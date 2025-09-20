@@ -25,6 +25,7 @@ function RoleDropdown({ role, isOpen, onClick, onSelect }) {
                     <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Farmer')}>Farmer</p>
                     <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Officer')}>Officer</p>
                     <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Admin')}>Admin</p>
+                    <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Subsidy Provider')}>Subsidy Provider</p>
                 </div>
             )}
         </div>
@@ -77,8 +78,13 @@ function Signup() {
     const [loginOtp, setLoginOtp] = useState('');
     const [loginEmailError, setLoginEmailError] = useState('');
 
-    // Forgot password states
+    // Forgot password multi-step states
     const [forgotPassword, setForgotPassword] = useState(false);
+    const [forgotStep, setForgotStep] = useState(1); // 1: email, 2: otp, 3: new password
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotOtp, setForgotOtp] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
+    const [otpVerified, setOtpVerified] = useState(false);
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [forgotPasswordError, setForgotPasswordError] = useState('');
@@ -245,10 +251,45 @@ function Signup() {
     // Forgot password handlers
     const handleForgotPasswordClick = () => {
         setForgotPassword(true);
+        setForgotStep(1);
+        setForgotEmail('');
+        setForgotOtp('');
+        setOtpSent(false);
+        setOtpVerified(false);
         setNewPassword('');
         setConfirmNewPassword('');
         setForgotPasswordError('');
     };
+
+    // Step 1: Send OTP to email
+    const handleForgotSendOtp = (e) => {
+        e.preventDefault();
+        if (!forgotEmail || !validateEmail(forgotEmail)) {
+            setForgotPasswordError('Enter a valid email address.');
+            return;
+        }
+        setForgotPasswordError('');
+        // TODO: Call backend to send OTP to email
+        setOtpSent(true);
+        setForgotStep(2);
+        // Optionally show a message: OTP sent
+    };
+
+    // Step 2: Verify OTP
+    const handleForgotVerifyOtp = (e) => {
+        e.preventDefault();
+        if (!forgotOtp) {
+            setForgotPasswordError('Enter the OTP sent to your email.');
+            return;
+        }
+        setForgotPasswordError('');
+        // TODO: Call backend to verify OTP
+        // For now, accept any OTP
+        setOtpVerified(true);
+        setForgotStep(3);
+    };
+
+    // Step 3: Set new password
     const handleForgotPasswordSubmit = (e) => {
         e.preventDefault();
         if (!newPassword || !confirmNewPassword) {
@@ -260,6 +301,7 @@ function Signup() {
             return;
         }
         setForgotPasswordError('');
+        // TODO: Call backend to reset password
         alert('Password reset successfully!');
         handlePageSwitch('login');
     };
@@ -278,44 +320,106 @@ function Signup() {
                     >Sign Up</button>
                 </div>
 
-                {/* Forgot Password Page */}
+                {/* Forgot Password Page - Multi-step */}
                 {forgotPassword && (
-                    <form onSubmit={handleForgotPasswordSubmit}>
-                        <p className="text-black text-center text-xl font-bold mb-4">Reset Password</p>
-                        <input
-                            className="w-full p-2 mb-3 rounded-md bg-white border"
-                            type="password"
-                            placeholder="New Password"
-                            value={newPassword}
-                            onChange={e => setNewPassword(e.target.value)}
-                            required
-                        />
-                        <input
-                            className="w-full p-2 mb-3 rounded-md bg-white border"
-                            type="password"
-                            placeholder="Confirm New Password"
-                            value={confirmNewPassword}
-                            onChange={e => setConfirmNewPassword(e.target.value)}
-                            required
-                        />
-                        {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
-                        <div className="flex items-center justify-center pt-2">
-                            <button
-                                className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
-                                type="submit"
-                            >
-                                Reset Password
-                            </button>
-                        </div>
-                        <div className="text-center">
-                            <span
-                                className="text-green-700 cursor-pointer hover:underline"
-                                onClick={() => setForgotPassword(false)}
-                            >
-                                Back to Login
-                            </span>
-                        </div>
-                    </form>
+                    <div>
+                        <p className="text-black text-center text-xl font-bold mb-4">Forgot Password</p>
+                        {forgotStep === 1 && (
+                            <form onSubmit={handleForgotSendOtp}>
+                                <input
+                                    className="w-full p-2 mb-3 rounded-md bg-white border"
+                                    type="email"
+                                    placeholder="Enter your email"
+                                    value={forgotEmail}
+                                    onChange={e => setForgotEmail(e.target.value)}
+                                    required
+                                />
+                                {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
+                                <div className="flex items-center justify-center pt-2">
+                                    <button
+                                        className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
+                                        type="submit"
+                                    >
+                                        Send OTP
+                                    </button>
+                                </div>
+                                <div className="text-center">
+                                    <span
+                                        className="text-green-700 cursor-pointer hover:underline"
+                                        onClick={() => setForgotPassword(false)}
+                                    >
+                                        Back to Login
+                                    </span>
+                                </div>
+                            </form>
+                        )}
+                        {forgotStep === 2 && (
+                            <form onSubmit={handleForgotVerifyOtp}>
+                                <input
+                                    className="w-full p-2 mb-3 rounded-md bg-white border"
+                                    type="text"
+                                    placeholder="Enter OTP sent to your email"
+                                    value={forgotOtp}
+                                    onChange={e => setForgotOtp(e.target.value)}
+                                    required
+                                />
+                                {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
+                                <div className="flex items-center justify-center pt-2">
+                                    <button
+                                        className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
+                                        type="submit"
+                                    >
+                                        Verify OTP
+                                    </button>
+                                </div>
+                                <div className="text-center">
+                                    <span
+                                        className="text-green-700 cursor-pointer hover:underline"
+                                        onClick={() => { setForgotStep(1); setForgotOtp(''); setForgotPasswordError(''); }}
+                                    >
+                                        Back to Email
+                                    </span>
+                                </div>
+                            </form>
+                        )}
+                        {forgotStep === 3 && (
+                            <form onSubmit={handleForgotPasswordSubmit}>
+                                <input
+                                    className="w-full p-2 mb-3 rounded-md bg-white border"
+                                    type="password"
+                                    placeholder="New Password"
+                                    value={newPassword}
+                                    onChange={e => setNewPassword(e.target.value)}
+                                    required
+                                />
+                                <input
+                                    className="w-full p-2 mb-3 rounded-md bg-white border"
+                                    type="password"
+                                    placeholder="Confirm New Password"
+                                    value={confirmNewPassword}
+                                    onChange={e => setConfirmNewPassword(e.target.value)}
+                                    required
+                                />
+                                {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
+                                <div className="flex items-center justify-center pt-2">
+                                    <button
+                                        className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
+                                        type="submit"
+                                    >
+                                        Reset Password
+                                    </button>
+                                </div>
+                                <div className="text-center">
+                                    <span
+                                        className="text-green-700 cursor-pointer hover:underline"
+                                        onClick={() => { setForgotStep(1); setForgotEmail(''); setForgotOtp(''); setNewPassword(''); setConfirmNewPassword(''); setForgotPasswordError(''); }}
+                                    >
+                                        Back to Email
+                                    </span>
+                                </div>
+                            </form>
+                        )}
+                    </div>
                 )}
 
                 {/* Login Page */}
