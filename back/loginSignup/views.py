@@ -24,7 +24,7 @@ from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import PasswordResetOTP  # a model to store OTP temporarily
+from .models import PasswordResetOTP 
 import os
 otp = ""
 
@@ -33,52 +33,57 @@ User = get_user_model()
 
 @api_view(['POST'])
 def forgot_password_send_otp(request):
-   load_dotenv()
-   email=request.data.get('email')
-   email=str(email)
-   if not email:
-        return  HttpResponse(f"Email is required")
-    
-  
-   otp = str(random.randint(100000, 999999))
-   subject ="E-mail verification"
-   message =f'Your otp is {otp}, Please do not share it with anyone.'
-   from_email = settings.EMAIL_HOST_USER
-   recipient_list = [email]
-  
-   try:
-        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
-        print("here")
-        return HttpResponse("Email sent successfully!")
-   except Exception as e:
-        return HttpResponse(f"Error sending email: {e}")
-  
+    load_dotenv()
+    email = request.data.get('email')
+    if not email:
+        return HttpResponse("Email is required", status=400)
 
+    otp = str(random.randint(100000, 999999))
+    subject = "E-mail verification"
+    message = f'Your OTP is {otp}, please do not share it with anyone'
+    from_email = os.getenv('EMAIL_HOST_USER')
+    recipient_list = [email]
+
+    try:
+        user = User.objects.get(email_address=email)
+
+        PasswordResetOTP.objects.update_or_create(
+            user=user,
+            defaults={"otp": otp}
+        )
+
+        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+        return HttpResponse("Email sent successfully!")
+    except User.DoesNotExist:
+        return HttpResponse("User not found.", status=404)
+    except Exception as e:
+        return HttpResponse(f"Error sending email: {e}", status=500)
 
 @api_view(['POST'])
 def forgot_password_verify_otp(request):
     email = request.data.get('email')
     otp = request.data.get('otp')
-    
+
     if not email or not otp:
-        return HttpResponse({'Email and OTP required.'})
-    
+        return HttpResponse("Email and OTP required.", status=400)
+
     try:
         user = User.objects.get(email_address=email)
-       
-        otp_obj = PasswordResetOTP.objects.get(user=user, otp=otp)
-    except(User.DoesNotExist, PasswordResetOTP.DoesNotExist):
-        return HttpResponse('error Invalid OTP or email.')
+        otp_obj = PasswordResetOTP.objects.get(user=user)
 
-    # Optionally check expiry here
-    return HttpResponse('OTP verified')
+        if otp_obj.otp != otp:
+            return HttpResponse("Invalid OTP.", status=400)
 
+        return HttpResponse("OTP verified successfully.")
+    except User.DoesNotExist:
+        return HttpResponse("User not found.", status=404)
+    except PasswordResetOTP.DoesNotExist:
+        return HttpResponse("No OTP found for this user.", status=400)
 @api_view(['POST'])
 def forgot_password_reset(request):
     email = request.data.get('email')
     new_password = request.data.get('new_password')
-    print(email)
-    print(new_password)
+
     if not email or not new_password:
         return Response({'error': 'Email and new password required.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -90,14 +95,16 @@ def forgot_password_reset(request):
     user.password = make_password(new_password)
     user.save()
 
-    PasswordResetOTP.objects.filter(user=user).delete()  # cleanup
+    PasswordResetOTP.objects.filter(user=user).delete()
+
     return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
 
 
 class UserSignupView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSignupSerializer
-    permission_classes = []  # anyone can sign up
+    permission_classes = []  
+
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -133,14 +140,13 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         refresh = data.get("refresh")
         access = data.get("access")
 
-        # Set HttpOnly cookies
         response.set_cookie(
             key="access_token",
             value=access,
             httponly=True,
-            secure=False,   # ❌ set True in production with HTTPS
+            secure=False,   
             samesite="Strict",
-            max_age=300,    # 5 mins
+            max_age=300,    
         )
         response.set_cookie(
             key="refresh_token",
@@ -148,10 +154,9 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             httponly=True,
             secure=False,
             samesite="Strict",
-            max_age=7*24*60*60,  # 7 days
+            max_age=7*24*60*60,  
         )
 
-        # You can remove tokens from response body if you want
         del response.data["access"]
         del response.data["refresh"]
 
@@ -174,7 +179,7 @@ class CookieTokenRefreshView(APIView):
                 httponly=True,
                 secure=False,
                 samesite="Strict",
-                max_age=300,   # 5 minutes
+                max_age=300,   
             )
             return response
 
