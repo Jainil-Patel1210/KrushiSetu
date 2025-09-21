@@ -13,8 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-from decouple import config
-
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -77,7 +76,7 @@ ROOT_URLCONF = 'back.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR/'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -175,9 +174,9 @@ SIMPLE_JWT = {
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
 
-TWILIO_ACCOUNT_SID = config("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = config("TWILIO_AUTH_TOKEN")
-TWILIO_PHONE_NUMBER = config("TWILIO_PHONE_NUMBER")
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -185,7 +184,6 @@ EMAIL_HOST = 'smtp.gmail.com'   # e.g., 'smtp.gmail.com'
 EMAIL_PORT = 587                               # usually 587 for TLS
 EMAIL_USE_TLS = True  
 EMAIL_USE_SSL = False                          # True for TLS, False for SSL
-EMAIL_HOST_USER = 'op4141ii@gmail.com'    # your email
-EMAIL_HOST_PASSWORD = 'hhtjzdtokucclact' 
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')    # your email
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 
-
