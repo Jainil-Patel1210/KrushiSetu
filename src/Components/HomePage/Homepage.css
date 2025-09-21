@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+.middle-bg {
+  position: relative;
+  overflow: hidden;
+  min-height: 33rem; 
+  max-height: 120px;
+  background-image: url(/Crop_middle_image.jpg);
+}
+
+.middle-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 1;
+  z-index: 0;
+}
+
+.middle-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+.bg_green_layer {
+  background: rgba(27, 122, 67, 0.89);
+  min-height: 100vh; /* or your desired height */
+}
