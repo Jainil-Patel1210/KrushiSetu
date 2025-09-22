@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+.Guidlines-bg {
+  position: relative;
+  overflow: hidden;
+  min-height: 33rem; 
+  max-height: 120px;
+  background-image: url('/Guidlines_image-Picsart-AiImageEnhancer.jpg');
+  background-size: cover;
+}
