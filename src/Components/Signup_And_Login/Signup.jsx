@@ -570,7 +570,6 @@ function Signup() {
                             <form onSubmit={showOtpForm ? handleOtpSubmit : handleMobileSubmit}>
                                 <div className="p-2">
                                     <input className="w-full p-1.5 mb-3 rounded-md bg-white border" type="text" placeholder="Full Name" value={signupFullName} onChange={e => setSignupFullName(e.target.value)} required />
-                                    <input className="w-full p-1.5 mb-3 rounded-md bg-white border" type="text" placeholder="Mobile Number" value={signupAadhaar} onChange={e => setSignupAadhaar(e.target.value)} required />
                                     {!showOtpForm ? (
                                         <input
                                             className="w-full p-1.5 mb-3 rounded-md bg-white border"
