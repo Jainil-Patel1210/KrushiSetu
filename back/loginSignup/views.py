@@ -1,16 +1,12 @@
 from rest_framework import generics
 from .models import User
 from django.http import HttpResponse
-
+from django.template.loader import render_to_string
 from .serializers import UserSignupSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
-from rest_framework.response import Response
-from django.conf import settings
 from rest_framework.views import APIView
-from rest_framework import status
 from django.contrib.auth import authenticate
 from .otp_utils import send_otp_sms, verify_otp_sms
 from .auth_utils import login_with_otp_success
@@ -24,7 +20,7 @@ from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import PasswordResetOTP 
+from .models import PasswordResetOTP  # a model to store OTP temporarily
 import os
 otp = ""
 
@@ -39,20 +35,23 @@ def forgot_password_send_otp(request):
         return HttpResponse("Email is required", status=400)
 
     otp = str(random.randint(100000, 999999))
-    subject = "E-mail verification"
+    subject = f"Email verification code: {otp}"
     message = f'Your OTP is {otp}, please do not share it with anyone'
+    html_content = render_to_string("otp_email.html", {"otp": otp, "user_email": email})
     from_email = os.getenv('EMAIL_HOST_USER')
     recipient_list = [email]
 
     try:
+        # check user exists
         user = User.objects.get(email_address=email)
 
+        # store OTP in DB
         PasswordResetOTP.objects.update_or_create(
             user=user,
             defaults={"otp": otp}
         )
 
-        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+        send_mail(subject, message, from_email, recipient_list, fail_silently=False, html_message=html_content)
         return HttpResponse("Email sent successfully!")
     except User.DoesNotExist:
         return HttpResponse("User not found.", status=404)
@@ -95,6 +94,7 @@ def forgot_password_reset(request):
     user.password = make_password(new_password)
     user.save()
 
+    # cleanup OTPs for this user
     PasswordResetOTP.objects.filter(user=user).delete()
 
     return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
@@ -103,7 +103,7 @@ def forgot_password_reset(request):
 class UserSignupView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSignupSerializer
-    permission_classes = []  
+    permission_classes = []  # anyone can sign up
 
 
 
@@ -140,13 +140,14 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         refresh = data.get("refresh")
         access = data.get("access")
 
+        # Set HttpOnly cookies
         response.set_cookie(
             key="access_token",
             value=access,
             httponly=True,
-            secure=False,   
+            secure=False,   # ❌ set True in production with HTTPS
             samesite="Strict",
-            max_age=300,    
+            max_age=300,    # 5 mins
         )
         response.set_cookie(
             key="refresh_token",
@@ -154,9 +155,10 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             httponly=True,
             secure=False,
             samesite="Strict",
-            max_age=7*24*60*60,  
+            max_age=7*24*60*60,  # 7 days
         )
 
+        # You can remove tokens from response body if you want
         del response.data["access"]
         del response.data["refresh"]
 
@@ -179,7 +181,7 @@ class CookieTokenRefreshView(APIView):
                 httponly=True,
                 secure=False,
                 samesite="Strict",
-                max_age=300,   
+                max_age=300,   # 5 minutes
             )
             return response
 

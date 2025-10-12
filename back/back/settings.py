@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'django_otp.plugins.otp_hotp',
+    'app',
 ]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -76,7 +77,7 @@ ROOT_URLCONF = 'back.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR/'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -154,6 +155,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR/'static']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -180,10 +183,10 @@ TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'   # e.g., 'smtp.gmail.com'
-EMAIL_PORT = 587                               # usually 587 for TLS
+EMAIL_HOST = 'smtp.gmail.com'   
+EMAIL_PORT = 587                               
 EMAIL_USE_TLS = True  
-EMAIL_USE_SSL = False                          # True for TLS, False for SSL
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')    # your email
+EMAIL_USE_SSL = False                          
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')    
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 

@@ -8,7 +8,7 @@ class UserSignupSerializer(serializers.ModelSerializer):
         extra_kwargs = {"password": {"write_only": True}}
 
     def validate(self, data):
-        # Ensure at least one of email or mobile is provided
+        # Ensure that least one of email or mobile is provided
         if not data.get("email_address") or not data.get("mobile_number"):
             raise serializers.ValidationError("You must provide either an email address and a mobile number")
 

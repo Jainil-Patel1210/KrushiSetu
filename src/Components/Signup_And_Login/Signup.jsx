@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import './Signup.css';
+import axios from "axios";
+import api from './api';
+import { GoogleOAuthProvider, GoogleLogin } from
+    "@react-oauth/google";
 
 // Role Dropdown Component
 function RoleDropdown({ role, isOpen, onClick, onSelect }) {
@@ -34,6 +38,29 @@ function RoleDropdown({ role, isOpen, onClick, onSelect }) {
 
 // Social Login Component
 function SocialLogin() {
+
+    //Google login
+    const handleGoogleLogin = async (credentialResponse) => {
+        const token = credentialResponse.credential; // Google ID token
+
+        try {
+            // Send Google token to Django backend
+            const res = await api.post("/auth/google/callback/", {
+                token,
+            });
+
+            console.log("Backend response:", res.data);
+            alert("Login successful! Check console for details.");
+
+            // Save JWT tokens (for later authenticated requests)
+            localStorage.setItem("access", res.data.access);
+            localStorage.setItem("refresh", res.data.refresh);
+        } catch (err) {
+            console.error("Login failed:", err.response?.data || err.message);
+            alert("Login failed. Check console.");
+        }
+    };
+
     return (
         <div>
             <div className="flex items-center">
@@ -41,24 +68,84 @@ function SocialLogin() {
                 <p className="ml-4 mr-2">Or continue with</p>
                 <hr className="border-t-2 w-17 ml-2" />
             </div>
-            <div className="flex justify-around pt-2 pl-25 pr-25">
-                <img className="w-7.5 h-7.5 pt-2" src="/Google_Logo.svg" alt="Google Logo" />
-                <img className="w-9.5 h-9.5" src="/DigiLocker_Logo.png" alt="DigiLocker Logo" />
+
+            <div className="flex justify-center items-center pt-2">
+                <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+                    <div >
+                        <GoogleLogin
+                            onSuccess={handleGoogleLogin}
+                            onError={() => console.log("Google Login Failed")}
+                        />
+                    </div>
+                </GoogleOAuthProvider>
+                {/* <img className="w-9.5 h-9.5" src="/DigiLocker_Logo.png" alt="DigiLocker Logo" /> */}
             </div>
         </div>
     );
 }
 
+// Common Password Visibility Toggle Icon
+function PasswordToggleIcon({ visible, onClick }) {
+    return (
+        <span className='absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer' onClick={onClick} tabIndex={0} role="button" aria-label="Toggle password visibility">
+            {!visible ? (
+                <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                    <path d="M177.5,67.4a9.75,9.75,0,0,0-14-1.5c-10.5,8.5-20,14.5-29.5,17.5-9.5,3.5-20.5,5-34,5s-24.5-1.5-34-5-19-9-29.5-17.5c-4.5-3.5-10.5-3-14,1.5s-3,10.5,1.5,14A132.06,132.06,0,0,0,45,95.9l-8.5,14.5c-2.5,5-1,11,3.5,13.5,5,2.5,11,1,13.5-3.5L63,103.9a112.84,112.84,0,0,0,27,4.5v18a10,10,0,0,0,20,0v-18a106.6,106.6,0,0,0,29-5.5l10,17.5a9.86,9.86,0,0,0,17-10l-9-15.5a111.22,111.22,0,0,0,19-13.5C180.5,77.9,181,71.9,177.5,67.4Z" />
+                </svg>
+            ) : (
+                <svg width="20" height="20" viewBox="0 0 32 32">
+                    <circle cx="16" cy="18" fill="none" r="3" stroke="#000" strokeWidth="2" />
+                    <path d="M31,18c0,0-6-9-15-9S1,18,1,18s6,9,15,9S31,18,31,18z" fill="none" stroke="#000" strokeWidth="2" />
+                    <line x1="16" x2="16" y1="6" y2="2" stroke="#000" strokeWidth="2" />
+                    <line x1="7" x2="4" y1="9" y2="6" stroke="#000" strokeWidth="2" />
+                    <line x1="25" x2="28" y1="9" y2="6" stroke="#000" strokeWidth="2" />
+                </svg>
+            )}
+        </span>
+    );
+}
+
 function Signup() {
+    const [showLoginPassword, setShowLoginPassword] = useState(false);
+    const [showSignupPassword, setShowSignupPassword] = useState(false);
+    const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
+    const [showForgotNewPassword, setShowForgotNewPassword] = useState(false);
+    const [showForgotConfirmNewPassword, setShowForgotConfirmNewPassword] = useState(false);
+    // Forgot password restrictions
+
+    const passwordRestriction = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    const handleForgotNewPasswordChange = (e) => {
+        const value = e.target.value;
+        setNewPassword(value);
+        if (value && !passwordRestriction.test(value)) {
+            setForgotPasswordError('Password must be at least 8 characters, include 1 letter, 1 digit, and 1 special character.');
+        } else if (confirmNewPassword && value !== confirmNewPassword) {
+            setForgotPasswordError('Passwords do not match.');
+        } else {
+            setForgotPasswordError('');
+        }
+    };
+
+    const handleForgotConfirmNewPasswordChange = (e) => {
+        setConfirmNewPassword(e.target.value);
+        if (newPassword && e.target.value !== newPassword) {
+            setForgotPasswordError('Passwords do not match.');
+        } else if (e.target.value && !passwordRestriction.test(newPassword)) {
+            setForgotPasswordError('Password must be at least 8 characters, include 1 letter, 1 digit, and 1 special character.');
+        } else {
+            setForgotPasswordError('');
+        }
+    };
     const [page, setPage] = useState('login');
     const [role, setRole] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [signupMethod, setSignupMethod] = useState('email');
-    const [showOtpForm, setShowOtpForm] = useState(false);
 
     // Signup states
     const [signupFullName, setSignupFullName] = useState('');
+    const [signupFullNameError, setSignupFullNameError] = useState('');
     const [signupAadhaar, setSignupAadhaar] = useState('');
+    const [signupAadhaarError, setSignupAadhaarError] = useState('');
     const [signupPassword, setSignupPassword] = useState('');
     const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
     const [signupMobile, setSignupMobile] = useState('');
@@ -70,13 +157,39 @@ function Signup() {
     // Login with OTP states
     const [loginWithOtp, setLoginWithOtp] = useState(false);
     const [showLoginOtpForm, setShowLoginOtpForm] = useState(false);
+    const [userId, setUserId] = useState('');
 
     // Login form states
     const [loginMobileOrEmail, setLoginMobileOrEmail] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
     const [loginMobile, setLoginMobile] = useState('');
+    const [loginMobileError, setLoginMobileError] = useState('');
     const [loginOtp, setLoginOtp] = useState('');
     const [loginEmailError, setLoginEmailError] = useState('');
+    // Login input restrictions
+    const handleLoginEmailChange = (e) => {
+        const value = e.target.value.replace(/[^0-9a-zA-Z@._-]/g, '');
+        setLoginMobileOrEmail(value);
+        if (value && !validateEmail(value)) {
+            setLoginEmailError('Enter a valid email address.');
+        } else {
+            setLoginEmailError('');
+        }
+    };
+
+    const handleLoginPasswordChange = (e) => {
+        setLoginPassword(e.target.value);
+    };
+
+    const handleLoginMobileChange = (e) => {
+        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+        setLoginMobile(val);
+        if (val.length !== 10 && val.length > 0) {
+            setLoginMobileError('Mobile number must be exactly 10 digits.');
+        } else {
+            setLoginMobileError('');
+        }
+    };
 
     // Forgot password multi-step states
     const [forgotPassword, setForgotPassword] = useState(false);
@@ -88,6 +201,7 @@ function Signup() {
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [forgotPasswordError, setForgotPasswordError] = useState('');
+    const [showOtpForm, setShowOtpForm] = useState(false);
 
     // Reset all form states
     const handlePageSwitch = (page) => {
@@ -123,41 +237,11 @@ function Signup() {
         setRole(selectedRole);
         setIsOpen(false);
     };
-    const handleClick = () => setIsOpen(!isOpen);
 
-    // Signup method switch
-    const handleSignupMethodSwitch = () => {
-        setSignupMethod(signupMethod === 'email' ? 'otp' : 'email');
-        setShowOtpForm(false);
-        setSignupFullName('');
-        setSignupAadhaar('');
-        setSignupPassword('');
-        setSignupConfirmPassword('');
-        setSignupMobile('');
-        setSignupOtp('');
-        setSignupEmail('');
-        setSignupEmailError('');
-        setSignupPasswordError('');
-    };
+    const handleClick = () => setIsOpen(!isOpen);
 
     // Email validation
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-    // Signup OTP handlers
-    const handleMobileSubmit = (e) => {
-        e.preventDefault();
-        if (signupMobile.length !== 10) {
-            alert('Please enter a valid 10-digit mobile number.');
-            return;
-        }
-        setShowOtpForm(true);
-        setSignupMobile('');
-    };
-    const handleOtpSubmit = (e) => {
-        e.preventDefault();
-        alert("Account created successfully!");
-        handlePageSwitch('login');
-    };
 
     // Login with OTP handlers
     const handleLoginOtpSwitch = () => {
@@ -169,46 +253,109 @@ function Signup() {
         setLoginPassword('');
         setLoginEmailError('');
     };
-    const handleLoginMobileSubmit = (e) => {
+
+    const handleLoginMobileSubmit = async (e) => {
         e.preventDefault();
         if (loginMobile.length !== 10) {
             alert('Please enter a valid 10-digit mobile number.');
             return;
         }
-        setShowLoginOtpForm(true);
-        setLoginMobile('');
+        try {
+            console.log(loginMobile)
+            const response = await api.post("/login/", {
+                mobile_number: loginMobile,
+                role: role,
+            });
+            console.log(response.data.user_id)
+            setUserId(response.data.user_id); // save user_id for OTP step
+            alert("OTP sent to your mobile!");
+            setShowLoginOtpForm(true);
+            setLoginMobile('');
+        } catch (error) {
+            console.error("Login failed: ", error.response ? error.response.data : error.message);
+            alert("Login failed!");
+        }
+
     };
-    const handleLoginOtpSubmit = (e) => {
+
+    const handleLoginOtpSubmit = async (e) => {
         e.preventDefault();
-        alert("Logged in successfully!");
-        setShowLoginOtpForm(false);
-        setLoginWithOtp(false);
-        setLoginMobile('');
-        setLoginOtp('');
+        try {
+            const response = await api.post("/verify-otp/", {
+                user_id: userId,
+                otp: loginOtp,
+            });
+            alert(response.data.message);
+            alert("Logged in successfully!");
+            setShowLoginOtpForm(false);
+            setLoginWithOtp(false);
+            setLoginMobile('');
+            setLoginOtp('');
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.error || "OTP verification failed");
+        }
     };
 
     // Login form submit
-    const handleLoginSubmit = (e) => {
+    const handleLoginSubmit = async (e) => {
         e.preventDefault();
-        if (!role) {
-            alert('Please select a role.');
-            return;
+        try {
+            if (!role) {
+                alert("Please select a role.");
+                return;
+            }
+
+            if (/^\d{10}$/.test(loginMobileOrEmail)) {
+                // valid mobile
+            } else if (validateEmail(loginMobileOrEmail)) {
+                // valid email
+            } else {
+                setLoginEmailError("Enter a valid 10-digit mobile number or email.");
+                return;
+            }
+
+            const response = await api.post("/token/", {
+                email_address: loginMobileOrEmail,
+                password: loginPassword,
+                role: role,
+            });
+
+            setLoginEmailError("");
+            alert("Logged in successfully!");
+            setLoginMobileOrEmail("");
+            setLoginPassword("");
+        } catch (error) {
+            console.error("Login failed: ", error.response ? error.response.data : error.message);
+            alert("Login failed!");
         }
-        if (/^\d{10}$/.test(loginMobileOrEmail)) {
-            // Valid mobile
-        } else if (validateEmail(loginMobileOrEmail)) {
-            // Valid email
-        } else {
-            setLoginEmailError('Enter a valid 10-digit mobile number or email.');
-            return;
-        }
-        setLoginEmailError('');
-        alert('Logged in successfully!');
-        setLoginMobileOrEmail('');
-        setLoginPassword('');
     };
 
-    // Signup email validation
+
+
+    // Name validation
+    const nameRestriction = /^[A-Za-z\s]+$/;
+    const handleSignupFullNameChange = (e) => {
+        const value = e.target.value;
+        if (!nameRestriction.test(value) && value !== "") {
+            setSignupFullNameError("Name can only contain alphabets and spaces.");
+        } else {
+            setSignupFullNameError("");
+        }
+        setSignupFullName(value.replace(/[^A-Za-z\s]/g, ""));
+    };
+
+    // Mobile validation
+    const handleSignupAadhaarChange = (e) => {
+        const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+        setSignupAadhaar(value);
+        if (value.length !== 10 && value.length > 0) {
+            setSignupAadhaarError("Mobile number must be exactly 10 digits.");
+        } else {
+            setSignupAadhaarError("");
+        }
+    };
+
     const handleSignupEmailChange = (e) => {
         setSignupEmail(e.target.value);
         if (e.target.value && !validateEmail(e.target.value)) {
@@ -220,32 +367,60 @@ function Signup() {
 
     // Signup password match validation
     const handleSignupPasswordChange = (e) => {
-        setSignupPassword(e.target.value);
-        if (signupConfirmPassword && e.target.value !== signupConfirmPassword) {
-            setSignupPasswordError('Passwords do not match.');
-        } else {
-            setSignupPasswordError('');
-        }
-    };
-    const handleSignupConfirmPasswordChange = (e) => {
-        setSignupConfirmPassword(e.target.value);
-        if (signupPassword && e.target.value !== signupPassword) {
+        const value = e.target.value;
+        setSignupPassword(value);
+        if (!passwordRestriction.test(value)) {
+            setSignupPasswordError('Password must be at least 8 characters, include 1 letter, 1 digit, and 1 special character.');
+        } else if (signupConfirmPassword && value !== signupConfirmPassword) {
             setSignupPasswordError('Passwords do not match.');
         } else {
             setSignupPasswordError('');
         }
     };
 
-    // Signup email form submit
-    const handleSignupEmailSubmit = (e) => {
-        e.preventDefault();
-        if (signupPassword !== signupConfirmPassword) {
+    const handleSignupConfirmPasswordChange = (e) => {
+        setSignupConfirmPassword(e.target.value);
+        if (signupPassword && e.target.value !== signupPassword) {
             setSignupPasswordError('Passwords do not match.');
-            return;
+        } else if (!passwordRestriction.test(signupPassword)) {
+            setSignupPasswordError('Password must be at least 8 characters, include 1 letter, 1 digit, and 1 special character.');
+        } else {
+            setSignupPasswordError('');
         }
-        setSignupPasswordError('');
-        alert("Account created successfully!");
-        handlePageSwitch('login');
+    };
+
+    // Signup email form submit
+    const handleSignupEmailSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            if (signupPassword !== signupConfirmPassword) {
+                setSignupPasswordError('Passwords do not match.');
+                return;
+            }
+            const response = await axios.post("http://127.0.0.1:8000/api/signup/", {
+                full_name: signupFullName,
+                email_address: signupEmail,
+                mobile_number: signupAadhaar,
+                password: signupPassword,
+            }, {
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+            // Only proceed if response is successful
+            if (response.status === 201 || response.status === 200) {
+                setSignupPasswordError('');
+                alert("Account created successfully!");
+                handlePageSwitch('login');
+            } else {
+                // If API returns error but no exception is thrown
+                alert("Register failed! " + (response.data?.detail || 'Unknown error.'));
+            }
+        } catch (error) {
+            // Only show error if an actual error occurs
+            console.error("Register failed: ", error.response ? error.response.data : error.message);
+            alert("Register failed! " + (error.response?.data?.detail || error.message));
+        }
     };
 
     // Forgot password handlers
@@ -261,33 +436,57 @@ function Signup() {
         setForgotPasswordError('');
     };
 
-    const handleForgotSendOtp = (e) => {
+    // Step 1: Send OTP to email
+    const handleForgotSendOtp = async (e) => {
         e.preventDefault();
         if (!forgotEmail || !validateEmail(forgotEmail)) {
             setForgotPasswordError('Enter a valid email address.');
             return;
         }
         setForgotPasswordError('');
-        setOtpSent(true);
-        setForgotStep(2);
+        try {
+            const response = await api.post("/forgot-password/", {
+                email: forgotEmail,
+            });
+            setOtpSent(true);
+            setForgotStep(2);
+            alert('OTP sent to your email!');
+        }
+        catch (err) {
+            console.error(err);
+            setForgotPasswordError(
+                err.response?.data?.error || 'Failed to send OTP. Please try again.'
+            );
+        }
     };
 
     // Step 2: Verify OTP
-    const handleForgotVerifyOtp = (e) => {
+    const handleForgotVerifyOtp = async (e) => {
         e.preventDefault();
         if (!forgotOtp) {
             setForgotPasswordError('Enter the OTP sent to your email.');
             return;
         }
         setForgotPasswordError('');
-        // TODO: Call backend to verify OTP
-        // For now, accept any OTP
-        setOtpVerified(true);
-        setForgotStep(3);
+
+        try {
+            const response = await api.post("/forgot-password/verify-otp/", {
+                email: forgotEmail,
+                otp: forgotOtp,
+            });
+            setOtpVerified(true);
+            setForgotStep(3);
+            alert('OTP verified. You can now reset your password.');
+        } catch (err) {
+            console.error(err);
+            setForgotPasswordError(
+                err.response?.data?.error || 'Invalid OTP. Please try again.'
+            );
+        }
     };
 
     // Step 3: Set new password
-    const handleForgotPasswordSubmit = (e) => {
+    const handleForgotPasswordSubmit = async (e) => {
         e.preventDefault();
         if (!newPassword || !confirmNewPassword) {
             setForgotPasswordError('Please fill both fields.');
@@ -298,9 +497,20 @@ function Signup() {
             return;
         }
         setForgotPasswordError('');
-        // TODO: Call backend to reset password
-        alert('Password reset successfully!');
-        handlePageSwitch('login');
+        try {
+            const response = await api.post("/forgot-password/reset-password/", {
+                email: forgotEmail,
+                new_password: newPassword,
+            });
+
+            alert('Password reset successfully!');
+            handlePageSwitch('login');
+        } catch (err) {
+            console.error(err);
+            setForgotPasswordError(
+                err.response?.data?.error || 'Password reset failed.'
+            );
+        }
     };
 
     return (
@@ -381,22 +591,28 @@ function Signup() {
                         )}
                         {forgotStep === 3 && (
                             <form onSubmit={handleForgotPasswordSubmit}>
-                                <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="password"
-                                    placeholder="New Password"
-                                    value={newPassword}
-                                    onChange={e => setNewPassword(e.target.value)}
-                                    required
-                                />
-                                <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="password"
-                                    placeholder="Confirm New Password"
-                                    value={confirmNewPassword}
-                                    onChange={e => setConfirmNewPassword(e.target.value)}
-                                    required
-                                />
+                                <div className="relative">
+                                    <input
+                                        className="w-full p-2 mb-3 rounded-md bg-white border"
+                                        type={showForgotNewPassword ? "text" : "password"}
+                                        placeholder="New Password"
+                                        value={newPassword}
+                                        onChange={handleForgotNewPasswordChange}
+                                        required
+                                    />
+                                    <PasswordToggleIcon visible={showForgotNewPassword} onClick={() => setShowForgotNewPassword((prev) => !prev)} />
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        className="w-full p-2 mb-3 rounded-md bg-white border"
+                                        type={showForgotConfirmNewPassword ? "text" : "password"}
+                                        placeholder="Confirm New Password"
+                                        value={confirmNewPassword}
+                                        onChange={handleForgotConfirmNewPasswordChange}
+                                        required
+                                    />
+                                    <PasswordToggleIcon visible={showForgotConfirmNewPassword} onClick={() => setShowForgotConfirmNewPassword((prev) => !prev)} />
+                                </div>
                                 {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
                                 <div className="flex items-center justify-center pt-2">
                                     <button
@@ -430,18 +646,21 @@ function Signup() {
                                     type="text"
                                     placeholder="Email"
                                     value={loginMobileOrEmail}
-                                    onChange={e => setLoginMobileOrEmail(e.target.value.replace(/[^0-9a-zA-Z@._-]/g, ''))}
+                                    onChange={handleLoginEmailChange}
                                     required
                                 />
                                 {loginEmailError && <p className="text-red-600 text-xs mb-1">{loginEmailError}</p>}
-                                <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="password"
-                                    placeholder="Password"
-                                    value={loginPassword}
-                                    onChange={e => setLoginPassword(e.target.value)}
-                                    required
-                                />
+                                <div className="relative">
+                                    <input
+                                        className="w-full p-2 mb-3 rounded-md bg-white border"
+                                        type={showLoginPassword ? "text" : "password"}
+                                        placeholder="Password"
+                                        value={loginPassword}
+                                        onChange={handleLoginPasswordChange}
+                                        required
+                                    />
+                                    <PasswordToggleIcon visible={showLoginPassword} onClick={() => setShowLoginPassword((prev) => !prev)} />
+                                </div>
                                 <RoleDropdown
                                     role={role}
                                     isOpen={isOpen}
@@ -456,7 +675,7 @@ function Signup() {
                                         Forgot Password?
                                     </span>
                                     <span className="cursor-pointer hover:underline" onClick={handleLoginOtpSwitch}>
-                                        {loginWithOtp ? 'Login with Password' : 'Login with OTP'}
+                                        {loginWithOtp ? 'Login with Email' : 'Login with Mobile'}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-center pt-2">
@@ -472,18 +691,18 @@ function Signup() {
                         ) : (
                             <form onSubmit={showLoginOtpForm ? handleLoginOtpSubmit : handleLoginMobileSubmit}>
                                 {!showLoginOtpForm ? (
-                                    <input
-                                        className="w-full p-2 mb-3 rounded-md bg-white border"
-                                        type="tel"
-                                        placeholder="Mobile Number"
-                                        value={loginMobile}
-                                        onChange={e => {
-                                            const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                            setLoginMobile(val);
-                                        }}
-                                        maxLength={10}
-                                        required
-                                    />
+                                    <>
+                                        <input
+                                            className="w-full p-2 mb-3 rounded-md bg-white border"
+                                            type="tel"
+                                            placeholder="Mobile Number"
+                                            value={loginMobile}
+                                            onChange={handleLoginMobileChange}
+                                            maxLength={10}
+                                            required
+                                        />
+                                        {loginMobileError && <p className="text-red-600 text-xs mb-1">{loginMobileError}</p>}
+                                    </>
                                 ) : (
                                     <input
                                         className="w-full p-2 mb-3 rounded-md bg-white border"
@@ -508,7 +727,7 @@ function Signup() {
                                         Forgot Password?
                                     </span>
                                     <span className="cursor-pointer hover:underline" onClick={handleLoginOtpSwitch}>
-                                        {loginWithOtp ? 'Login with Password' : 'Login with OTP'}
+                                        {loginWithOtp ? 'Login with Email' : 'Login with Mobile'}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-center pt-2">
@@ -530,11 +749,28 @@ function Signup() {
                 {page === 'signup' && (
                     <div>
                         <p className="text-black text-center text-xl font-bold mb-0.5">Create Your Account</p>
-                        {signupMethod === 'email' ? (
+                        {signupMethod === 'email' && (
                             <form onSubmit={handleSignupEmailSubmit}>
                                 <div className="p-2">
-                                    <input className="w-full p-1.5 mb-3 rounded-md bg-white border" type="text" placeholder="Full Name" value={signupFullName} onChange={e => setSignupFullName(e.target.value)} required />
-                                    <input className="w-full p-1.5 mb-3 rounded-md bg-white border" type="text" placeholder="Mobile Number" value={signupAadhaar} onChange={e => setSignupAadhaar(e.target.value)} />
+                                    <input
+                                        className="w-full p-1.5 mb-3 rounded-md bg-white border"
+                                        type="text"
+                                        placeholder="Full Name"
+                                        value={signupFullName}
+                                        onChange={handleSignupFullNameChange}
+                                        required
+                                    />
+                                    {signupFullNameError && <p className="text-red-600 text-xs mb-2">{signupFullNameError}</p>}
+                                    <input
+                                        className="w-full p-1.5 mb-3 rounded-md bg-white border"
+                                        type="text"
+                                        placeholder="Mobile Number"
+                                        value={signupAadhaar}
+                                        onChange={handleSignupAadhaarChange}
+                                        maxLength={10}
+                                        required
+                                    />
+                                    {signupAadhaarError && <p className="text-red-600 text-xs mb-2">{signupAadhaarError}</p>}
                                     <input
                                         className="w-full p-1.5 mb-3 rounded-md bg-white border"
                                         type="email"
@@ -544,13 +780,33 @@ function Signup() {
                                         required
                                     />
                                     {signupEmailError && <p className="text-red-600 text-xs mb-2">{signupEmailError}</p>}
-                                    <input className="w-full p-1.5 mb-3 rounded-md bg-white border" type="password" placeholder="Password" value={signupPassword} onChange={handleSignupPasswordChange} required />
-                                    <input className="w-full p-1.5 rounded-md bg-white border" type="password" placeholder="Confirm Password" value={signupConfirmPassword} onChange={handleSignupConfirmPasswordChange} required />
+                                    <div className="relative">
+                                        <input
+                                            className="w-full p-1.5 mb-3 rounded-md bg-white border"
+                                            type={showSignupPassword ? "text" : "password"}
+                                            placeholder="Password"
+                                            value={signupPassword}
+                                            onChange={handleSignupPasswordChange}
+                                            required
+                                        />
+                                        <PasswordToggleIcon visible={showSignupPassword} onClick={() => setShowSignupPassword((prev) => !prev)} />
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            className="w-full p-1.5 rounded-md bg-white border"
+                                            type={showSignupConfirmPassword ? "text" : "password"}
+                                            placeholder="Confirm Password"
+                                            value={signupConfirmPassword}
+                                            onChange={handleSignupConfirmPasswordChange}
+                                            required
+                                        />
+                                        <PasswordToggleIcon visible={showSignupConfirmPassword} onClick={() => setShowSignupConfirmPassword((prev) => !prev)} />
+                                    </div>
                                     {signupPasswordError && <p className="text-red-600 text-xs mb-2">{signupPasswordError}</p>}
                                 </div>
-                                <p onClick={handleSignupMethodSwitch} className="cursor-pointer hover:underline text-green-700 font-semibold mb-2 text-right mr-3">
+                                {/* <p onClick={handleSignupMethodSwitch} className="cursor-pointer hover:underline text-green-700 font-semibold mb-2 text-right mr-3">
                                     {signupMethod === 'email' ? 'Login with OTP' : 'Login with Email'}
-                                </p>
+                                </p> */}
                                 <div className="flex items-center space-x-2 pl-4 mb-2">
                                     <input type="checkbox" id="agree" className="h-4 w-4 text-green-700 border-gray-300 rounded focus:ring-green-500" required />
                                     <label htmlFor="agree" className="text-black">I agree to the <span className='text-green-700'>Terms & Conditions</span></label>
@@ -566,57 +822,11 @@ function Signup() {
                                 </div>
                                 <SocialLogin />
                             </form>
-                        ) : (
-                            <form onSubmit={showOtpForm ? handleOtpSubmit : handleMobileSubmit}>
-                                <div className="p-2">
-                                    <input className="w-full p-1.5 mb-3 rounded-md bg-white border" type="text" placeholder="Full Name" value={signupFullName} onChange={e => setSignupFullName(e.target.value)} required />
-                                    {!showOtpForm ? (
-                                        <input
-                                            className="w-full p-1.5 mb-3 rounded-md bg-white border"
-                                            type="tel"
-                                            placeholder="Mobile Number"
-                                            value={signupMobile}
-                                            onChange={e => {
-                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                                setSignupMobile(val);
-                                            }}
-                                            maxLength={10}
-                                            required
-                                        />
-                                    ) : (
-                                        <input
-                                            className="w-full p-1.5 mb-3 rounded-md bg-white border"
-                                            type="text"
-                                            placeholder="Enter OTP"
-                                            value={signupOtp}
-                                            onChange={e => setSignupOtp(e.target.value)}
-                                            required
-                                        />
-                                    )}
-                                </div>
-                                <div className="flex items-center space-x-2 pl-4 mb-2">
-                                    <input type="checkbox" id="agree" className="h-4 w-4 text-green-700 border-gray-300 rounded focus:ring-green-500" required />
-                                    <label htmlFor="agree" className="text-black">I agree to the <span className='text-green-700'>Terms & Conditions</span></label>
-                                </div>
-                                <p onClick={handleSignupMethodSwitch} className="cursor-pointer hover:underline text-green-700 font-semibold mb-2 text-right mr-3">
-                                    {signupMethod === 'email' ? 'Login with OTP' : 'Login with Email'}
-                                </p>
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${!showOtpForm ? (signupMobile.length === 10 ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed') : 'bg-green-700 hover:bg-green-800'} transition duration-200`}
-                                        type="submit"
-                                        disabled={!showOtpForm && signupMobile.length !== 10}
-                                    >
-                                        {showOtpForm ? 'Verify OTP & Create Account' : 'Create Account'}
-                                    </button>
-                                </div>
-                                <SocialLogin />
-                            </form>
                         )}
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }
 
