@@ -4,6 +4,7 @@ import axios from "axios";
 import api from './api';
 import { GoogleOAuthProvider, GoogleLogin } from
     "@react-oauth/google";
+import { useNavigate } from 'react-router-dom';
 
 // Role Dropdown Component
 function RoleDropdown({ role, isOpen, onClick, onSelect }) {
@@ -38,6 +39,7 @@ function RoleDropdown({ role, isOpen, onClick, onSelect }) {
 
 // Social Login Component
 function SocialLogin() {
+    const navigate = useNavigate();
 
     //Google login
     const handleGoogleLogin = async (credentialResponse) => {
@@ -55,6 +57,8 @@ function SocialLogin() {
             // Save JWT tokens (for later authenticated requests)
             localStorage.setItem("access", res.data.access);
             localStorage.setItem("refresh", res.data.refresh);
+            // redirect to sidebar after successful login
+            navigate('/sidebar');
         } catch (err) {
             console.error("Login failed:", err.response?.data || err.message);
             alert("Login failed. Check console.");
@@ -106,6 +110,7 @@ function PasswordToggleIcon({ visible, onClick }) {
 }
 
 function Signup() {
+    const navigate = useNavigate();
     const [showLoginPassword, setShowLoginPassword] = useState(false);
     const [showSignupPassword, setShowSignupPassword] = useState(false);
     const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
@@ -291,6 +296,8 @@ function Signup() {
             setLoginWithOtp(false);
             setLoginMobile('');
             setLoginOtp('');
+            // navigate to sidebar after successful OTP login
+            navigate('/sidebar');
         } catch (err) {
             console.error(err);
             alert(err.response?.data?.error || "OTP verification failed");
@@ -325,6 +332,8 @@ function Signup() {
             alert("Logged in successfully!");
             setLoginMobileOrEmail("");
             setLoginPassword("");
+            // navigate to sidebar after successful login
+            navigate('/sidebar');
         } catch (error) {
             console.error("Login failed: ", error.response ? error.response.data : error.message);
             alert("Login failed!");
