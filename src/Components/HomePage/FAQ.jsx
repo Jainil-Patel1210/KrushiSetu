@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import Aos from 'aos';
+import 'aos/dist/aos.css';
+import './FAQ.css'
 
 function FAQ() {
   const [answerno, setAnswerno] = useState(null);
@@ -10,13 +13,17 @@ function FAQ() {
       setAnswerno(index);
     }
   };
+  
+  useEffect(()=>{
+    Aos.init({duration:2000});
+  },[]);
 
   return (
     <>
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-6 text-center mt-5 ">Frequently Asked Questions</h1>
-      <div className="space-y-4 max-w-3xl mx-auto font-semibold text-lg mb-6">
+      <h1 className="text-4xl font-extrabold text-gray-900 mb-6 text-center mt-5 " data-aos='fade-down' data-aos-delay='100'>Frequently Asked Questions</h1>
+      <div className="space-y-4 max-w-3xl mx-auto font-semibold text-lg mb-6" data-aos='fade-up' data-aos-delay='100'>
         <div
-          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer"
+          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer hover:bg-[#B2E0B2] custom-transition hover:transform hover:scale-102 hover:shadow-lg "
           onClick={() => toggleAnswer(0)}
         >
           <p className="text-gray-800">How can I apply for a subsidy?</p>
@@ -33,7 +40,7 @@ function FAQ() {
         )}
 
         <div
-          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer"
+          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer hover:bg-[#B2E0B2] custom-transition hover:transform hover:scale-102 hover:shadow-lg"
           onClick={() => toggleAnswer(1)}
         >
           <p className="text-gray-800">What documents are required for subsidy application?</p>
@@ -50,7 +57,7 @@ function FAQ() {
         )}
 
         <div
-          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer"
+          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer hover:bg-[#B2E0B2] custom-transition hover:transform hover:scale-102 hover:shadow-lg"
           onClick={() => toggleAnswer(2)}
         >
           <p className="text-gray-800">How long does it take to process a subsidy application?</p>
@@ -67,7 +74,7 @@ function FAQ() {
         )}
 
         <div
-          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer"
+          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer hover:bg-[#B2E0B2] custom-transition hover:transform hover:scale-102 hover:shadow-lg"
           onClick={() => toggleAnswer(3)}
         >
           <p className="text-gray-800">Are there any eligibility criteria for farmers to apply for subsidies?</p>
