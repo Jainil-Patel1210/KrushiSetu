@@ -1,4 +1,7 @@
-import React from "react";
+import React,{useEffect} from "react";
+import Aos from "aos";
+import "aos/dist/aos.css";
+import { use } from "react";
 
 const Subsidy = () => {
   const subsidyData = [
@@ -25,10 +28,14 @@ const Subsidy = () => {
     },
   ];
   return (
+    useEffect(()=>{
+    Aos.init({duration:2000});
+  },[]),
+  
     <>
       <div className="w-full bg-[#F3FFF1] pt-4">
         
-          <div className="text-center mb-12">
+          <div className="text-center mb-12" data-aos="fade-down" data-aos-delay="100">
             <h2 className="text-4xl font-bold text-gray-800 mb-3">
               Popular Subsidies{" "}
             </h2>
@@ -38,7 +45,7 @@ const Subsidy = () => {
             </p>
           </div>
 
-          <div className="flex justify-around" >
+          <div className="flex justify-around" data-aos="fade-up" data-aos-delay="100">
             {subsidyData.map((subsidy) => (
               <div
                 key={subsidy.id}
@@ -60,7 +67,7 @@ const Subsidy = () => {
             ))}
           </div>
 
-          <div className="text-center mt-8">
+          <div className="text-center mt-8" data-aos="fade-up" >
           <button className="bg-green-600 text-xl pl-5 pr-5 pt-2 pb-2 mb-4  text-white font-bold rounded-lg hover:bg-emerald-800 transition-colors duration-300">
             Explore More
           </button>
