@@ -87,7 +87,7 @@ function Personal_info() {
                     {/* Profile Image + Inputs */}
                     <div className="flex items-start gap-8 flex-wrap">
                         <div className="relative mr-6 ml-2">
-                            <div className="bg-gradient-to-br from-green-300 to-green-500 rounded-full w-28 h-28 flex items-center justify-center text-white font-semibold text-base shadow-md overflow-hidden">
+                            <div className="bg-gray-300 rounded-full w-28 h-28 flex items-center justify-center text-white font-semibold text-base shadow-md overflow-hidden">
                             </div>
                             <p className="text-xs text-gray-500 text-center mt-2">Click to upload photo</p>
                         </div>
@@ -95,20 +95,20 @@ function Personal_info() {
                         {/* Input Fields */}
                         <div className="flex flex-wrap gap-5 flex-1 ml-3">
                             <div className="flex flex-col w-80">
-                                <label className="text-sm font-medium text-gray-700">Full Name</label>
-                                <input type="text" placeholder="Enter Full Name" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1"/>
+                                <label className="text-md font-semibold">Full Name</label>
+                                <input type="text" placeholder="Enter Full Name" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none "/>
                             </div>
                             <div className="flex flex-col w-80">
-                                <label className="text-sm font-medium text-gray-700">Email Address</label>
-                                <input type="email" placeholder="Enter Email Address" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1"/>
+                                <label className="text-md font-semibold">Email Address</label>
+                                <input type="email" placeholder="Enter Email Address" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                             </div>
                             <div className="flex flex-col w-80 ">
-                                <label className="text-sm font-medium text-gray-700">Phone Number</label>
-                                <input type="tel" placeholder="Enter Phone Number" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1"/>
+                                <label className="text-md font-semibold">Phone Number</label>
+                                <input type="tel" placeholder="Enter Phone Number" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                             </div>
                             <div className="flex flex-col w-80">
-                                <label className="text-sm font-medium text-gray-700">Aadhaar Number</label>
-                                <input type="text" placeholder="Enter Aadhaar Number" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1"/>
+                                <label className="text-md font-semibold">Aadhaar Number</label>
+                                <input type="text" placeholder="Enter Aadhaar Number" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                             </div>
                         </div>
                     </div>
@@ -116,27 +116,27 @@ function Personal_info() {
                     {/* Location Fields */}
                     <div className="flex flex-wrap justify-between gap-6 mt-8">
                         <div className="flex flex-col flex-1 min-w-[180px]">
-                            <label className="font-bold text-gray-800">State</label>
-                            <input type="text" placeholder="Enter State" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1"/>
+                            <label className="text-md font-semibold">State</label>
+                            <input type="text" placeholder="Enter State" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                         <div className="flex flex-col flex-1 min-w-[180px]">
-                            <label className="font-bold text-gray-800">District</label>
-                            <input type="text" placeholder="Enter District" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1"/>
+                            <label className="text-md font-semibold">District</label>
+                            <input type="text" placeholder="Enter District" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                         <div className="flex flex-col flex-1 min-w-[180px]">
-                            <label className="font-bold text-gray-800">Taluka</label>
-                            <input type="text" placeholder="Enter Taluka" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 "/>
+                            <label className="text-md font-semibold">Taluka</label>
+                            <input type="text" placeholder="Enter Taluka" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                         <div className="flex flex-col flex-1 min-w-[180px]">
-                            <label className="font-bold text-gray-800">Village</label>
-                            <input type="text" placeholder="Enter Village" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1"/>
+                            <label className="text-md font-semibold">Village</label>
+                            <input type="text" placeholder="Enter Village" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                     </div>
 
                     {/* Address Field */}
                     <div className="flex flex-col mt-6">
-                        <label className="font-bold text-gray-800">Address</label>
-                        <input type="text" placeholder="Enter Address" className="w-full h-12 border border-gray-300 rounded-md px-4 text-sm mt-1"/>
+                        <label className="text-md font-semibold">Address</label>
+                        <input type="text" placeholder="Enter Address" className="w-full h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                     </div>
                 </div>
 
@@ -145,28 +145,28 @@ function Personal_info() {
                     <h2 className="text-green-700 font-semibold mb-6 text-xl">Land Information</h2>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700">Land Size</label>
-                            <input type="text" placeholder="Enter Land Size" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                            <label className="text-md font-semibold">Land Size</label>
+                            <input type="text" placeholder="Enter Land Size" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700 opacity-0">Unit</label>
-                            <input type="text" placeholder="Unit" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                            <label className="text-md font-semibold">Unit</label>
+                            <input type="text" placeholder="Unit" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700">Soil Type</label>
-                            <input type="text" placeholder="Enter Soil Type" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                            <label className="text-md font-semibold">Soil Type</label>
+                            <input type="text" placeholder="Enter Soil Type" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700">Ownership Type</label>
-                            <input type="text" placeholder="Enter Ownership Type" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                            <label className="text-md font-semibold">Ownership Type</label>
+                            <input type="text" placeholder="Enter Ownership Type" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                     </div>
                     <div className='mt-4'>
-                        <label className="text-sm font-medium text-gray-700">Land Ownership Proof</label>
+                        <label className="text-md font-semibold">Land Ownership Proof</label>
                     </div>
 
                     <div>
-                        <div className={`border-2 border-dashed p-6 mt-3 text-center cursor-pointer rounded-lg transition-all duration-200 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-gray-200 bg-gray-50'}`}
+                        <div className={`border-2 border-dashed p-6 mt-3 text-center cursor-pointer rounded-lg transition-all duration-200 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-green-600 bg-gray-50'}`}
                         onClick={()=> fileInputRef.current?.click()}
                         onDragOver={onDragOver}
                         onDrop={(e) => onDrop(e, 'landOwnershipProof')}>
@@ -208,24 +208,24 @@ function Personal_info() {
                     <h2 className="text-green-700 font-semibold mb-4 text-xl">Bank & Identification</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-sm font-medium text-gray-700">Bank Account Number</label>
-                            <input type="text" placeholder="Enter Account Number" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                            <label className="text-md font-semibold">Bank Account Number</label>
+                            <input type="text" placeholder="Enter Account Number" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none "/>
                         </div>
                         <div>
-                            <label className="text-sm font-medium text-gray-700">IFSC Code</label>
-                            <input type="text" placeholder="Enter IFSC Code" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                            <label className="text-md font-semibold">IFSC Code</label>
+                            <input type="text" placeholder="Enter IFSC Code" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                     </div>
                     <div className="flex flex-col mt-4">
-                        <label className="text-sm font-medium text-gray-700">Bank Name</label>
-                        <input type="text" placeholder="Enter Bank Name" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                        <label className="text-md font-semibold">Bank Name</label>
+                        <input type="text" placeholder="Enter Bank Name" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700">PAN Card</label>
-                            <div className={`border-2 border-dashed p-3 rounded-md mt-1 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-gray-200 bg-gray-50'}`} onClick={() => panInputRef.current?.click()}  onDragOver={onDragOver}
-                             onDrop={(e) => onDrop(e, 'pan')}>
+                            <label className="text-md font-semibold">PAN Card</label>
+                            <div className={`border-2 border-dashed p-3 rounded-md mt-1 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-green-600 bg-gray-50'}`} onClick={() => panInputRef.current?.click()}  onDragOver={onDragOver}
+                             onDrop={(e) => onDrop(e, 'panCard')}>
                                 <input type="file" ref={panInputRef} className="hidden" onChange={(e) => handleInputFileUpload(e, 'pan')} accept=".pdf,image/*" />
                                 <div className="flex items-center gap-3 text-gray-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -240,9 +240,9 @@ function Personal_info() {
                         </div>
 
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700">Aadhaar Card</label>
-                            <div className={`border-2 border-dashed p-3 rounded-md mt-1 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-gray-200 bg-gray-50'}`} onClick={() => aadhaarInputRef.current?.click()}  onDragOver={onDragOver}
-                        onDrop={(e) => onDrop(e, 'aadhaar')}>
+                            <label className="text-md font-semibold">Aadhaar Card</label>
+                            <div className={`border-2 border-dashed p-3 rounded-md mt-1 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-green-600 bg-gray-50'}`} onClick={() => aadhaarInputRef.current?.click()}  onDragOver={onDragOver}
+                                onDrop={(e) => onDrop(e, 'aadhaarCard')}>
                                 <input type="file" ref={aadhaarInputRef} className="hidden" onChange={(e) => handleInputFileUpload(e, 'aadhaar')} accept=".pdf,image/*" />
                                 <div className="flex items-center gap-3 text-gray-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

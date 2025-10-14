@@ -5,7 +5,7 @@ function Sidebar() {
     return (
         <>
             <div className='flex  flex-2'>
-                <div className='w-70 rounded-2xl sticky self-start'>
+                <div className='w-70 rounded-2xl sticky top-0 self-start'>
                     <img src="./Krushisetu_banner-removebg-preview.png" className='h-20 w-50 pt-3 ml-2' />
                     <hr role="separator" className="my-2 border-t border-gray-300" />
                     <div className='flex flex-col gap-8 mt-5'>
