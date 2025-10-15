@@ -9,6 +9,18 @@ function Personal_info() {
     const [panFileInfo,setPanFileInfo]=useState(null);
     const [aadhaarFileInfo,setAadhaarFileInfo]=useState(null);
 
+    const [aadhaarValue, setAadhaarValue] = useState('');
+    const [aadhaarError, setAadhaarError] = useState('');
+    const [mobileValue, setMobileValue] = useState('');
+    const [mobileError,setMobileError] = useState('');
+    const [emailValue,setEmailValue]=useState('');
+    const [emailError,setEmailError]=useState('');
+    const [ifscValue,setIfscValue]=useState('');
+    const [ifscError,setIfscError]=useState('');
+    const [fullNameValue, setFullNameValue] = useState('');
+    const [fullNameError,setFullNameError]=useState('');
+    const [accountNumberValue, setAccountNumberValue] = useState('');
+
     const MAX_FILE_SIZE=5*1024*1024; //5MB file limit
     const Accepted_inputFile_Type = ['application/pdf','image/jpeg','image/png','image/jpg'];
 
@@ -62,6 +74,10 @@ function Personal_info() {
         if (file) handleInputFileSelection(file,type);
     }
 
+    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const validateIFSC = (ifsc) => /^[A-Za-z]{4}0\d{6}$/.test(ifsc);
+    const validateName = (name) => /^[A-Za-z\s]+$/.test(name);
+    
     return (
         <>
             {/* Header Section */}
@@ -96,19 +112,94 @@ function Personal_info() {
                         <div className="flex flex-wrap gap-5 flex-1 lg:ml-3">
                             <div className="flex flex-col w-80">
                                 <label className="text-md font-semibold">Full Name</label>
-                                <input type="text" placeholder="Enter Full Name" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none "/>
+                                <input
+                                    type="text"
+                                    placeholder="Enter Full Name"
+                                    value={fullNameValue}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+                                        setFullNameValue(value);
+                                        if (validateName(value)) setFullNameError('');
+                                    }}
+                                    onBlur={() => {
+                                        if (fullNameValue && !validateName(fullNameValue)) {
+                                            setFullNameError('Invalid full name.');
+                                        } else {
+                                            setFullNameError('');
+                                        }
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300  focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
+                                {fullNameError && <div className="text-xs text-red-600 mt-1">{fullNameError}</div>}
                             </div>
                             <div className="flex flex-col w-80">
                                 <label className="text-md font-semibold">Email Address</label>
-                                <input type="email" placeholder="Enter Email Address" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                                <input
+                                    type="text"
+                                    placeholder="Enter Email Address"
+                                    value={emailValue}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^0-9a-zA-Z@._-]/g, '');
+                                        setEmailValue(value);
+                                        if (validateEmail(value)) setEmailError('');
+                                    }}
+                                    onBlur={() => {
+                                        if (emailValue && !validateEmail(emailValue)) {
+                                            setEmailError('Invalid email address.');
+                                        } else {
+                                            setEmailError('');
+                                        }
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300  focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
+                                {emailError && <div className="text-xs text-red-600 mt-1">{emailError}</div>}
+
                             </div>
                             <div className="flex flex-col w-80 ">
                                 <label className="text-md font-semibold">Phone Number</label>
-                                <input type="tel" placeholder="Enter Phone Number" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                                <input
+                                    type="tel"
+                                    inputMode="numeric"
+                                    placeholder="Enter Phone Number"
+                                    value={mobileValue}
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                        setMobileValue(digits);
+                                        if (digits.length === 10) setMobileError('');
+                                    }}
+                                    onBlur={() => {
+                                        if (mobileValue && mobileValue.length !== 10) {
+                                            setMobileError('Mobile number must be exactly 10 digits.');
+                                        } else {
+                                            setMobileError('');
+                                        }
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300  focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
+                                {mobileError && <div className="text-xs text-red-600 mt-1">{mobileError}</div>}
                             </div>
                             <div className="flex flex-col w-80">
                                 <label className="text-md font-semibold">Aadhaar Number</label>
-                                <input type="text" placeholder="Enter Aadhaar Number" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    placeholder="Enter Aadhaar Number"
+                                    value={aadhaarValue}
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/\D/g, '').slice(0, 12);
+                                        setAadhaarValue(digits);
+                                        if (digits.length === 12) setAadhaarError('');
+                                    }}
+                                    onBlur={() => {
+                                        if (aadhaarValue && aadhaarValue.length !== 12) {
+                                            setAadhaarError('Aadhaar number must be exactly 12 digits.');
+                                        } else {
+                                            setAadhaarError('');
+                                        }
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
+                                {aadhaarError && <div className="text-xs text-red-600 mt-1">{aadhaarError}</div>}
                             </div>
                         </div>
                     </div>
@@ -136,7 +227,7 @@ function Personal_info() {
                     {/* Address Field */}
                     <div className="flex flex-col mt-6">
                         <label className="text-md font-semibold">Address</label>
-                        <input type="text" placeholder="Enter Address" className="w-full h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                        <input type="text" placeholder="Enter Address" maxLength={150} className="w-full h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                     </div>
                 </div>
 
@@ -209,11 +300,39 @@ function Personal_info() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="text-md font-semibold">Bank Account Number</label>
-                            <input type="text" placeholder="Enter Account Number" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none "/>
+                            <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    placeholder="Enter Account Number"
+                                    value={accountNumberValue}
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/\D/g, '');
+                                        setAccountNumberValue(digits);
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
                         </div>
                         <div>
                             <label className="text-md font-semibold">IFSC Code</label>
-                            <input type="text" placeholder="Enter IFSC Code" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                            <input
+                                    type="text"
+                                    placeholder="Enter IFSC Code"
+                                    value={ifscValue}
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 11);
+                                        setIfscValue(digits);
+                                        if (validateIFSC(digits)) setIfscError('');
+                                    }}
+                                    onBlur={() => {
+                                        if (ifscValue && !validateIFSC(ifscValue)) {
+                                            setIfscError('IFSC code must be exactly 11 characters.');
+                                        } else {
+                                            setIfscError('');
+                                        }
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300  focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
+                                {ifscError && <div className="text-xs text-red-600 mt-1">{ifscError}</div>}
                         </div>
                     </div>
                     <div className="flex flex-col mt-4">
