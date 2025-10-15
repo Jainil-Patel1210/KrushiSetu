@@ -406,7 +406,7 @@ function Signup() {
                 setSignupPasswordError('Passwords do not match.');
                 return;
             }
-            const response = await axios.post("/api/signup/", {
+            const response = await api.post("/signup/", {
                 full_name: signupFullName,
                 email_address: signupEmail,
                 mobile_number: signupAadhaar,
