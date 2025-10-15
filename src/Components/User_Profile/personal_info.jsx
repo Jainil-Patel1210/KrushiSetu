@@ -93,7 +93,7 @@ function Personal_info() {
                         </div>
 
                         {/* Input Fields */}
-                        <div className="flex flex-wrap gap-5 flex-1 ml-3">
+                        <div className="flex flex-wrap gap-5 flex-1 lg:ml-3">
                             <div className="flex flex-col w-80">
                                 <label className="text-md font-semibold">Full Name</label>
                                 <input type="text" placeholder="Enter Full Name" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none "/>
@@ -114,7 +114,7 @@ function Personal_info() {
                     </div>
 
                     {/* Location Fields */}
-                    <div className="flex flex-wrap justify-between gap-6 mt-8">
+                    <div className="flex flex-wrap justify-between gap-6 mt-3 lg:mt-8">
                         <div className="flex flex-col flex-1 min-w-[180px]">
                             <label className="text-md font-semibold">State</label>
                             <input type="text" placeholder="Enter State" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
@@ -129,7 +129,7 @@ function Personal_info() {
                         </div>
                         <div className="flex flex-col flex-1 min-w-[180px]">
                             <label className="text-md font-semibold">Village</label>
-                            <input type="text" placeholder="Enter Village" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                            <input type="text" placeholder="Enter Village" className="h-12 border border-gray-300 rounded-md px-4  text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                     </div>
 
