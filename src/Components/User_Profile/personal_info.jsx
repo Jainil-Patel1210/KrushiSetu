@@ -1,13 +1,17 @@
+
 import React,{useRef,useState} from 'react';
+import Data from './assets/data.json';
 
 function Personal_info() {
     const fileInputRef = useRef(null);
     const panInputRef = useRef(null);
     const aadhaarInputRef = useRef(null);
+    const photoInputRef = useRef(null);
     const [inputFileInfo,setInputFileInfo]=useState(null);
     const [inputFileError,setInputFileError]=useState('');
     const [panFileInfo,setPanFileInfo]=useState(null);
     const [aadhaarFileInfo,setAadhaarFileInfo]=useState(null);
+    const [photoFileInfo,setPhotoFileInfo]=useState(null);
 
     const [aadhaarValue, setAadhaarValue] = useState('');
     const [aadhaarError, setAadhaarError] = useState('');
@@ -20,6 +24,20 @@ function Personal_info() {
     const [fullNameValue, setFullNameValue] = useState('');
     const [fullNameError,setFullNameError]=useState('');
     const [accountNumberValue, setAccountNumberValue] = useState('');
+
+    const [stateValue,setStateValue]=useState('');
+    const [districtValue,setDistrictValue]=useState('');
+    const [talukaValue,setTalukaValue]=useState('');
+    const [villageValue,setVillageValue]=useState('');
+    const [unitValue,setUnitValue]=useState('');
+    const [soilTypeValue,setSoilTypeValue]=useState('');
+
+    // normalize JSON shape: support either [{state, districts: []}, ...] or { states: [...] }
+    const stateDistrictData = Array.isArray(Data)
+        ? Data
+        : Data && Data.states
+            ? Data.states
+            : [];
 
     const MAX_FILE_SIZE=5*1024*1024; //5MB file limit
     const Accepted_inputFile_Type = ['application/pdf','image/jpeg','image/png','image/jpg'];
@@ -51,6 +69,12 @@ function Personal_info() {
             });
         }else if(type === 'aadhaarCard'){
             setAadhaarFileInfo({
+                name: file.name,
+                size: file.size,
+                preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
+            });
+        }else if(type === 'photo'){
+            setPhotoFileInfo({
                 name: file.name,
                 size: file.size,
                 preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
@@ -103,9 +127,19 @@ function Personal_info() {
                     {/* Profile Image + Inputs */}
                     <div className="flex items-start gap-8 flex-wrap">
                         <div className="relative mr-6 ml-2">
-                            <div className="bg-gray-300 rounded-full w-28 h-28 flex items-center justify-center text-white font-semibold text-base shadow-md overflow-hidden">
+                            <div className="bg-gray-300 rounded-full w-28 h-28 flex items-center justify-center text-white font-semibold text-base shadow-md overflow-hidden" 
+                                onClick={()=> photoInputRef.current?.click()}
+                                onDragOver={onDragOver}
+                                onDrop={(e) => onDrop(e, 'photo')}>
+                                <input type="file" ref={photoInputRef} className="hidden" onChange={(e) => handleInputFileUpload(e, 'photo')} />
+                                {photoFileInfo && photoFileInfo.preview ? (
+                                    <img src={photoFileInfo.preview} alt="profile" className='w-full h-full object-cover' />
+                                ) : (
+                                    <img src="./Camero.jpg" className='w-8 h-8' />
+                                )}
                             </div>
-                            <p className="text-xs text-gray-500 text-center mt-2">Click to upload photo</p>
+                        <p className="text-xs text-gray-500 text-center mt-2">Click to upload photo</p>
+                          
                         </div>
 
                         {/* Input Fields */}
@@ -208,19 +242,72 @@ function Personal_info() {
                     <div className="flex flex-wrap justify-between gap-6 mt-3 lg:mt-8">
                         <div className="flex flex-col flex-1 min-w-[180px]">
                             <label className="text-md font-semibold">State</label>
-                            <input type="text" placeholder="Enter State" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                            <select 
+                                value={stateValue} 
+                                onChange={(e) => {
+                                setStateValue(e.target.value);
+                                setDistrictValue(''); 
+                                setTalukaValue('');
+                                setVillageValue('');
+                            }} 
+                                className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white">
+                                <option value="">Select State</option>
+                                {Data && Data.map((stateData, index) => (
+                                <option key={index} value={stateData.state}>
+                                {stateData.state}
+                                </option>
+                                ))}
+                            </select>
                         </div>
+
                         <div className="flex flex-col flex-1 min-w-[180px]">
                             <label className="text-md font-semibold">District</label>
-                            <input type="text" placeholder="Enter District" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                            <select 
+                                value={districtValue} 
+                                onChange={(e) => {
+                                    setDistrictValue(e.target.value);
+                                    setTalukaValue('');
+                                    setVillageValue('');
+                            }} 
+                            className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
+                            >
+                            <option value="">Select District</option>
+                            {stateValue && Data && Array.isArray(Data) && Data.find(s => s.state === stateValue)?.districts.map((districtData, index) => (
+                                <option key={index} value={districtData.district}>{districtData.district}</option>
+                            ))}
+                            </select>
                         </div>
                         <div className="flex flex-col flex-1 min-w-[180px]">
                             <label className="text-md font-semibold">Taluka</label>
-                            <input type="text" placeholder="Enter Taluka" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                            <select 
+                                value={talukaValue} 
+                                onChange={(e) => {
+                                    setTalukaValue(e.target.value);
+                                    setVillageValue('');
+                            }} 
+                            className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
+                            >
+                            <option value="">Select Taluka</option>
+                            {districtValue && stateValue && Data && Array.isArray(Data) && Data.find(s => s.state === stateValue)?.districts.find(d => d.district === districtValue)?.subDistricts.map((subDistrictData, index) => (
+                                <option key={index} value={subDistrictData.subDistrict}>
+                                {subDistrictData.subDistrict}
+                                </option>
+                            ))}
+                            </select>
                         </div>
                         <div className="flex flex-col flex-1 min-w-[180px]">
                             <label className="text-md font-semibold">Village</label>
-                            <input type="text" placeholder="Enter Village" className="h-12 border border-gray-300 rounded-md px-4  text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                            <select 
+                                value={villageValue} 
+                                onChange={(e) => setVillageValue(e.target.value)} 
+                                className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
+                            >
+                            <option value="">Select Village</option>
+                            {talukaValue && districtValue && stateValue && Data && Array.isArray(Data) && Data.find(s => s.state === stateValue)
+                                ?.districts.find(d => d.district === districtValue)?.subDistricts.find(sd => sd.subDistrict === talukaValue)?.villages.map((village, index) => (
+                                <option key={index} value={village}>{village}</option>
+                            ))}
+                            </select>
                         </div>
                     </div>
 
@@ -234,22 +321,41 @@ function Personal_info() {
                 {/* Land information */}
                 <div className="bg-white rounded-2xl p-6 mt-6 shadow-lg ring-1 ring-gray-100">
                     <h2 className="text-green-700 font-semibold mb-6 text-xl">Land Information</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="flex flex-col">
                             <label className="text-md font-semibold">Land Size</label>
-                            <input type="text" placeholder="Enter Land Size" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                            <input type="text" placeholder="Enter Land Size" className="h-12 border border-gray-300 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                         <div className="flex flex-col">
                             <label className="text-md font-semibold">Unit</label>
-                            <input type="text" placeholder="Unit" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                            <select 
+                                value={unitValue} 
+                                onChange={(e) => setUnitValue(e.target.value)} 
+                                className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
+                            >
+                            <option value="">Select Unit</option>
+                            <option value="hectares">Hectares</option>
+                            <option value="acres">Acres</option>
+                            </select>
                         </div>
                         <div className="flex flex-col">
                             <label className="text-md font-semibold">Soil Type</label>
-                            <input type="text" placeholder="Enter Soil Type" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
-                        </div>
-                        <div className="flex flex-col">
-                            <label className="text-md font-semibold">Ownership Type</label>
-                            <input type="text" placeholder="Enter Ownership Type" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                            <select 
+                                value={soilTypeValue} 
+                                onChange={(e) => setSoilTypeValue(e.target.value)} 
+                                className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
+                            >
+                            <option value="">Select Soil Type</option>
+                            <option value="Alluvial">Alluvial</option>
+                            <option value="Black">Black</option>
+                            <option value="Red & Yellow">Red & Yellow</option>
+                            <option value="Laterite">Laterite</option>
+                            <option value="Arid">Arid</option>
+                            <option value="Forest & Mountain">Forest & Mountain</option>
+                            <option value="Saline & Alkaline">Saline & Alkaline</option>
+                            <option value="Peaty">Peaty</option>
+                            <option value="Marshy">Marshy</option>
+                            </select>
                         </div>
                     </div>
                     <div className='mt-4'>
@@ -330,14 +436,14 @@ function Personal_info() {
                                             setIfscError('');
                                         }
                                     }}
-                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300  focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none`}
                                 />
                                 {ifscError && <div className="text-xs text-red-600 mt-1">{ifscError}</div>}
                         </div>
                     </div>
                     <div className="flex flex-col mt-4">
                         <label className="text-md font-semibold">Bank Name</label>
-                        <input type="text" placeholder="Enter Bank Name" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
+                        <input type="text" placeholder="Enter Bank Name" className="w-full h-12 border border-gray-300 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
