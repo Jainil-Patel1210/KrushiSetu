@@ -1,13 +1,43 @@
+
 import React,{useRef,useState} from 'react';
+import Data from './assets/data.json';
 
 function Personal_info() {
     const fileInputRef = useRef(null);
     const panInputRef = useRef(null);
     const aadhaarInputRef = useRef(null);
+    const photoInputRef = useRef(null);
     const [inputFileInfo,setInputFileInfo]=useState(null);
     const [inputFileError,setInputFileError]=useState('');
     const [panFileInfo,setPanFileInfo]=useState(null);
     const [aadhaarFileInfo,setAadhaarFileInfo]=useState(null);
+    const [photoFileInfo,setPhotoFileInfo]=useState(null);
+
+    const [aadhaarValue, setAadhaarValue] = useState('');
+    const [aadhaarError, setAadhaarError] = useState('');
+    const [mobileValue, setMobileValue] = useState('');
+    const [mobileError,setMobileError] = useState('');
+    const [emailValue,setEmailValue]=useState('');
+    const [emailError,setEmailError]=useState('');
+    const [ifscValue,setIfscValue]=useState('');
+    const [ifscError,setIfscError]=useState('');
+    const [fullNameValue, setFullNameValue] = useState('');
+    const [fullNameError,setFullNameError]=useState('');
+    const [accountNumberValue, setAccountNumberValue] = useState('');
+
+    const [stateValue,setStateValue]=useState('');
+    const [districtValue,setDistrictValue]=useState('');
+    const [talukaValue,setTalukaValue]=useState('');
+    const [villageValue,setVillageValue]=useState('');
+    const [unitValue,setUnitValue]=useState('');
+    const [soilTypeValue,setSoilTypeValue]=useState('');
+
+    // normalize JSON shape: support either [{state, districts: []}, ...] or { states: [...] }
+    const stateDistrictData = Array.isArray(Data)
+        ? Data
+        : Data && Data.states
+            ? Data.states
+            : [];
 
     const MAX_FILE_SIZE=5*1024*1024; //5MB file limit
     const Accepted_inputFile_Type = ['application/pdf','image/jpeg','image/png','image/jpg'];
@@ -43,6 +73,12 @@ function Personal_info() {
                 size: file.size,
                 preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
             });
+        }else if(type === 'photo'){
+            setPhotoFileInfo({
+                name: file.name,
+                size: file.size,
+                preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
+            });
         }
     }
 
@@ -62,6 +98,10 @@ function Personal_info() {
         if (file) handleInputFileSelection(file,type);
     }
 
+    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const validateIFSC = (ifsc) => /^[A-Za-z]{4}0\d{6}$/.test(ifsc);
+    const validateName = (name) => /^[A-Za-z\s]+$/.test(name);
+    
     return (
         <>
             {/* Header Section */}
@@ -87,86 +127,243 @@ function Personal_info() {
                     {/* Profile Image + Inputs */}
                     <div className="flex items-start gap-8 flex-wrap">
                         <div className="relative mr-6 ml-2">
-                            <div className="bg-gradient-to-br from-green-300 to-green-500 rounded-full w-28 h-28 flex items-center justify-center text-white font-semibold text-base shadow-md overflow-hidden">
+                            <div className="bg-gray-300 rounded-full w-28 h-28 flex items-center justify-center text-white font-semibold text-base shadow-md overflow-hidden" 
+                                onClick={()=> photoInputRef.current?.click()}
+                                onDragOver={onDragOver}
+                                onDrop={(e) => onDrop(e, 'photo')}>
+                                <input type="file" ref={photoInputRef} className="hidden" onChange={(e) => handleInputFileUpload(e, 'photo')} />
+                                {photoFileInfo && photoFileInfo.preview ? (
+                                    <img src={photoFileInfo.preview} alt="profile" className='w-full h-full object-cover' />
+                                ) : (
+                                    <img src="./Camero.jpg" className='w-8 h-8' />
+                                )}
                             </div>
-                            <p className="text-xs text-gray-500 text-center mt-2">Click to upload photo</p>
+                        <p className="text-xs text-gray-500 text-center mt-2">Click to upload photo</p>
+                          
                         </div>
 
                         {/* Input Fields */}
-                        <div className="flex flex-wrap gap-5 flex-1 ml-3">
+                        <div className="flex flex-wrap gap-5 flex-1 lg:ml-3">
                             <div className="flex flex-col w-80">
-                                <label className="text-sm font-medium text-gray-700">Full Name</label>
-                                <input type="text" placeholder="Enter Full Name" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1"/>
+                                <label className="text-md font-semibold">Full Name</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter Full Name"
+                                    value={fullNameValue}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+                                        setFullNameValue(value);
+                                        if (validateName(value)) setFullNameError('');
+                                    }}
+                                    onBlur={() => {
+                                        if (fullNameValue && !validateName(fullNameValue)) {
+                                            setFullNameError('Invalid full name.');
+                                        } else {
+                                            setFullNameError('');
+                                        }
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300  focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
+                                {fullNameError && <div className="text-xs text-red-600 mt-1">{fullNameError}</div>}
                             </div>
                             <div className="flex flex-col w-80">
-                                <label className="text-sm font-medium text-gray-700">Email Address</label>
-                                <input type="email" placeholder="Enter Email Address" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1"/>
+                                <label className="text-md font-semibold">Email Address</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter Email Address"
+                                    value={emailValue}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^0-9a-zA-Z@._-]/g, '');
+                                        setEmailValue(value);
+                                        if (validateEmail(value)) setEmailError('');
+                                    }}
+                                    onBlur={() => {
+                                        if (emailValue && !validateEmail(emailValue)) {
+                                            setEmailError('Invalid email address.');
+                                        } else {
+                                            setEmailError('');
+                                        }
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300  focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
+                                {emailError && <div className="text-xs text-red-600 mt-1">{emailError}</div>}
+
                             </div>
                             <div className="flex flex-col w-80 ">
-                                <label className="text-sm font-medium text-gray-700">Phone Number</label>
-                                <input type="tel" placeholder="Enter Phone Number" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1"/>
+                                <label className="text-md font-semibold">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    inputMode="numeric"
+                                    placeholder="Enter Phone Number"
+                                    value={mobileValue}
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                        setMobileValue(digits);
+                                        if (digits.length === 10) setMobileError('');
+                                    }}
+                                    onBlur={() => {
+                                        if (mobileValue && mobileValue.length !== 10) {
+                                            setMobileError('Mobile number must be exactly 10 digits.');
+                                        } else {
+                                            setMobileError('');
+                                        }
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300  focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
+                                {mobileError && <div className="text-xs text-red-600 mt-1">{mobileError}</div>}
                             </div>
                             <div className="flex flex-col w-80">
-                                <label className="text-sm font-medium text-gray-700">Aadhaar Number</label>
-                                <input type="text" placeholder="Enter Aadhaar Number" className="w-full h-12 border border-gray-200 rounded-md px-4 text-sm mt-1"/>
+                                <label className="text-md font-semibold">Aadhaar Number</label>
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    placeholder="Enter Aadhaar Number"
+                                    value={aadhaarValue}
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/\D/g, '').slice(0, 12);
+                                        setAadhaarValue(digits);
+                                        if (digits.length === 12) setAadhaarError('');
+                                    }}
+                                    onBlur={() => {
+                                        if (aadhaarValue && aadhaarValue.length !== 12) {
+                                            setAadhaarError('Aadhaar number must be exactly 12 digits.');
+                                        } else {
+                                            setAadhaarError('');
+                                        }
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
+                                {aadhaarError && <div className="text-xs text-red-600 mt-1">{aadhaarError}</div>}
                             </div>
                         </div>
                     </div>
 
                     {/* Location Fields */}
-                    <div className="flex flex-wrap justify-between gap-6 mt-8">
+                    <div className="flex flex-wrap justify-between gap-6 mt-3 lg:mt-8">
                         <div className="flex flex-col flex-1 min-w-[180px]">
-                            <label className="font-bold text-gray-800">State</label>
-                            <input type="text" placeholder="Enter State" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1"/>
+                            <label className="text-md font-semibold">State</label>
+                            <select 
+                                value={stateValue} 
+                                onChange={(e) => {
+                                setStateValue(e.target.value);
+                                setDistrictValue(''); 
+                                setTalukaValue('');
+                                setVillageValue('');
+                            }} 
+                                className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white">
+                                <option value="">Select State</option>
+                                {Data && Data.map((stateData, index) => (
+                                <option key={index} value={stateData.state}>
+                                {stateData.state}
+                                </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex flex-col flex-1 min-w-[180px]">
+                            <label className="text-md font-semibold">District</label>
+                            <select 
+                                value={districtValue} 
+                                onChange={(e) => {
+                                    setDistrictValue(e.target.value);
+                                    setTalukaValue('');
+                                    setVillageValue('');
+                            }} 
+                            className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
+                            >
+                            <option value="">Select District</option>
+                            {stateValue && Data && Array.isArray(Data) && Data.find(s => s.state === stateValue)?.districts.map((districtData, index) => (
+                                <option key={index} value={districtData.district}>{districtData.district}</option>
+                            ))}
+                            </select>
                         </div>
                         <div className="flex flex-col flex-1 min-w-[180px]">
-                            <label className="font-bold text-gray-800">District</label>
-                            <input type="text" placeholder="Enter District" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1"/>
+                            <label className="text-md font-semibold">Taluka</label>
+                            <select 
+                                value={talukaValue} 
+                                onChange={(e) => {
+                                    setTalukaValue(e.target.value);
+                                    setVillageValue('');
+                            }} 
+                            className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
+                            >
+                            <option value="">Select Taluka</option>
+                            {districtValue && stateValue && Data && Array.isArray(Data) && Data.find(s => s.state === stateValue)?.districts.find(d => d.district === districtValue)?.subDistricts.map((subDistrictData, index) => (
+                                <option key={index} value={subDistrictData.subDistrict}>
+                                {subDistrictData.subDistrict}
+                                </option>
+                            ))}
+                            </select>
                         </div>
                         <div className="flex flex-col flex-1 min-w-[180px]">
-                            <label className="font-bold text-gray-800">Taluka</label>
-                            <input type="text" placeholder="Enter Taluka" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 "/>
-                        </div>
-                        <div className="flex flex-col flex-1 min-w-[180px]">
-                            <label className="font-bold text-gray-800">Village</label>
-                            <input type="text" placeholder="Enter Village" className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1"/>
+                            <label className="text-md font-semibold">Village</label>
+                            <select 
+                                value={villageValue} 
+                                onChange={(e) => setVillageValue(e.target.value)} 
+                                className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
+                            >
+                            <option value="">Select Village</option>
+                            {talukaValue && districtValue && stateValue && Data && Array.isArray(Data) && Data.find(s => s.state === stateValue)
+                                ?.districts.find(d => d.district === districtValue)?.subDistricts.find(sd => sd.subDistrict === talukaValue)?.villages.map((village, index) => (
+                                <option key={index} value={village}>{village}</option>
+                            ))}
+                            </select>
                         </div>
                     </div>
 
                     {/* Address Field */}
                     <div className="flex flex-col mt-6">
-                        <label className="font-bold text-gray-800">Address</label>
-                        <input type="text" placeholder="Enter Address" className="w-full h-12 border border-gray-300 rounded-md px-4 text-sm mt-1"/>
+                        <label className="text-md font-semibold">Address</label>
+                        <input type="text" placeholder="Enter Address" maxLength={150} className="w-full h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                     </div>
                 </div>
 
                 {/* Land information */}
                 <div className="bg-white rounded-2xl p-6 mt-6 shadow-lg ring-1 ring-gray-100">
                     <h2 className="text-green-700 font-semibold mb-6 text-xl">Land Information</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700">Land Size</label>
-                            <input type="text" placeholder="Enter Land Size" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                            <label className="text-md font-semibold">Land Size</label>
+                            <input type="text" placeholder="Enter Land Size" className="h-12 border border-gray-300 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                         </div>
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700 opacity-0">Unit</label>
-                            <input type="text" placeholder="Unit" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                            <label className="text-md font-semibold">Unit</label>
+                            <select 
+                                value={unitValue} 
+                                onChange={(e) => setUnitValue(e.target.value)} 
+                                className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
+                            >
+                            <option value="">Select Unit</option>
+                            <option value="hectares">Hectares</option>
+                            <option value="acres">Acres</option>
+                            </select>
                         </div>
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700">Soil Type</label>
-                            <input type="text" placeholder="Enter Soil Type" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
-                        </div>
-                        <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700">Ownership Type</label>
-                            <input type="text" placeholder="Enter Ownership Type" className="h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                            <label className="text-md font-semibold">Soil Type</label>
+                            <select 
+                                value={soilTypeValue} 
+                                onChange={(e) => setSoilTypeValue(e.target.value)} 
+                                className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
+                            >
+                            <option value="">Select Soil Type</option>
+                            <option value="Alluvial">Alluvial</option>
+                            <option value="Black">Black</option>
+                            <option value="Red & Yellow">Red & Yellow</option>
+                            <option value="Laterite">Laterite</option>
+                            <option value="Arid">Arid</option>
+                            <option value="Forest & Mountain">Forest & Mountain</option>
+                            <option value="Saline & Alkaline">Saline & Alkaline</option>
+                            <option value="Peaty">Peaty</option>
+                            <option value="Marshy">Marshy</option>
+                            </select>
                         </div>
                     </div>
                     <div className='mt-4'>
-                        <label className="text-sm font-medium text-gray-700">Land Ownership Proof</label>
+                        <label className="text-md font-semibold">Land Ownership Proof</label>
                     </div>
 
                     <div>
-                        <div className={`border-2 border-dashed p-6 mt-3 text-center cursor-pointer rounded-lg transition-all duration-200 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-gray-200 bg-gray-50'}`}
+                        <div className={`border-2 border-dashed p-6 mt-3 text-center cursor-pointer rounded-lg transition-all duration-200 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-green-600 bg-gray-50'}`}
                         onClick={()=> fileInputRef.current?.click()}
                         onDragOver={onDragOver}
                         onDrop={(e) => onDrop(e, 'landOwnershipProof')}>
@@ -208,24 +405,52 @@ function Personal_info() {
                     <h2 className="text-green-700 font-semibold mb-4 text-xl">Bank & Identification</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-sm font-medium text-gray-700">Bank Account Number</label>
-                            <input type="text" placeholder="Enter Account Number" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                            <label className="text-md font-semibold">Bank Account Number</label>
+                            <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    placeholder="Enter Account Number"
+                                    value={accountNumberValue}
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/\D/g, '');
+                                        setAccountNumberValue(digits);
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
                         </div>
                         <div>
-                            <label className="text-sm font-medium text-gray-700">IFSC Code</label>
-                            <input type="text" placeholder="Enter IFSC Code" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                            <label className="text-md font-semibold">IFSC Code</label>
+                            <input
+                                    type="text"
+                                    placeholder="Enter IFSC Code"
+                                    value={ifscValue}
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 11);
+                                        setIfscValue(digits);
+                                        if (validateIFSC(digits)) setIfscError('');
+                                    }}
+                                    onBlur={() => {
+                                        if (ifscValue && !validateIFSC(ifscValue)) {
+                                            setIfscError('IFSC code must be exactly 11 characters.');
+                                        } else {
+                                            setIfscError('');
+                                        }
+                                    }}
+                                    className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none`}
+                                />
+                                {ifscError && <div className="text-xs text-red-600 mt-1">{ifscError}</div>}
                         </div>
                     </div>
                     <div className="flex flex-col mt-4">
-                        <label className="text-sm font-medium text-gray-700">Bank Name</label>
-                        <input type="text" placeholder="Enter Bank Name" className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"/>
+                        <label className="text-md font-semibold">Bank Name</label>
+                        <input type="text" placeholder="Enter Bank Name" className="w-full h-12 border border-gray-300 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"/>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700">PAN Card</label>
-                            <div className={`border-2 border-dashed p-3 rounded-md mt-1 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-gray-200 bg-gray-50'}`} onClick={() => panInputRef.current?.click()}  onDragOver={onDragOver}
-                             onDrop={(e) => onDrop(e, 'pan')}>
+                            <label className="text-md font-semibold">PAN Card</label>
+                            <div className={`border-2 border-dashed p-3 rounded-md mt-1 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-green-600 bg-gray-50'}`} onClick={() => panInputRef.current?.click()}  onDragOver={onDragOver}
+                             onDrop={(e) => onDrop(e, 'panCard')}>
                                 <input type="file" ref={panInputRef} className="hidden" onChange={(e) => handleInputFileUpload(e, 'pan')} accept=".pdf,image/*" />
                                 <div className="flex items-center gap-3 text-gray-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -240,9 +465,9 @@ function Personal_info() {
                         </div>
 
                         <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700">Aadhaar Card</label>
-                            <div className={`border-2 border-dashed p-3 rounded-md mt-1 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-gray-200 bg-gray-50'}`} onClick={() => aadhaarInputRef.current?.click()}  onDragOver={onDragOver}
-                        onDrop={(e) => onDrop(e, 'aadhaar')}>
+                            <label className="text-md font-semibold">Aadhaar Card</label>
+                            <div className={`border-2 border-dashed p-3 rounded-md mt-1 ${inputFileError ? 'border-red-600 bg-red-50' : 'border-green-600 bg-gray-50'}`} onClick={() => aadhaarInputRef.current?.click()}  onDragOver={onDragOver}
+                                onDrop={(e) => onDrop(e, 'aadhaarCard')}>
                                 <input type="file" ref={aadhaarInputRef} className="hidden" onChange={(e) => handleInputFileUpload(e, 'aadhaar')} accept=".pdf,image/*" />
                                 <div className="flex items-center gap-3 text-gray-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
