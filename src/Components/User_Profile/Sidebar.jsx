@@ -1,9 +1,9 @@
 import React,{useState} from 'react'
 import Personal_info from './personal_info.jsx'
-import Subsidy from '../HomePage/Subsidy.jsx';
+import Subsidy_List from './Subsidy_List.jsx';
 
 function Sidebar() {
-    const [page,setPage]=useState('Dashboard');
+    const [page,setPage]=useState('Profile');
 
     function handlePageChange(newPage){
         setPage(newPage);
@@ -11,8 +11,8 @@ function Sidebar() {
 
     return (
         <>
-            <div className='flex flex-2'>
-                <div className='max-w-70 rounded-2xl sticky top-0 self-start'>
+            <div className='flex min-h-screen'>
+                <div className='max-w-90 w-73 rounded-2xl sticky top-0 self-start'>
                     <img src="./Krushisetu_banner-removebg-preview.png" className='lg:h-20 lg:w-50 md:h-15 md:w-40 h-10 w-30 pt-3 ml-2' />
                     <hr role="separator" className="my-2 border-t border-gray-300" />
                     <div className='flex flex-col gap-6 mt-5'>
@@ -25,7 +25,7 @@ function Sidebar() {
                     </div>
                 </div>
                 <div className="w-px bg-gray-300" />
-                <div>
+                <div className='flex-1'>
                     {page==='Profile' && <Personal_info/>}
                     {page==='Documents' && <Documents/>}
                     {page==='Subsidies' && <Subsidy_List/>}

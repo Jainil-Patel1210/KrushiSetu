@@ -1,6 +1,7 @@
 
 import React,{useRef,useState} from 'react';
 import Data from './assets/data.json';
+import Header from './Header';
 
 function Personal_info() {
     const fileInputRef = useRef(null);
@@ -104,17 +105,7 @@ function Personal_info() {
     
     return (
         <>
-            {/* Header Section */}
-            <div className="flex justify-between mt-4 px-8">
-                <div></div>
-                <div className="flex gap-2 items-center">
-                    <img src="./Notification.svg" alt="Notification" />
-                    <img src="./Account.svg" alt="Account" className="w-7 h-7" />
-                </div>
-            </div>
-
-            <hr role="separator" className="my-4 border-t border-gray-300" />
-
+            <Header />
             {/* Main Section */}
             <div className="w-full max-w-5xl mx-auto px-8">
                 <h1 className="font-extrabold text-3xl text-gray-900">Profile & Personal Details</h1>
