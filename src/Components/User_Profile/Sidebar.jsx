@@ -3,7 +3,7 @@ import Personal_info from './personal_info.jsx'
 import Subsidy_List from './Subsidy_List.jsx';
 
 function Sidebar() {
-    const [page,setPage]=useState('Profile');
+    const [page,setPage]=useState('Dashboard');
 
     function handlePageChange(newPage){
         setPage(newPage);
