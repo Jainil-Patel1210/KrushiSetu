@@ -1,6 +1,7 @@
 
 import React,{useRef,useState} from 'react';
 import Data from './assets/data.json';
+import { Bell } from "lucide-react";
 
 function Personal_info() {
     const fileInputRef = useRef(null);
@@ -105,11 +106,15 @@ function Personal_info() {
     return (
         <>
             {/* Header Section */}
-            <div className="flex justify-between mt-4 px-8">
-                <div></div>
-                <div className="flex gap-2 items-center">
-                    <img src="./Notification.svg" alt="Notification" />
-                    <img src="./Account.svg" alt="Account" className="w-7 h-7" />
+           {/* Header */}
+            <div className="sticky top-0 bg-white w-full flex justify-end items-center py-1 px-4 sm:px-6 md:px-8">
+                <div className="flex items-center gap-4 sm:gap-6 mt-2">
+                    <Bell className="w-6 h-6 sm:w-7 sm:h-7 text-black cursor-pointer hover:text-green-700" />
+                    <img
+                        src="./Account.svg"
+                        alt="Account"
+                        className="w-7 h-7 sm:w-8 sm:h-8 cursor-pointer rounded-full"
+                    />
                 </div>
             </div>
 
