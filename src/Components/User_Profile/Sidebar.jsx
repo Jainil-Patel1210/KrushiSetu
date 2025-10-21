@@ -1,7 +1,8 @@
 import React,{useState} from 'react'
+import Dashboard from './Dashboard.jsx';
 import Personal_info from './personal_info.jsx'
 import Subsidy_List from './Subsidy_List.jsx';
-
+import Documents from './Documents.jsx';
 function Sidebar() {
     const [page,setPage]=useState('Dashboard');
 
@@ -26,6 +27,7 @@ function Sidebar() {
                 </div>
                 <div className="w-px bg-gray-300" />
                 <div className='flex-1'>
+                    {page==='Dashboard' && <Dashboard/>}
                     {page==='Profile' && <Personal_info/>}
                     {page==='Documents' && <Documents/>}
                     {page==='Subsidies' && <Subsidy_List/>}
