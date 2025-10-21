@@ -5,6 +5,7 @@ import api from './api';
 import { GoogleOAuthProvider, GoogleLogin } from
     "@react-oauth/google";
 import { useNavigate } from 'react-router-dom';
+import { Toaster, toast } from 'react-hot-toast';
 
 // Role Dropdown Component
 function RoleDropdown({ role, isOpen, onClick, onSelect }) {
@@ -51,17 +52,21 @@ function SocialLogin() {
                 token,
             });
 
-            console.log("Backend response:", res.data);
-            alert("Login successful! Check console for details.");
+            toast.success("Logged in successfully!");
+
 
             // Save JWT tokens (for later authenticated requests)
             localStorage.setItem("access", res.data.access);
             localStorage.setItem("refresh", res.data.refresh);
+
             // redirect to sidebar after successful login
-            navigate('/sidebar');
+            setTimeout(() => {
+                navigate('/sidebar');
+            }, 3000);
+
         } catch (err) {
             console.error("Login failed:", err.response?.data || err.message);
-            alert("Login failed. Check console.");
+            toast.error("Login failed!");
         }
     };
 
@@ -158,6 +163,10 @@ function Signup() {
     const [signupEmail, setSignupEmail] = useState('');
     const [signupEmailError, setSignupEmailError] = useState('');
     const [signupPasswordError, setSignupPasswordError] = useState('');
+    const [remember, setRemember] = useState(false);
+    const handleRememberChange = (e) => {
+        setRemember(e.target.checked);
+    };
 
     // Login with OTP states
     const [loginWithOtp, setLoginWithOtp] = useState(false);
@@ -260,9 +269,13 @@ function Signup() {
     };
 
     const handleLoginMobileSubmit = async (e) => {
+        console.log("1");
         e.preventDefault();
+        const btn = document.getElementById("btn1");
+        btn.disabled = true;
         if (loginMobile.length !== 10) {
-            alert('Please enter a valid 10-digit mobile number.');
+            toast('Please enter a valid 10-digit mobile number.');
+            btn.disabled = false;
             return;
         }
         try {
@@ -270,15 +283,18 @@ function Signup() {
             const response = await api.post("/login/", {
                 mobile_number: loginMobile,
                 role: role,
+                remember: remember,
             });
             console.log(response.data.user_id)
             setUserId(response.data.user_id); // save user_id for OTP step
-            alert("OTP sent to your mobile!");
+            toast("OTP sent to your mobile!");
             setShowLoginOtpForm(true);
             setLoginMobile('');
+            btn.disabled = false;
         } catch (error) {
             console.error("Login failed: ", error.response ? error.response.data : error.message);
-            alert("Login failed!");
+            toast.error("Login failed!");
+            btn.disabled = false;
         }
 
     };
@@ -289,27 +305,32 @@ function Signup() {
             const response = await api.post("/verify-otp/", {
                 user_id: userId,
                 otp: loginOtp,
+                remember: remember,
             });
-            alert(response.data.message);
-            alert("Logged in successfully!");
+            toast.success("Logged in successfully!");
             setShowLoginOtpForm(false);
             setLoginWithOtp(false);
             setLoginMobile('');
             setLoginOtp('');
             // navigate to sidebar after successful OTP login
-            navigate('/sidebar');
+            setTimeout(() => {
+                navigate('/sidebar');
+            }, 1200);
         } catch (err) {
             console.error(err);
-            alert(err.response?.data?.error || "OTP verification failed");
+            toast.error(err.response?.data?.error || "OTP verification failed");
         }
     };
 
     // Login form submit
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
+        const btn = getElementById("btn6");
+        btn.disabled = true;
         try {
             if (!role) {
-                alert("Please select a role.");
+                toast("Please select a role.");
+                btn.disabled = false;
                 return;
             }
 
@@ -318,25 +339,32 @@ function Signup() {
             } else if (validateEmail(loginMobileOrEmail)) {
                 // valid email
             } else {
+                btn.disabled = false;
                 setLoginEmailError("Enter a valid 10-digit mobile number or email.");
                 return;
             }
+            console.log(role);
 
             const response = await api.post("/token/", {
                 email_address: loginMobileOrEmail,
                 password: loginPassword,
                 role: role,
+                remember: remember,
             });
 
             setLoginEmailError("");
-            alert("Logged in successfully!");
+            toast.success("Logged in successfully!");
             setLoginMobileOrEmail("");
             setLoginPassword("");
             // navigate to sidebar after successful login
-            navigate('/sidebar');
+            setTimeout(() => {
+                navigate('/sidebar');
+            }, 3000);
+            btn.disabled = false;
         } catch (error) {
             console.error("Login failed: ", error.response ? error.response.data : error.message);
-            alert("Login failed!");
+            toast.error("Login failed!");
+            btn.disabled = false;
         }
     };
 
@@ -401,10 +429,13 @@ function Signup() {
     // Signup email form submit
     const handleSignupEmailSubmit = async (e) => {
         e.preventDefault();
+        const btn = document.getElementById("btn5");
+        btn.disabled = true;
         try {
             if (signupPassword !== signupConfirmPassword) {
                 setSignupPasswordError('Passwords do not match.');
                 return;
+                btn.disabled = false;
             }
             const response = await api.post("/signup/", {
                 full_name: signupFullName,
@@ -419,16 +450,21 @@ function Signup() {
             // Only proceed if response is successful
             if (response.status === 201 || response.status === 200) {
                 setSignupPasswordError('');
-                alert("Account created successfully!");
-                handlePageSwitch('login');
+                toast.success("Account created successfully!");
+                setTimeout(() => {
+                    handlePageSwitch('login');
+                }, 1200);
+                btn.disabled = false;
             } else {
                 // If API returns error but no exception is thrown
-                alert("Register failed! " + (response.data?.detail || 'Unknown error.'));
+                toast.error("Register failed! " + (response.data?.detail || 'Unknown error.'));
+                btn.disabled = false;
             }
         } catch (error) {
             // Only show error if an actual error occurs
             console.error("Register failed: ", error.response ? error.response.data : error.message);
-            alert("Register failed! " + (error.response?.data?.detail || error.message));
+            toast.error("Register failed! " + (error.response?.data?.detail || error.message));
+            btn.disabled = false;
         }
     };
 
@@ -448,6 +484,8 @@ function Signup() {
     // Step 1: Send OTP to email
     const handleForgotSendOtp = async (e) => {
         e.preventDefault();
+        const btn = document.getElementById("btn3");
+        btn.disabled = true;
         if (!forgotEmail || !validateEmail(forgotEmail)) {
             setForgotPasswordError('Enter a valid email address.');
             return;
@@ -459,13 +497,15 @@ function Signup() {
             });
             setOtpSent(true);
             setForgotStep(2);
-            alert('OTP sent to your email!');
+            toast('OTP sent to your email!');
+            btn.disabled = false;
         }
         catch (err) {
             console.error(err);
             setForgotPasswordError(
                 err.response?.data?.error || 'Failed to send OTP. Please try again.'
             );
+            btn.disabled = false;
         }
     };
 
@@ -477,7 +517,8 @@ function Signup() {
             return;
         }
         setForgotPasswordError('');
-
+        const btn = document.getElementById("btn2");
+        btn.disabled = true;
         try {
             const response = await api.post("/forgot-password/verify-otp/", {
                 email: forgotEmail,
@@ -485,25 +526,32 @@ function Signup() {
             });
             setOtpVerified(true);
             setForgotStep(3);
-            alert('OTP verified. You can now reset your password.');
+            toast.success('OTP verified. You can now reset your password.');
+            setTimeout('', 1200);
+            btn.disabled = false;
         } catch (err) {
             console.error(err);
             setForgotPasswordError(
                 err.response?.data?.error || 'Invalid OTP. Please try again.'
             );
+            btn.disabled = false;
         }
     };
 
     // Step 3: Set new password
     const handleForgotPasswordSubmit = async (e) => {
         e.preventDefault();
+        const btn = document.getElementById("btn4");
+        btn.disabled = true;
         if (!newPassword || !confirmNewPassword) {
             setForgotPasswordError('Please fill both fields.');
             return;
+            btn.disabled = false;
         }
         if (newPassword !== confirmNewPassword) {
             setForgotPasswordError('Passwords do not match.');
             return;
+            btn.disabled = false;
         }
         setForgotPasswordError('');
         try {
@@ -512,330 +560,364 @@ function Signup() {
                 new_password: newPassword,
             });
 
-            alert('Password reset successfully!');
-            handlePageSwitch('login');
+            toast.success('Password reset successfully!');
+            setTimeout(() => {
+                handlePageSwitch('login');
+            }, 1200);
+            btn.disabled = false;
+
         } catch (err) {
             console.error(err);
             setForgotPasswordError(
                 err.response?.data?.error || 'Password reset failed.'
             );
+            btn.disabled = false;
         }
     };
 
     return (
-        <div className="signup-bg bg-green-300 h-screen flex items-center justify-center">
-            <div className="bg-gray-50 w-full max-w-sm p-8 pb-4 rounded-lg">
-                <div className="bg-gray-500 p-1 rounded-md mb-4 flex justify-between items-center">
-                    <button
-                        className={`text-black font-bold w-[50%] ${((page === 'login') || forgotPassword) ? 'bg-[#07843A] text-white rounded-md' : ''}`}
-                        onClick={() => handlePageSwitch('login')}
-                    >Login</button>
-                    <button
-                        className={`text-black font-bold w-[50%] ${page === 'signup' ? 'bg-[#07843A] text-white rounded-md' : ''}`}
-                        onClick={() => handlePageSwitch('signup')}
-                    >Sign Up</button>
-                </div>
-
-                {/* Forgot Password Page - Multi-step */}
-                {forgotPassword && (
-                    <div>
-                        <p className="text-black text-center text-xl font-bold mb-4">Forgot Password</p>
-                        {forgotStep === 1 && (
-                            <form onSubmit={handleForgotSendOtp}>
-                                <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="email"
-                                    placeholder="Enter your email"
-                                    value={forgotEmail}
-                                    onChange={e => setForgotEmail(e.target.value)}
-                                    required
-                                />
-                                {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
-                                        type="submit"
-                                    >
-                                        Send OTP
-                                    </button>
-                                </div>
-                                <div className="text-center">
-                                    <span
-                                        className="text-green-700 cursor-pointer hover:underline"
-                                        onClick={() => setForgotPassword(false)}
-                                    >
-                                        Back to Login
-                                    </span>
-                                </div>
-                            </form>
-                        )}
-                        {forgotStep === 2 && (
-                            <form onSubmit={handleForgotVerifyOtp}>
-                                <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="text"
-                                    placeholder="Enter OTP sent to your email"
-                                    value={forgotOtp}
-                                    onChange={e => setForgotOtp(e.target.value)}
-                                    required
-                                />
-                                {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
-                                        type="submit"
-                                    >
-                                        Verify OTP
-                                    </button>
-                                </div>
-                                <div className="text-center">
-                                    <span
-                                        className="text-green-700 cursor-pointer hover:underline"
-                                        onClick={() => { setForgotStep(1); setForgotOtp(''); setForgotPasswordError(''); }}
-                                    >
-                                        Back to Email
-                                    </span>
-                                </div>
-                            </form>
-                        )}
-                        {forgotStep === 3 && (
-                            <form onSubmit={handleForgotPasswordSubmit}>
-                                <div className="relative">
-                                    <input
-                                        className="w-full p-2 mb-3 rounded-md bg-white border"
-                                        type={showForgotNewPassword ? "text" : "password"}
-                                        placeholder="New Password"
-                                        value={newPassword}
-                                        onChange={handleForgotNewPasswordChange}
-                                        required
-                                    />
-                                    <PasswordToggleIcon visible={showForgotNewPassword} onClick={() => setShowForgotNewPassword((prev) => !prev)} />
-                                </div>
-                                <div className="relative">
-                                    <input
-                                        className="w-full p-2 mb-3 rounded-md bg-white border"
-                                        type={showForgotConfirmNewPassword ? "text" : "password"}
-                                        placeholder="Confirm New Password"
-                                        value={confirmNewPassword}
-                                        onChange={handleForgotConfirmNewPasswordChange}
-                                        required
-                                    />
-                                    <PasswordToggleIcon visible={showForgotConfirmNewPassword} onClick={() => setShowForgotConfirmNewPassword((prev) => !prev)} />
-                                </div>
-                                {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
-                                        type="submit"
-                                    >
-                                        Reset Password
-                                    </button>
-                                </div>
-                                <div className="text-center">
-                                    <span
-                                        className="text-green-700 cursor-pointer hover:underline"
-                                        onClick={() => { setForgotStep(1); setForgotEmail(''); setForgotOtp(''); setNewPassword(''); setConfirmNewPassword(''); setForgotPasswordError(''); }}
-                                    >
-                                        Back to Email
-                                    </span>
-                                </div>
-                            </form>
-                        )}
+        <>
+            <Toaster position="top-center" reverseOrder={false} />
+            <div className="signup-bg bg-green-300 h-screen flex items-center justify-center">
+                <div className="bg-gray-50 w-full max-w-sm p-8 pb-4 rounded-lg">
+                    <div className="bg-gray-500 p-1 rounded-md mb-4 flex justify-between items-center">
+                        <button
+                            className={`text-black font-bold w-[50%] ${((page === 'login') || forgotPassword) ? 'bg-[#07843A] text-white rounded-md' : ''}`}
+                            onClick={() => handlePageSwitch('login')}
+                        >Login</button>
+                        <button
+                            className={`text-black font-bold w-[50%] ${page === 'signup' ? 'bg-[#07843A] text-white rounded-md' : ''}`}
+                            onClick={() => handlePageSwitch('signup')}
+                        >Sign Up</button>
                     </div>
-                )}
 
-                {/* Login Page */}
-                {page === 'login' && !forgotPassword && (
-                    <div>
-                        <p className="text-black text-center text-xl font-bold mb-2">Welcome back!</p>
-                        {!loginWithOtp ? (
-                            <form onSubmit={handleLoginSubmit}>
-                                <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="text"
-                                    placeholder="Email"
-                                    value={loginMobileOrEmail}
-                                    onChange={handleLoginEmailChange}
-                                    required
-                                />
-                                {loginEmailError && <p className="text-red-600 text-xs mb-1">{loginEmailError}</p>}
-                                <div className="relative">
+                    {/* Forgot Password Page - Multi-step */}
+                    {forgotPassword && (
+                        <div>
+                            <p className="text-black text-center text-xl font-bold mb-4">Forgot Password</p>
+                            {forgotStep === 1 && (
+                                <form onSubmit={handleForgotSendOtp}>
                                     <input
                                         className="w-full p-2 mb-3 rounded-md bg-white border"
-                                        type={showLoginPassword ? "text" : "password"}
-                                        placeholder="Password"
-                                        value={loginPassword}
-                                        onChange={handleLoginPasswordChange}
+                                        type="email"
+                                        placeholder="Enter your email"
+                                        value={forgotEmail}
+                                        onChange={e => setForgotEmail(e.target.value)}
                                         required
                                     />
-                                    <PasswordToggleIcon visible={showLoginPassword} onClick={() => setShowLoginPassword((prev) => !prev)} />
-                                </div>
-                                <RoleDropdown
-                                    role={role}
-                                    isOpen={isOpen}
-                                    onClick={handleClick}
-                                    onSelect={handleRoleSelect}
-                                />
-                                <div className='flex justify-between text-green-700 font-semibold mb-2'>
-                                    <span
-                                        className="cursor-pointer hover:underline"
-                                        onClick={handleForgotPasswordClick}
-                                    >
-                                        Forgot Password?
-                                    </span>
-                                    <span className="cursor-pointer hover:underline" onClick={handleLoginOtpSwitch}>
-                                        {loginWithOtp ? 'Login with Email' : 'Login with Mobile'}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-center pt-2">
+                                    {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
+                                    <div className="flex items-center justify-center pt-2">
+                                        <button
+                                            className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
+                                            type="submit"
+                                            id="btn3"
+                                        >
+                                            Send OTP
+                                        </button>
+                                    </div>
+                                    <div className="text-center">
+                                        <span
+                                            className="text-green-700 cursor-pointer hover:underline"
+                                            onClick={() => setForgotPassword(false)}
+                                        >
+                                            Back to Login
+                                        </span>
+                                    </div>
+                                </form>
+                            )}
+                            {forgotStep === 2 && (
+                                <form onSubmit={handleForgotVerifyOtp}>
                                     <input
-                                        className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${role ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
-                                        type="submit"
-                                        value="Log In"
-                                        disabled={!role}
+                                        className="w-full p-2 mb-3 rounded-md bg-white border"
+                                        type="text"
+                                        placeholder="Enter OTP sent to your email"
+                                        value={forgotOtp}
+                                        onChange={e => setForgotOtp(e.target.value)}
+                                        required
                                     />
-                                </div>
-                                <SocialLogin />
-                            </form>
-                        ) : (
-                            <form onSubmit={showLoginOtpForm ? handleLoginOtpSubmit : handleLoginMobileSubmit}>
-                                {!showLoginOtpForm ? (
-                                    <>
+                                    {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
+                                    <div className="flex items-center justify-center pt-2">
+                                        <button
+                                            className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
+                                            type="submit"
+                                            id="btn2"
+                                        >
+                                            Verify OTP
+                                        </button>
+                                    </div>
+                                    <div className="text-center">
+                                        <span
+                                            className="text-green-700 cursor-pointer hover:underline"
+                                            onClick={() => { setForgotStep(1); setForgotOtp(''); setForgotPasswordError(''); }}
+                                        >
+                                            Back to Email
+                                        </span>
+                                    </div>
+                                </form>
+                            )}
+                            {forgotStep === 3 && (
+                                <form onSubmit={handleForgotPasswordSubmit}>
+                                    <div className="relative">
                                         <input
                                             className="w-full p-2 mb-3 rounded-md bg-white border"
-                                            type="tel"
+                                            type={showForgotNewPassword ? "text" : "password"}
+                                            placeholder="New Password"
+                                            value={newPassword}
+                                            onChange={handleForgotNewPasswordChange}
+                                            required
+                                        />
+                                        <PasswordToggleIcon visible={showForgotNewPassword} onClick={() => setShowForgotNewPassword((prev) => !prev)} />
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            className="w-full p-2 mb-3 rounded-md bg-white border"
+                                            type={showForgotConfirmNewPassword ? "text" : "password"}
+                                            placeholder="Confirm New Password"
+                                            value={confirmNewPassword}
+                                            onChange={handleForgotConfirmNewPasswordChange}
+                                            required
+                                        />
+                                        <PasswordToggleIcon visible={showForgotConfirmNewPassword} onClick={() => setShowForgotConfirmNewPassword((prev) => !prev)} />
+                                    </div>
+                                    {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
+                                    <div className="flex items-center justify-center pt-2">
+                                        <button
+                                            className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
+                                            type="submit"
+                                            id="btn4"
+                                        >
+                                            Reset Password
+                                        </button>
+                                    </div>
+                                    <div className="text-center">
+                                        <span
+                                            className="text-green-700 cursor-pointer hover:underline"
+                                            onClick={() => { setForgotStep(1); setForgotEmail(''); setForgotOtp(''); setNewPassword(''); setConfirmNewPassword(''); setForgotPasswordError(''); }}
+                                        >
+                                            Back to Email
+                                        </span>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Login Page */}
+                    {page === 'login' && !forgotPassword && (
+                        <div>
+                            <p className="text-black text-center text-xl font-bold mb-2">Welcome back!</p>
+                            {!loginWithOtp ? (
+                                <form onSubmit={handleLoginSubmit}>
+                                    <input
+                                        className="w-full p-2 mb-3 rounded-md bg-white border"
+                                        type="text"
+                                        placeholder="Email"
+                                        value={loginMobileOrEmail}
+                                        onChange={handleLoginEmailChange}
+                                        required
+                                    />
+                                    {loginEmailError && <p className="text-red-600 text-xs mb-1">{loginEmailError}</p>}
+                                    <div className="relative">
+                                        <input
+                                            className="w-full p-2 mb-3 rounded-md bg-white border"
+                                            type={showLoginPassword ? "text" : "password"}
+                                            placeholder="Password"
+                                            value={loginPassword}
+                                            onChange={handleLoginPasswordChange}
+                                            required
+                                        />
+                                        <PasswordToggleIcon visible={showLoginPassword} onClick={() => setShowLoginPassword((prev) => !prev)} />
+                                    </div>
+                                    <RoleDropdown
+                                        role={role}
+                                        isOpen={isOpen}
+                                        onClick={handleClick}
+                                        onSelect={handleRoleSelect}
+                                    />
+                                    <div className='flex justify-between text-green-700 font-semibold mb-2'>
+                                        <span
+                                            className="cursor-pointer hover:underline"
+                                            onClick={handleForgotPasswordClick}
+                                        >
+                                            Forgot Password?
+                                        </span>
+                                        <span className="cursor-pointer hover:underline" onClick={handleLoginOtpSwitch}>
+                                            {loginWithOtp ? 'Login with Email' : 'Login with Mobile'}
+                                        </span>
+                                    </div>
+
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <input
+                                            type="checkbox"
+                                            id="rememberMe"
+                                            checked={remember}
+                                            onChange={handleRememberChange}
+                                        />
+                                        <label htmlFor="rememberMe">Remember Me</label>
+                                    </div>
+
+                                    <div className="flex items-center justify-center pt-2">
+                                        <input
+                                            className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${role ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
+                                            type="submit"
+                                            value="Log In"
+                                            disabled={!role}
+                                            id="btn6"
+                                        />
+                                    </div>
+                                    <SocialLogin />
+                                </form>
+                            ) : (
+                                <form onSubmit={showLoginOtpForm ? handleLoginOtpSubmit : handleLoginMobileSubmit}>
+                                    {!showLoginOtpForm ? (
+                                        <>
+                                            <input
+                                                className="w-full p-2 mb-3 rounded-md bg-white border"
+                                                type="tel"
+                                                placeholder="Mobile Number"
+                                                value={loginMobile}
+                                                onChange={handleLoginMobileChange}
+                                                maxLength={10}
+                                                required
+                                            />
+                                            {loginMobileError && <p className="text-red-600 text-xs mb-1">{loginMobileError}</p>}
+                                        </>
+                                    ) : (
+                                        <input
+                                            className="w-full p-2 mb-3 rounded-md bg-white border"
+                                            type="text"
+                                            placeholder="Enter OTP"
+                                            value={loginOtp}
+                                            onChange={e => setLoginOtp(e.target.value)}
+                                            required
+                                        />
+                                    )}
+                                    <RoleDropdown
+                                        role={role}
+                                        isOpen={isOpen}
+                                        onClick={handleClick}
+                                        onSelect={handleRoleSelect}
+                                    />
+                                    <div className='flex justify-between text-green-700 font-semibold mb-2'>
+                                        <span
+                                            className="cursor-pointer hover:underline "
+                                            onClick={handleForgotPasswordClick}
+                                        >
+                                            Forgot Password?
+                                        </span>
+                                        <span className="cursor-pointer hover:underline" onClick={handleLoginOtpSwitch}>
+                                            {loginWithOtp ? 'Login with Email' : 'Login with Mobile'}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <input
+                                            type="checkbox"
+                                            id="rememberMe"
+                                            checked={remember}
+                                            onChange={handleRememberChange}
+                                        />
+                                        <label htmlFor="rememberMe">Remember Me</label>
+                                    </div>
+                                    <div className="flex items-center justify-center pt-2">
+                                        <button
+                                            className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${role ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
+                                            type="submit"
+                                            disabled={!role}
+                                            id="btn1"
+                                        >
+                                            {showLoginOtpForm ? 'Verify OTP & Login' : 'Send OTP'}
+                                        </button>
+                                    </div>
+                                    <SocialLogin />
+                                </form>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Signup Page */}
+                    {page === 'signup' && (
+                        <div>
+                            <p className="text-black text-center text-xl font-bold mb-0.5">Create Your Account</p>
+                            {signupMethod === 'email' && (
+                                <form onSubmit={handleSignupEmailSubmit}>
+                                    <div className="p-2">
+                                        <input
+                                            className="w-full p-1.5 mb-3 rounded-md bg-white border"
+                                            type="text"
+                                            placeholder="Full Name"
+                                            value={signupFullName}
+                                            onChange={handleSignupFullNameChange}
+                                            required
+                                        />
+                                        {signupFullNameError && <p className="text-red-600 text-xs mb-2">{signupFullNameError}</p>}
+                                        <input
+                                            className="w-full p-1.5 mb-3 rounded-md bg-white border"
+                                            type="text"
                                             placeholder="Mobile Number"
-                                            value={loginMobile}
-                                            onChange={handleLoginMobileChange}
+                                            value={signupAadhaar}
+                                            onChange={handleSignupAadhaarChange}
                                             maxLength={10}
                                             required
                                         />
-                                        {loginMobileError && <p className="text-red-600 text-xs mb-1">{loginMobileError}</p>}
-                                    </>
-                                ) : (
-                                    <input
-                                        className="w-full p-2 mb-3 rounded-md bg-white border"
-                                        type="text"
-                                        placeholder="Enter OTP"
-                                        value={loginOtp}
-                                        onChange={e => setLoginOtp(e.target.value)}
-                                        required
-                                    />
-                                )}
-                                <RoleDropdown
-                                    role={role}
-                                    isOpen={isOpen}
-                                    onClick={handleClick}
-                                    onSelect={handleRoleSelect}
-                                />
-                                <div className='flex justify-between text-green-700 font-semibold mb-2'>
-                                    <span
-                                        className="cursor-pointer hover:underline "
-                                        onClick={handleForgotPasswordClick}
-                                    >
-                                        Forgot Password?
-                                    </span>
-                                    <span className="cursor-pointer hover:underline" onClick={handleLoginOtpSwitch}>
-                                        {loginWithOtp ? 'Login with Email' : 'Login with Mobile'}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${role ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
-                                        type="submit"
-                                        disabled={!role}
-                                    >
-                                        {showLoginOtpForm ? 'Verify OTP & Login' : 'Send OTP'}
-                                    </button>
-                                </div>
-                                <SocialLogin />
-                            </form>
-                        )}
-                    </div>
-                )}
-
-                {/* Signup Page */}
-                {page === 'signup' && (
-                    <div>
-                        <p className="text-black text-center text-xl font-bold mb-0.5">Create Your Account</p>
-                        {signupMethod === 'email' && (
-                            <form onSubmit={handleSignupEmailSubmit}>
-                                <div className="p-2">
-                                    <input
-                                        className="w-full p-1.5 mb-3 rounded-md bg-white border"
-                                        type="text"
-                                        placeholder="Full Name"
-                                        value={signupFullName}
-                                        onChange={handleSignupFullNameChange}
-                                        required
-                                    />
-                                    {signupFullNameError && <p className="text-red-600 text-xs mb-2">{signupFullNameError}</p>}
-                                    <input
-                                        className="w-full p-1.5 mb-3 rounded-md bg-white border"
-                                        type="text"
-                                        placeholder="Mobile Number"
-                                        value={signupAadhaar}
-                                        onChange={handleSignupAadhaarChange}
-                                        maxLength={10}
-                                        required
-                                    />
-                                    {signupAadhaarError && <p className="text-red-600 text-xs mb-2">{signupAadhaarError}</p>}
-                                    <input
-                                        className="w-full p-1.5 mb-3 rounded-md bg-white border"
-                                        type="email"
-                                        placeholder="Email"
-                                        value={signupEmail}
-                                        onChange={handleSignupEmailChange}
-                                        required
-                                    />
-                                    {signupEmailError && <p className="text-red-600 text-xs mb-2">{signupEmailError}</p>}
-                                    <div className="relative">
+                                        {signupAadhaarError && <p className="text-red-600 text-xs mb-2">{signupAadhaarError}</p>}
                                         <input
                                             className="w-full p-1.5 mb-3 rounded-md bg-white border"
-                                            type={showSignupPassword ? "text" : "password"}
-                                            placeholder="Password"
-                                            value={signupPassword}
-                                            onChange={handleSignupPasswordChange}
+                                            type="email"
+                                            placeholder="Email"
+                                            value={signupEmail}
+                                            onChange={handleSignupEmailChange}
                                             required
                                         />
-                                        <PasswordToggleIcon visible={showSignupPassword} onClick={() => setShowSignupPassword((prev) => !prev)} />
+                                        {signupEmailError && <p className="text-red-600 text-xs mb-2">{signupEmailError}</p>}
+                                        <div className="relative">
+                                            <input
+                                                className="w-full p-1.5 mb-3 rounded-md bg-white border"
+                                                type={showSignupPassword ? "text" : "password"}
+                                                placeholder="Password"
+                                                value={signupPassword}
+                                                onChange={handleSignupPasswordChange}
+                                                required
+                                            />
+                                            <PasswordToggleIcon visible={showSignupPassword} onClick={() => setShowSignupPassword((prev) => !prev)} />
+                                        </div>
+                                        <div className="relative">
+                                            <input
+                                                className="w-full p-1.5 rounded-md bg-white border"
+                                                type={showSignupConfirmPassword ? "text" : "password"}
+                                                placeholder="Confirm Password"
+                                                value={signupConfirmPassword}
+                                                onChange={handleSignupConfirmPasswordChange}
+                                                required
+                                            />
+                                            <PasswordToggleIcon visible={showSignupConfirmPassword} onClick={() => setShowSignupConfirmPassword((prev) => !prev)} />
+                                        </div>
+                                        {signupPasswordError && <p className="text-red-600 text-xs mb-2">{signupPasswordError}</p>}
                                     </div>
-                                    <div className="relative">
-                                        <input
-                                            className="w-full p-1.5 rounded-md bg-white border"
-                                            type={showSignupConfirmPassword ? "text" : "password"}
-                                            placeholder="Confirm Password"
-                                            value={signupConfirmPassword}
-                                            onChange={handleSignupConfirmPasswordChange}
-                                            required
-                                        />
-                                        <PasswordToggleIcon visible={showSignupConfirmPassword} onClick={() => setShowSignupConfirmPassword((prev) => !prev)} />
-                                    </div>
-                                    {signupPasswordError && <p className="text-red-600 text-xs mb-2">{signupPasswordError}</p>}
-                                </div>
-                                {/* <p onClick={handleSignupMethodSwitch} className="cursor-pointer hover:underline text-green-700 font-semibold mb-2 text-right mr-3">
+                                    {/* <p onClick={handleSignupMethodSwitch} className="cursor-pointer hover:underline text-green-700 font-semibold mb-2 text-right mr-3">
                                     {signupMethod === 'email' ? 'Login with OTP' : 'Login with Email'}
                                 </p> */}
-                                <div className="flex items-center space-x-2 pl-4 mb-2">
-                                    <input type="checkbox" id="agree" className="h-4 w-4 text-green-700 border-gray-300 rounded focus:ring-green-500" required />
-                                    <label htmlFor="agree" className="text-black">I agree to the <span className='text-green-700'>Terms & Conditions</span></label>
-                                </div>
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError) ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
-                                        type="submit"
-                                        disabled={!(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError)}
-                                    >
-                                        Create Account
-                                    </button>
-                                </div>
-                                <SocialLogin />
-                            </form>
-                        )}
-                    </div>
-                )}
-            </div>
-        </div >
+                                    <div className="flex items-center space-x-2 pl-4 mb-2">
+                                        <input type="checkbox" id="agree" className="h-4 w-4 text-green-700 border-gray-300 rounded focus:ring-green-500" required />
+                                        <label htmlFor="agree" className="text-black">I agree to the <span className='text-green-700'>Terms & Conditions</span></label>
+                                    </div>
+                                    <div className="flex items-center justify-center pt-2">
+                                        <button
+                                            className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError) ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
+                                            type="submit"
+                                            disabled={!(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError)}
+                                            id="btn5"
+                                        >
+                                            Create Account
+                                        </button>
+                                    </div>
+                                    <SocialLogin />
+                                </form>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div >
+        </>
     );
 }
 

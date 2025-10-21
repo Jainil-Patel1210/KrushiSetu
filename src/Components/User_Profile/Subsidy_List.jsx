@@ -5,36 +5,36 @@ function Subsidy_List() {
 
     const [searchTerm, setSearchTerm] = useState("");
     const subsidies = [
-    {
-      title: "NFSM - Nutri cereal - Bajra",
-      amount: "₹15,000",
-      applicationDate: "18/06/2025 to 31/12/2025",
-    },
-    {
-      title: "PM-KUSUM - Solar Pump Subsidy",
-      amount: "₹30,000",
-      applicationDate: "18/06/2025 to 31/12/2025",
-    },
-    {
-      title: "PMFBY - Crop Insurance Scheme",
-      amount: "₹20,000",
-      applicationDate: "18/06/2025 to 31/12/2025",
-    },
-    {
-      title: "RKVY - Farm Mechanization",
-      amount: "₹25,000",
-      applicationDate: "18/06/2025 to 31/12/2025",
-    },
-    {
-      title: "MIDH - Horticulture Development",
-      amount: "₹18,000",
-      applicationDate: "18/06/2025 to 31/12/2025",
-    },
-    {
-      title: "PM-FME - Food Processing Support",
-      amount: "₹40,000",
-      applicationDate: "18/06/2025 to 31/12/2025",
-    },
+        {
+            title: "NFSM - Nutri cereal - Bajra",
+            amount: "₹15,000",
+            applicationDate: "18/06/2025 to 31/12/2025",
+        },
+        {
+            title: "PM-KUSUM - Solar Pump Subsidy",
+            amount: "₹30,000",
+            applicationDate: "18/06/2025 to 31/12/2025",
+        },
+        {
+            title: "PMFBY - Crop Insurance Scheme",
+            amount: "₹20,000",
+            applicationDate: "18/06/2025 to 31/12/2025",
+        },
+        {
+            title: "RKVY - Farm Mechanization",
+            amount: "₹25,000",
+            applicationDate: "18/06/2025 to 31/12/2025",
+        },
+        {
+            title: "MIDH - Horticulture Development",
+            amount: "₹18,000",
+            applicationDate: "18/06/2025 to 31/12/2025",
+        },
+        {
+            title: "PM-FME - Food Processing Support",
+            amount: "₹40,000",
+            applicationDate: "18/06/2025 to 31/12/2025",
+        },
     ];
 
     const filteredSubsidies = subsidies.filter((subsidy) =>
@@ -47,7 +47,7 @@ function Subsidy_List() {
             <div className="w-full bg-gray-100 min-h-screen">
                 <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 md:px-10">
                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Subsidy Schemes</h1>
-                    
+
                     {/* Search Bar */}
                     <div className="mt-6 mb-6">
                         <input
@@ -59,13 +59,13 @@ function Subsidy_List() {
                         />
                     </div>
 
-                    <div className= "max-w-6xl">
+                    <div className="max-w-6xl">
                         {filteredSubsidies.length === 0 ? (
                             <p>No subsidies found.</p>
                         ) : (
                             filteredSubsidies.map((subsidy, index) => (
                                 <div key={index} className="flex justify-between bg-white p-6 rounded-2xl shadow-md mb-4">
-                                    <div> 
+                                    <div>
                                         <h2 className="text-xl font-semibold text-gray-600">{subsidy.title}</h2>
                                         <p className="text-sm text-gray-600">Maximum Amount - {subsidy.amount}</p>
                                         <p className="text-sm text-gray-600">Date of Application - {subsidy.applicationDate}</p>
