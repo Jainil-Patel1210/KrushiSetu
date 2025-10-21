@@ -325,7 +325,7 @@ function Signup() {
     // Login form submit
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
-        const btn = getElementById("btn6");
+        const btn = document.getElementById("btn6");
         btn.disabled = true;
         try {
             if (!role) {
