@@ -108,7 +108,7 @@ function Personal_info() {
             <Header />
             {/* Main Section */}
             <div className="w-full max-w-5xl mx-auto px-8">
-                <h1 className="font-extrabold text-3xl text-gray-900">Profile & Personal Details</h1>
+                <h1 className="font-extrabold text-3xl text-gray-900 mt-8">Profile & Personal Details</h1>
                 <p className="text-gray-600 mt-2 max-w-2xl">Manage your personal information, land details, and bank accounts. Keep your documents secure by uploading verified identity proofs.</p>
 
                 {/* Personal Information Card */}
