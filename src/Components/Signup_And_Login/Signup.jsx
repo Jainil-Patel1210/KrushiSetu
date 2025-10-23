@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SocialLogin from './SocialLogin';
 import PasswordToggleIcon from './PasswordToggleIcon';
-import axios from 'axios'; // For the signup API call
+import api from './api'; // For the signup API call
 
-function Signup({ onSignupSuccess }) {
+function Signup({ onSignupSuccess = null }) {
     const navigate = useNavigate(); 
     const [signupMethod, setSignupMethod] = useState('email');
     const [signupFullName, setSignupFullName] = useState('');
