@@ -45,6 +45,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ("farmer", "Farmer"),
         ("admin", "Admin"),
         ("officer", "Officer"),
+        ("subsidy_provider", "Subsidy Provider"),
     ]
 
     full_name = models.CharField(max_length=100)
