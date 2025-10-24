@@ -14,7 +14,7 @@ function Sidebar() {
         <>
             <div className='flex min-h-screen'>
                 <div className='max-w-90 w-73 rounded-2xl sticky top-0 self-start'>
-                    <img src="./Krushisetu_banner-removebg-preview.png" className='lg:h-20 lg:w-50 md:h-15 md:w-40 h-10 w-30 pt-3 ml-2' />
+                    <img src="./Krushisetu_banner-removebg-preview.png" className='lg:h-20 lg:w-50 md:h-15 md:w-45 h-10 w-30 pt-3 ml-2' />
                     <hr role="separator" className="my-2 border-t border-gray-300" />
                     <div className='flex flex-col gap-6 mt-5'>
                         <button className={`flex flex-wrap gap-2 pl-4 ${page==="Dashboard" ? "bg-green-600 p-3 rounded-md" :""}`} onClick={(e)=>handlePageChange('Dashboard')}><img src="./Home.svg" className='h-5 w-5' />Dashboard</button>

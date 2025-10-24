@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Header from "./Header";
+import Sidebar from "./Sidebar";
 import Subsidy_detail from "./Subsidy_detail";
 
 function Subsidy_List() {
@@ -120,7 +121,7 @@ function Subsidy_List() {
                                         <p className="text-sm text-gray-600">Date of Application - {formatDateRange(subsidy.application_start_date, subsidy.application_end_date)}</p>
                                     </div>
                                     <div className="flex gap-3 items-center">
-                                        <button className="bg-green-600 text-white px-3 py-2 text-sm rounded-md" onClick={()=>setSelectedSubsidy(subsidy)}>View More</button>
+                                        <button className="bg-green-600 text-white px-3 py-2 text-sm rounded-md cursor-pointer" onClick={()=>setSelectedSubsidy(subsidy)}>View More</button>
                                         <button className="bg-green-600 text-white px-3 py-2 text-sm rounded-md">Apply</button>
                                     </div>
                                 </div>
