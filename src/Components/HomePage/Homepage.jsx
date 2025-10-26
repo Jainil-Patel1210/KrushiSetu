@@ -24,9 +24,9 @@ function Homepage() {
                     </div>
                 </div>
             </div>
-            {/* <Subsidy /> */}
+            <Subsidy />
             {/* <Guidlines /> */}
-            {/* <News /> */}
+            <News />
             <FAQ />
             <Footer />
         </>
