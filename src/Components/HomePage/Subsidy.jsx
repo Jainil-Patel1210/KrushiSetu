@@ -4,6 +4,7 @@ import "aos/dist/aos.css";
 import { use } from "react";
 
 const Subsidy = () => {
+
   const subsidyData = [
     {
       id: 1,
@@ -33,8 +34,7 @@ const Subsidy = () => {
   },[]),
   
     <>
-      <div className="w-full bg-[#F3FFF1] pt-4">
-        
+      <div className="bg-[#F3FFF1] pt-4">
           <div className="text-center mb-12" data-aos="fade-down" data-aos-delay="100">
             <h2 className="text-4xl font-bold text-gray-800 mb-3">
               Popular Subsidies{" "}
@@ -45,11 +45,13 @@ const Subsidy = () => {
             </p>
           </div>
 
-          <div className="flex justify-around" data-aos="fade-up" data-aos-delay="100">
-            {subsidyData.map((subsidy) => (
+          <div className="flex flex-col items-center gap-6 sm:grid sm:grid-cols-2 md:flex md:flex-row md:justify-around md:gap-3" data-aos="fade-up" data-aos-delay="100">
+            {subsidyData.map((subsidy, index) => (
               <div
                 key={subsidy.id}
-                className="bg-[#C3FFC8] border border-green-200 rounded-xl p-6 h-83 w-80 flex flex-col shadow-md hover:shadow-lg transition-shadow duration-300"
+                className={`bg-[#C3FFC8] border border-green-200 rounded-xl p-6 h-83 w-80 flex flex-col shadow-md hover:shadow-lg transition-shadow duration-300 
+                  ${index > 0 ? 'hidden sm:block md:block md:justify-around md:gap-3' : ''} 
+                  ${index > 1 ? 'sm:hidden md:block md:justify-around md:gap-3' : ''}`}
               >
                 <h3 className="text-2xl text-center font-bold text-gray-800 mb-8">
                   {subsidy.title}
@@ -57,10 +59,10 @@ const Subsidy = () => {
                 <p className="text-l text-black  flex-grow">
                   {subsidy.description}
                 </p>
-                <p className="text-center text-2xl font-semibold text-[#2E2E2E] mb-4">
+                <p className="text-center text-2xl font-semibold text-[#2E2E2E] mb-8 mt-5">
                   {subsidy.amount}
                 </p>
-                <button className="w-28 bg-[#477E60] text-white text-l font-bold py-1 rounded-lg hover:bg-green-700 transition-colors duration-300 mt-auto self-center">
+                <button className="w-28 bg-[#477E60] text-white font-bold py-1 rounded-lg hover:bg-green-700 transition-colors duration-300 mt-auto self-center">
                   Apply
                 </button>
               </div>
