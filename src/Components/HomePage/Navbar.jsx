@@ -1,45 +1,76 @@
-import React from "react";
+import React,{useState} from "react";
 import { useNavigate } from 'react-router-dom';
+import './Navbar.css';
 
 function Navbar() {
-  const navigate = useNavigate(); 
+    const navigate = useNavigate();   
+    const [isOpen, setIsOpen] = useState(false);
 
-  const handleLoginClick = () => {
-    navigate('/login'); // Navigate to /login route
-  };
+    const handleLoginClick = () => {
+      navigate('/login'); // Navigate to /login route
+    };
 
-  return (
-  <>
-    <div className="bg-white text-black sticky top-0 z-50 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-         <div className="flex items-center space-x-2">
-          <img src='/Krushisetu_banner (1).jpg' className='h-12 w-12' />
-          <div className="flex flex-col ">
-            <h1 className="font-bold text-md text-center text-green-600">KRUSHISETU</h1>
-            <p className="font-bold text-sm text-amber-950">PATH TO PROPERTY</p>
+    const handleNavbarToggle = () =>{
+      setIsOpen(!isOpen);
+    }
+
+    return (
+    <>
+      <div className="w-full bg-white text-black sticky top-0 z-50 shadow-md">
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16 items-center">
+          <div className="flex items-center space-x-2">
+            <img src='/Krushisetu_banner (1).jpg' className='h-12 w-12' />
+            <div className="flex flex-col">
+              <h1 className="font-bold text-md text-center text-green-600">KRUSHISETU</h1>
+              <p className="font-bold text-sm text-amber-950">PATH TO PROPERTY</p>
+            </div>
           </div>
-        </div>
-        
-          <div className="md:flex space-x-6">
-            <button className="hover:text-green-600 hover:scale-105 hover:underline px-3 py-1 font-semibold">Home</button>
-            <button className="hover:text-green-600 hover:scale-105 hover:underline px-3 py-1 font-semibold">Subsidy</button>
-            <button className="hover:text-green-600 hover:scale-105 hover:underline px-3 py-1 font-semibold">Guide</button>
-            <button className="hover:text-green-600 hover:scale-105 hover:underline px-3 py-1 font-semibold">News</button>
-            <button className="hover:text-green-600 hover:scale-105 hover:underline px-3 py-1 font-semibold">About Us</button>
-            <button className="hover:text-green-600 hover:scale-105 hover:underline px-3 py-1 font-semibold">Contact Us</button>
-
+          
             <button
-              onClick={handleLoginClick} // Navigate to login
-              className="bg-green-600 hover:scale-105 text-white font-semibold text-xl px-8 py-1 pb- my-2 rounded-full"
+              type="button"
+              className="lg:hidden inline-flex items-center justify-center p-2 rounded-md border border-gray-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-600 transition"
+              aria-label="Toggle navigation menu"
+              aria-expanded={isOpen}
+              onClick={handleNavbarToggle}
             >
-              Login
+            <span className="sr-only">{isOpen ? 'Close menu' : 'Open menu'}</span>
+              <div className="relative h-5 w-6">
+                <span className={`absolute left-0 block h-[2px] w-6 bg-gray-800 transition-all duration-300 ease-in-out ${isOpen ? 'top-2.5 rotate-45' : 'top-0 rotate-0'}`}/>
+                <span className={`absolute left-0 block h-[2px] w-6 bg-gray-800 transition-all duration-300 ease-in-out ${isOpen ? 'opacity-0' : 'top-2.5 opacity-100'}`}/>
+                <span className={`absolute left-0 block h-[2px] w-6 bg-gray-800 transition-all duration-300 ease-in-out ${isOpen ? 'top-2.5 -rotate-45' : 'top-5 rotate-0'}`}/>
+              </div>
             </button>
+
+            <div className="lg:flex space-x-6 hidden md:hidden">
+              <button className="Navbar">Home</button>
+              <button className="Navbar">Subsidy</button>
+              <button className="Navbar">Guide</button>
+              <button className="Navbar">News</button>
+              <button className="Navbar">FAQ</button>
+              <button className="Navbar">Contact Us</button>
+              <button onClick={handleLoginClick} className="bg-green-600 hover:scale-105 text-white font-semibold text-xl text-center px-8 p-0.5 pb-1.5 rounded-full">Login</button>
+            </div>
+
+            {isOpen && (
+              <div className="lg:hidden absolute top-16 right-0 bg-white w-2/4 shadow-md z-40">
+                <button className="Navbar-mobile">Home</button>
+                <button className="Navbar-mobile">Subsidy</button>
+                <button className="Navbar-mobile">Guide</button>
+                <button className="Navbar-mobile">News</button>
+                <button className="Navbar-mobile">FAQ</button>
+                <button className="Navbar-mobile">Contact Us</button>
+                <button
+                  onClick={handleLoginClick} // Navigate to login
+                  className="Navbar-mobile mb-2 font-semibold">
+                  Login
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </div>
-  </>
+    </>
   );
 }
 
