@@ -1,24 +1,5 @@
-.FAQ-box {
-  background-color: #D2EACF;
-  display: flex;
-  justify-content: space-between; 
-  align-items: center;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-}
-
-.FAQ-box:hover {
-  background-color: #B2E0B2;
-  transform: scale(1.02);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
 @layer utilities {
   .custom-transition {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 }
-
