@@ -22,7 +22,10 @@ def send_otp_sms(user):
     return otp  
 
 def verify_otp_sms(user, token):
+    print(otps[user.mobile_number])
+    print(token)
     if str(otps[user.mobile_number]) == str(token):
+        print("here1")
         return True
     return False
 

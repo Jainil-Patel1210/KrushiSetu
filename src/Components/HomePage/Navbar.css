@@ -1,0 +1,19 @@
+.Navbar-mobile {
+    display: block;
+    width:100%;
+    text-align: left;
+    padding-inline: 16px;
+    padding-block:8px;
+}
+
+.Navbar{
+    font-weight:600;
+    padding-block: 4px;
+    padding-inline:12px;
+}
+
+.Navbar:hover{
+    text-decoration: underline;
+    color: #16a34a; /* Tailwind's green-600 */
+    transform: scale(1.05);
+}

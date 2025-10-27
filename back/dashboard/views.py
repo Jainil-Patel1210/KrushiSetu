@@ -1,31 +1,28 @@
-# app/views.py
-from rest_framework import generics, permissions
-from rest_framework.parsers import MultiPartParser, FormParser
-from .models import UserProfile
-from .serializers import UserProfileSerializer
+from django.shortcuts import render
+import sqlite3
+from rest_framework import generics
 
-class UserProfileView(generics.RetrieveUpdateAPIView):
-    serializer_class = UserProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
-    def initial(self, request, *args, **kwargs):
-        print("🔹 Initial called")
-        print(request.data.get('bank_account_number'))
-        print(request.data.get('photo'))
-        super().initial(request, *args, **kwargs)
-        
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework.views import APIView
+from django.contrib.auth import authenticate
+from dotenv import load_dotenv, dotenv_values 
+from django.core.mail import send_mail
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
 
-    def get_object(self):
-        
-        # Get or create ensures the user always has a profile
-        profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
-        return profile
-
-    def perform_update(self, serializer):
-        # Ensure the user field is linked properly during updates
-        serializer.save(user=self.request.user)
-
-    def perform_create(self, serializer):
-        # (Optional, in case you ever use POST explicitly)
-       
-        serializer.save(user=self.request.user)
+@api_view(['POST'])
+def information(request):
+ conn = sqlite3.connect('db.sqlite3')
+ cursor = conn.cursor()
+ email = request.data.get('email')
+ cursor.execute("SELECT * FROM db.sqlite3 WHERE email = ?", (email,))
+ rows = cursor.fetchall()
+ return Response({f'{rows}'}, status=status.HTTP_200_OK)

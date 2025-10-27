@@ -1,6 +1,8 @@
 from django.urls import path
-from . import views
+from django.urls import path
 from .auth_utils import GoogleLoginView
+from django.urls import path
+from . import views
 
 urlpatterns = [
     path("signup/", views.UserSignupView.as_view(), name="signup"),
@@ -12,3 +14,4 @@ urlpatterns = [
     path('forgot-password/verify-otp/', views.forgot_password_verify_otp),
     path('forgot-password/reset-password/', views.forgot_password_reset),
 ]
+
