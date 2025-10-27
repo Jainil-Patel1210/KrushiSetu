@@ -8,17 +8,10 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
-  build: {
-    chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          oauth: ['@react-oauth/google'],
-          icons: ['react-icons'],
-        },
-      },
-    },
-  },
+  server: {
+    proxy: {
+      '/media': 'http://127.0.0.1:8000'
+    }
+  }
 })
+

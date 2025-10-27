@@ -21,10 +21,17 @@ function FAQ() {
   return (
     <>
       <h1 className="text-4xl font-extrabold text-gray-900 mb-6 text-center mt-5 " data-aos='fade-down' data-aos-delay='100'>Frequently Asked Questions</h1>
-      <div className="space-y-4 max-w-3xl mx-auto font-semibold text-lg mb-6 md:p-auto p-2" data-aos='fade-up' data-aos-delay='100'>
-        <div className=" FAQ-box" onClick={() => toggleAnswer(0)}>
+      <div className="space-y-4 max-w-3xl mx-auto font-semibold text-lg mb-6" data-aos='fade-up' data-aos-delay='100'>
+        <div
+          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer hover:bg-[#B2E0B2] custom-transition hover:transform hover:scale-102 hover:shadow-lg "
+          onClick={() => toggleAnswer(0)}
+        >
           <p className="text-gray-800">How can I apply for a subsidy?</p>
-          <img src="./Dropdown_Logo.svg" className={`w-5 h-5 transition-transform ${answerno === 0 ? 'transform rotate-180' : ''}`} alt="Dropdown"/>
+          <img
+            src="./Dropdown_Logo.svg"
+            className={`w-5 h-5 transition-transform ${answerno === 0 ? 'transform rotate-180' : ''}`}
+            alt="Dropdown"
+          />
         </div>
         {answerno === 0 && (
           <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700">
@@ -32,9 +39,16 @@ function FAQ() {
           </div>
         )}
 
-        <div className="FAQ-box" onClick={() => toggleAnswer(1)}>
+        <div
+          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer hover:bg-[#B2E0B2] custom-transition hover:transform hover:scale-102 hover:shadow-lg"
+          onClick={() => toggleAnswer(1)}
+        >
           <p className="text-gray-800">What documents are required for subsidy application?</p>
-          <img src="./Dropdown_Logo.svg" className={`w-5 h-5 transition-transform ${answerno === 1 ? 'transform rotate-180' : ''}`} alt="Dropdown"/>
+          <img
+            src="./Dropdown_Logo.svg"
+            className={`w-5 h-5 transition-transform ${answerno === 1 ? 'transform rotate-180' : ''}`}
+            alt="Dropdown"
+          />
         </div>
         {answerno === 1 && (
           <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700">
@@ -42,9 +56,16 @@ function FAQ() {
           </div>
         )}
 
-        <div className="FAQ-box" onClick={() => toggleAnswer(2)}>
+        <div
+          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer hover:bg-[#B2E0B2] custom-transition hover:transform hover:scale-102 hover:shadow-lg"
+          onClick={() => toggleAnswer(2)}
+        >
           <p className="text-gray-800">How long does it take to process a subsidy application?</p>
-          <img src="./Dropdown_Logo.svg" className={`w-5 h-5 transition-transform ${answerno === 2 ? 'transform rotate-180' : ''}`} alt="Dropdown"/>
+          <img
+            src="./Dropdown_Logo.svg"
+            className={`w-5 h-5 transition-transform ${answerno === 2 ? 'transform rotate-180' : ''}`}
+            alt="Dropdown"
+          />
         </div>
         {answerno === 2 && (
           <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700">
@@ -52,9 +73,16 @@ function FAQ() {
           </div>
         )}
 
-        <div className="FAQ-box" onClick={() => toggleAnswer(3)}>
+        <div
+          className="bg-[#D2EACF] flex justify-between items-center p-4 rounded-xl shadow-md cursor-pointer hover:bg-[#B2E0B2] custom-transition hover:transform hover:scale-102 hover:shadow-lg"
+          onClick={() => toggleAnswer(3)}
+        >
           <p className="text-gray-800">Are there any eligibility criteria for farmers to apply for subsidies?</p>
-          <img src="./Dropdown_Logo.svg" className={`w-5 h-5 transition-transform ${answerno === 3 ? 'transform rotate-180' : ''}`} alt="Dropdown" />
+          <img
+            src="./Dropdown_Logo.svg"
+            className={`w-5 h-5 transition-transform ${answerno === 3 ? 'transform rotate-180' : ''}`}
+            alt="Dropdown"
+          />
         </div>
         {answerno === 3 && (
           <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700">
