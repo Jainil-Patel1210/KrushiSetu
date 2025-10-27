@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-from corsheaders.defaults import default_headers
+
 from pathlib import Path
 import os
 from dotenv import load_dotenv
@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-r@0q!s@*@_r(0d)v^4()ej4-kipbw5&q^u@zs4rt+goiraknv!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -50,7 +50,6 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_totp',
     'django_otp.plugins.otp_hotp',
     'app',
-    'dashboard',
 ]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -62,16 +61,16 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "corsheaders.middleware.CorsMiddleware",  
     "django.middleware.common.CommonMiddleware",
-    "django_otp.middleware.OTPMiddleware",
+    'django_otp.middleware.OTPMiddleware',
 ]
 
 ROOT_URLCONF = 'back.urls'
@@ -93,27 +92,21 @@ TEMPLATES = [
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-   # "https://krushisetu-backend-production-4a02.up.railway.app",
-    "http://localhost:5173",
-    "http://127.0.0.1:8000",
-  #  "https://krushisetufrontend.vercel.app",
-    # "https://krushi-setu-htmwj4wp2-jainil-s-projects.vercel.app",
-    # "https://krushisetu-backend-production-4a02.up.railway.app",
+   
+    "https://krushi-setu-htmwj4wp2-jainil-s-projects.vercel.app",
+    "https://krushisetu-backend-production-4a02.up.railway.app",
 ]
 
 # If testing, you can allow all (not safe for prod)
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    "Authorization",
-    "Content-Type",
+
+CORS_ALLOW_HEADERS = [
+    "content-type",
+    "authorization",
 ]
 
-
-
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    #"https://krushisetufrontend.vercel.app",
-    # "https://krushi-setu-htmwj4wp2-jainil-s-projects.vercel.app",
+    "https://krushi-setu-htmwj4wp2-jainil-s-projects.vercel.app",
 ]
 WSGI_APPLICATION = 'back.wsgi.application'
 
@@ -122,6 +115,10 @@ WSGI_APPLICATION = 'back.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'db.sqlite3',
+    # }
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'neondb',
@@ -209,7 +206,5 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')    
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 
-
-# settings.py
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+CORS_ALLOW_ALL_ORIGINS = True
+MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
