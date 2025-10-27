@@ -24,7 +24,7 @@ function Personal_info() {
 
     const stateDistrictData = Array.isArray(Data)
         ? Data
-        : Data && Data.states
+        : Data && Data.states 
             ? Data.states
             : [];
 
