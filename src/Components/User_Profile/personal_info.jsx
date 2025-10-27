@@ -46,19 +46,13 @@ function Personal_info() {
         land_size: "",
         soil_type: "",
         ownership_type: "",
-<<<<<<< HEAD
         bank_account: "",
         ifsc: "",
-=======
-        bank_account_number: "",
-        ifsc_code: "",
->>>>>>> main
         bank_name: "",
         profile_image: null,
         pan_card: null,
         aadhaar_card: null,
         land_proof: null,
-<<<<<<< HEAD
     });
 
     useEffect(() => {
@@ -127,75 +121,6 @@ function Personal_info() {
         setFormData((prev) => ({ ...prev, [fieldName]: e.target.value }));
     };
 
-=======
-        photo: null,
-    });
-
-    useEffect(() => {
-    const fetchProfile = async () => {
-        try {
-            
-
-            const response = await api.get("/profile/", {
-                withCredentials: true
-                // use "Bearer" only if using JWT
-            });
-
-            const data = response.data;
-
-            // Map data to form state
-            setFormData({
-                full_name: data.full_name || "",
-                email: data.email_address || "",
-                phone: data.mobile_number || "",
-                aadhaar_number: data.aadhaar_number || "",
-                state: data.state || "",
-                district: data.district || "",
-                taluka: data.taluka || "",
-                village: data.village || "",
-                address: data.address || "",
-                land_size: data.land_size || "",
-                unit: data.unit || "",
-                soil_type: data.soil_type || "",
-                ownership_type: data.ownership_type || "",
-                bank_account_number: data.bank_account_number || "",
-                ifsc_code: data.ifsc_code || "",
-                bank_name: data.bank_name || "",
-            });
-
-            const setFileInfo = (fileField, setter) => {
-                if (data[fileField]) {
-                    setter({
-                        name: data[fileField].split("/").pop(),
-                        preview: data[fileField],
-                    });
-                }
-            };
-
-            setFileInfo("land_proof", setInputFileInfo);
-            setFileInfo("pan_card", setPanFileInfo);
-            setFileInfo("aadhaar_card", setAadhaarFileInfo);
-            setFileInfo("photo", setPhotoFileInfo);
-
-        } catch (err) {
-            console.error("Error fetching profile:", err);
-        }
-    };
-
-    fetchProfile();
-}, []);
-
-
-
-    const handleInputChange = (e, fieldName) => {
-        setFormData((prev) => ({ ...prev, [fieldName]: e.target.value }));
-         if (file) {
-        setFormData(prev => ({ ...prev, [type]: file })); // for backend upload
-        setPhotoFileInfo({ file, preview: URL.createObjectURL(file) }); // for preview
-    }
-    };
-
->>>>>>> main
     const handleInputFileSelection = (file, type) => {
         setInputFileError("");
 
@@ -231,18 +156,10 @@ function Personal_info() {
 
     const handleInputFileUpload = (e, type) => {
         const file = e.target.files[0];
-<<<<<<< HEAD
         if (file) {
             const preview = URL.createObjectURL(file);
             setPhotoFileInfo({ file, preview });
         }
-=======
-          if (file) {
-       setFormData((prev) => ({ ...prev, [type]: file })); // ✅ saves to formData
-    const preview = URL.createObjectURL(file);
-    setPhotoFileInfo({ file, preview });
-  }
->>>>>>> main
     };
 
     const onDragOver = (e) => {
@@ -267,36 +184,19 @@ function Personal_info() {
         Object.keys(formData).forEach((key) => {
             if (formData[key]) data.append(key, formData[key]);
         });
-<<<<<<< HEAD
 
         try {
             await api.put("/profile/", data, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                     Authorization: `Bearer ${token}`,
-=======
-        // 👇 Check what’s inside FormData
-
-        try {
-            await api.put("/profile/", data, {
-                withCredentials: true,
-                headers: {
-                     Authorization: `Bearer ${token}`,
-                    "Content-Type": "multipart/form-data",
-                  
-                    
->>>>>>> main
                 },
             });
             toast.success("Profile updated successfully!");
             setTimeout('', 3000);
             btn.disabled = false;
         } catch (err) {
-<<<<<<< HEAD
             console.error("Error updating profile:", err);
-=======
-            le.error("Error updating profile:", err);conso
->>>>>>> main
             toast.error('Failed to update Profile.')
             btn.disabled = false;
         }
@@ -327,21 +227,13 @@ function Personal_info() {
                                     e.preventDefault(); // needed for drop to work
                                     onDragOver(e);
                                 }}
-<<<<<<< HEAD
                                 onDrop={(e) => onDrop(e, 'photo')}
-=======
-                                onDrop={(e) => onDrop(e, "photo")}
->>>>>>> main
                             >
                                 <input
                                     type="file"
                                     ref={photoInputRef}
                                     className="hidden"
-<<<<<<< HEAD
                                     onChange={(e) => handleInputFileUpload(e, 'photo')}
-=======
-                                    onChange={(e) => handleInputFileUpload(e, "photo")}
->>>>>>> main
                                 />
 
                                 {photoFileInfo && photoFileInfo.preview ? (
@@ -669,17 +561,10 @@ function Personal_info() {
                                 type="text"
                                 inputMode="numeric"
                                 placeholder="Enter Account Number"
-<<<<<<< HEAD
                                 value={formData.bank_account}
                                 onChange={(e) => {
                                     const digits = e.target.value.replace(/\D/g, '');
                                     handleInputChange(e, 'bank_account')
-=======
-                                value={formData.bank_account_number}
-                                onChange={(e) => {
-                                    const digits = e.target.value.replace(/\D/g, '');
-                                    handleInputChange(e, 'bank_account_number')
->>>>>>> main
                                 }}
                                 className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none`}
                             />
@@ -689,7 +574,6 @@ function Personal_info() {
                             <input
                                 type="text"
                                 placeholder="Enter IFSC Code"
-<<<<<<< HEAD
                                 value={formData.ifsc}
                                 onChange={(e) => {
                                     const digits = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 11);
@@ -698,16 +582,6 @@ function Personal_info() {
                                 }}
                                 onBlur={() => {
                                     if (formData.ifsc && !validateIFSC(formData.ifsc)) {
-=======
-                                value={formData.ifsc_code}
-                                onChange={(e) => {
-                                    const digits = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 11);
-                                    handleInputChange(e, 'ifsc_code');
-                                    if (validateIFSC(digits)) setIfscError('');
-                                }}
-                                onBlur={() => {
-                                    if (formData.ifsc_code && !validateIFSC(formData.ifsc_code)) {
->>>>>>> main
                                         setIfscError('IFSC code must be exactly 11 characters.');
                                     } else {
                                         setIfscError('');
