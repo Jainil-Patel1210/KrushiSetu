@@ -1,2 +1,2 @@
-# KrushiSetu
-KrushiSetu is a digital platform that helps farmers easily apply for and track government subsidies.
+# Krushisetu_Frontend
+frontend code and much more
