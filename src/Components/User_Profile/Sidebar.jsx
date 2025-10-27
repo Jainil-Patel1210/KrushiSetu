@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 import React, { useState } from 'react'
-=======
-import React,{useState} from 'react'
 import Dashboard from './Dashboard.jsx';
->>>>>>> main
 import Personal_info from './personal_info.jsx'
 import Subsidy_List from './Subsidy_List.jsx';
 import Documents from './Documents.jsx';
@@ -31,20 +27,12 @@ function Sidebar() {
                 </div>
                 <div className="w-px bg-gray-300" />
                 <div className='flex-1'>
-<<<<<<< HEAD
-                    {page === 'Profile' && <Personal_info />}
-                    {page === 'Documents' && <Documents />}
-                    {page === 'Subsidies' && <Subsidy_List />}
-                    {page === 'Support' && <Support />}
-                    {page === 'Settings' && <Settings />}
-=======
                     {page==='Dashboard' && <Dashboard/>}
                     {page==='Profile' && <Personal_info/>}
                     {page==='Documents' && <Documents/>}
                     {page==='Subsidies' && <Subsidy_List/>}
                     {page==='Support' && <Support/>}
                     {page==='Settings' && <Settings/>}
->>>>>>> main
                 </div>
             </div>
         </>

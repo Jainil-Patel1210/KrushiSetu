@@ -11,13 +11,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
     mobile_number = PhoneNumberField(source="user.mobile_number", read_only=True)
 
     # Optional image upload field (editable)
-<<<<<<< HEAD
-    photo = serializers.ImageField(required=False, allow_null=True)
-
-    class Meta:
-        model = UserProfile
-        fields = "__all__"
-=======
 
     class Meta:
         model = UserProfile
@@ -45,5 +38,4 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "mobile_number",
         ]
         
->>>>>>> main
         read_only_fields = ["user"]

@@ -46,10 +46,10 @@ function Personal_info() {
         land_size: "",
         soil_type: "",
         ownership_type: "",
-        bank_account: "",
-        ifsc: "",
+        bank_account_number: "",
+        ifsc_code: "",
         bank_name: "",
-        profile_image: null,
+        photo: null,
         pan_card: null,
         aadhaar_card: null,
         land_proof: null,
@@ -78,11 +78,10 @@ function Personal_info() {
                     unit: data.unit || "",
                     soil_type: data.soil_type || "",
                     ownership_type: data.ownership_type || "",
-                    bank_account: data.bank_account_number || "",
-                    ifsc: data.ifsc_code || "",
+                    bank_account_number: data.bank_account_number || "",
+                    ifsc_code: data.ifsc_code || "",
                     bank_name: data.bank_name || "",
                 }));
-
                 // Populate file previews
                 if (data.land_proof) {
                     setInputFileInfo({
@@ -117,8 +116,13 @@ function Personal_info() {
     }, []);
 
 
+
     const handleInputChange = (e, fieldName) => {
-        setFormData((prev) => ({ ...prev, [fieldName]: e.target.value }));
+        const handleInputChange = (e, fieldName) => {
+            const value = e.target.value;
+            setFormData((prev) => ({ ...prev, [fieldName]: value }));
+        };
+
     };
 
     const handleInputFileSelection = (file, type) => {
@@ -188,8 +192,9 @@ function Personal_info() {
         try {
             await api.put("/profile/", data, {
                 headers: {
-                    "Content-Type": "multipart/form-data",
                     Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data",
+
                 },
             });
             toast.success("Profile updated successfully!");
@@ -561,10 +566,10 @@ function Personal_info() {
                                 type="text"
                                 inputMode="numeric"
                                 placeholder="Enter Account Number"
-                                value={formData.bank_account}
+                                value={formData.bank_account_number}
                                 onChange={(e) => {
                                     const digits = e.target.value.replace(/\D/g, '');
-                                    handleInputChange(e, 'bank_account')
+                                    handleInputChange(e, 'bank_account_number')
                                 }}
                                 className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none`}
                             />
@@ -574,10 +579,10 @@ function Personal_info() {
                             <input
                                 type="text"
                                 placeholder="Enter IFSC Code"
-                                value={formData.ifsc}
+                                value={formData.ifsc_code}
                                 onChange={(e) => {
                                     const digits = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 11);
-                                    handleInputChange(e, 'ifsc');
+                                    handleInputChange(e, 'ifsc_code');
                                     if (validateIFSC(digits)) setIfscError('');
                                 }}
                                 onBlur={() => {

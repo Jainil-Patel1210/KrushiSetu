@@ -158,13 +158,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             key="access_token",
             value=access,
             httponly=True,
-<<<<<<< HEAD
-            secure=False,   # ❌ set True in production with HTTPS
-            samesite="Strict",
-=======
             secure=True,   # ❌ set True in production with HTTPS
             samesite="None",
->>>>>>> main
             max_age=access_max_age,    # 5 mins
         )
 
@@ -172,13 +167,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             key="refresh_token",
             value=refresh,
             httponly=True,
-<<<<<<< HEAD
-            secure=False,
-            samesite="Strict",
-=======
             secure=True,
             samesite="None",
->>>>>>> main
             max_age=refresh_max_age,  # 7 days
         )
 
@@ -203,13 +193,8 @@ class CookieTokenRefreshView(APIView):
                 key="access_token",
                 value=access,
                 httponly=True,
-<<<<<<< HEAD
-                secure=False,
-                samesite="Strict",
-=======
                 secure=True,
                 samesite="None",
->>>>>>> main
                 max_age=300,   
             )
             return response
@@ -255,26 +240,16 @@ class VerifyOTPView(APIView):
                     key="access_token",
                     value=access,
                     httponly=True,
-<<<<<<< HEAD
-                    secure=False,  # True in production
-                    samesite="Strict",
-=======
                     secure=True,  # True in production
                     samesite="None",
->>>>>>> main
                     max_age=access_max_age,
                 )
                 response.set_cookie(
                     key="refresh_token",
                     value=refresh_token,
                     httponly=True,
-<<<<<<< HEAD
-                    secure=False,
-                    samesite="Strict",
-=======
                     secure=True,
                     samesite="None",
->>>>>>> main
                     max_age=refresh_max_age,
                 )
 

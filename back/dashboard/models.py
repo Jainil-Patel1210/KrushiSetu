@@ -12,10 +12,7 @@ class UserProfile(models.Model):
     taluka = models.CharField(max_length=100, blank=True, null=True)
     village = models.CharField(max_length=100, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
-<<<<<<< HEAD
     photo = models.ImageField(upload_to="documents/profile_photos/", blank=True, null=True)
-=======
->>>>>>> main
 
     # 🏞️ Land Info
     land_size = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
@@ -25,21 +22,11 @@ class UserProfile(models.Model):
     land_proof = models.FileField(upload_to="documents/land_proofs/", blank=True, null=True)
 
     # 🏦 Bank & ID Info
-<<<<<<< HEAD
     bank_account_number = models.CharField(max_length=20, blank=True, null=True)
     ifsc_code = models.CharField(max_length=15, blank=True, null=True)
     bank_name = models.CharField(max_length=100, blank=True, null=True)
     pan_card = models.FileField(upload_to="documents/pan_cards/", blank=True, null=True)
     aadhaar_card = models.FileField(upload_to="documents/aadhaar_cards/", blank=True, null=True)
 
-=======
-    bank_account_number = models.CharField(max_length=12, blank=True,null=True)  # up to 12 digits
-    ifsc_code = models.CharField(max_length=11, blank=True,null=True)   
-    bank_name = models.CharField(max_length=100, blank=True, null=True)
-    pan_card = models.FileField(upload_to="documents/pan_cards/", blank=True, null=True)
-    aadhaar_card = models.FileField(upload_to="documents/aadhaar_cards/", blank=True, null=True)
-    #profile photo
-    photo = models.ImageField(upload_to="documents/profile_photos/", blank=True, null=True)
->>>>>>> main
     def __str__(self):
         return f"{self.user.full_name}'s Profile"
