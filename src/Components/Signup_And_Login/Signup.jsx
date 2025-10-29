@@ -83,6 +83,8 @@ function Signup({ onSignupSuccess = null }) {
     // Signup email form submit
     const handleSignupEmailSubmit = async (e) => {
         e.preventDefault();
+        const btn = document.getElementById("btn5");
+        btn.disabled = true;
         try {
             if (signupPassword !== signupConfirmPassword) {
                 setSignupPasswordError('Passwords do not match.');

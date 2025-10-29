@@ -3,6 +3,8 @@ import api from "./api";
 import { Toaster, toast } from 'react-hot-toast';
 import Header from './Header';
 
+import Data from './assets/data.json';
+
 function Personal_info() {
     const fileInputRef = useRef(null);
     const panInputRef = useRef(null);
@@ -163,9 +165,9 @@ function Personal_info() {
         }
     };
 
-        const onDragOver = (e) => {
-            e.preventDefault();
-        }
+    const onDragOver = (e) => {
+        e.preventDefault();
+    }
 
     const onDrop = (e, type) => {
         e.preventDefault();
@@ -214,9 +216,9 @@ function Personal_info() {
                     Manage your personal information, land details, and bank accounts. Keep your documents secure by uploading verified identity proofs.
                 </p>
 
-                    {/* Personal Information Card */}
-                    <div className="bg-white rounded-2xl p-8 mt-6 shadow-lg ring-1 ring-gray-100">
-                        <h2 className="text-green-700 font-semibold mb-6 text-xl">Personal Information</h2>
+                {/* Personal Information Card */}
+                <div className="bg-white rounded-2xl p-8 mt-6 shadow-lg ring-1 ring-gray-100">
+                    <h2 className="text-green-700 font-semibold mb-6 text-xl">Personal Information</h2>
 
                     {/* Profile Image + Inputs */}
                     <div className="flex items-start gap-8 flex-wrap">
@@ -680,4 +682,4 @@ function Personal_info() {
     );
 }
 
-    export default Personal_info;
+export default Personal_info;
