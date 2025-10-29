@@ -1,12 +1,16 @@
 from rest_framework import generics
 from .models import User
 from django.http import HttpResponse
-from django.template.loader import render_to_string
+
 from .serializers import UserSignupSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework.response import Response
+from django.conf import settings
 from rest_framework.views import APIView
+from rest_framework import status
 from django.contrib.auth import authenticate
 from .otp_utils import send_otp_sms, verify_otp_sms
 from .auth_utils import login_with_otp_success
@@ -20,7 +24,7 @@ from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import PasswordResetOTP  # a model to store OTP temporarily
+from .models import PasswordResetOTP 
 import os
 otp = ""
 
@@ -29,34 +33,35 @@ User = get_user_model()
 
 @api_view(['POST'])
 def forgot_password_send_otp(request):
-    load_dotenv()
     email = request.data.get('email')
     if not email:
-        return HttpResponse("Email is required", status=400)
-
-    otp = str(random.randint(100000, 999999))
-    subject = f"Email verification code: {otp}"
-    message = f'Your OTP is {otp}, please do not share it with anyone'
-    html_content = render_to_string("otp_email.html", {"otp": otp, "user_email": email})
-    from_email = os.getenv('EMAIL_HOST_USER')
-    recipient_list = [email]
+        return Response({"error": "Email is required"}, status=400)
 
     try:
-        # check user exists
         user = User.objects.get(email_address=email)
-
-        # store OTP in DB
-        PasswordResetOTP.objects.update_or_create(
-            user=user,
-            defaults={"otp": otp}
-        )
-
-        send_mail(subject, message, from_email, recipient_list, fail_silently=False, html_message=html_content)
-        return HttpResponse("Email sent successfully!")
     except User.DoesNotExist:
-        return HttpResponse("User not found.", status=404)
+        return Response({"error": "User not found"}, status=404)
+
+    otp = str(random.randint(100000, 999999))
+    PasswordResetOTP.objects.update_or_create(
+        user=user,
+        defaults={"otp": otp}
+    )
+
+    subject = "E-mail verification"
+    message = f'Your OTP is {otp}, please do not share it with anyone'
+
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False
+        )
+        return Response({"success": "Email sent successfully!"})
     except Exception as e:
-        return HttpResponse(f"Error sending email: {e}", status=500)
+        return Response({"error": f"Error sending email: {e}"}, status=500) 
 
 @api_view(['POST'])
 def forgot_password_verify_otp(request):
@@ -94,7 +99,6 @@ def forgot_password_reset(request):
     user.password = make_password(new_password)
     user.save()
 
-    # cleanup OTPs for this user
     PasswordResetOTP.objects.filter(user=user).delete()
 
     return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
@@ -103,9 +107,7 @@ def forgot_password_reset(request):
 class UserSignupView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSignupSerializer
-    permission_classes = []  # anyone can sign up
-
-
+    permission_classes = []  
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -134,11 +136,22 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
+        remember_me = request.data.get("remember", False)  # get from request body
         response = super().post(request, *args, **kwargs)
         data = response.data
 
         refresh = data.get("refresh")
         access = data.get("access")
+
+        # Set default expiry
+        access_max_age = 300  # 5 minutes
+        refresh_max_age = 7*24*60*60  # 7 days
+
+        # Extend expiry if remember_me is checked
+        if remember_me:
+            print("working")
+            access_max_age = 60*60*24  # 1 day
+            refresh_max_age = 30*24*60*60  # 30 days
 
         # Set HttpOnly cookies
         response.set_cookie(
@@ -147,15 +160,16 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             httponly=True,
             secure=False,   # ❌ set True in production with HTTPS
             samesite="Strict",
-            max_age=300,    # 5 mins
+            max_age=access_max_age,    # 5 mins
         )
+
         response.set_cookie(
             key="refresh_token",
             value=refresh,
             httponly=True,
             secure=False,
             samesite="Strict",
-            max_age=7*24*60*60,  # 7 days
+            max_age=refresh_max_age,  # 7 days
         )
 
         # You can remove tokens from response body if you want
@@ -181,7 +195,7 @@ class CookieTokenRefreshView(APIView):
                 httponly=True,
                 secure=False,
                 samesite="Strict",
-                max_age=300,   # 5 minutes
+                max_age=300,   
             )
             return response
 
@@ -203,14 +217,45 @@ class VerifyOTPView(APIView):
     def post(self, request):
         user_id = request.data.get("user_id")
         token = request.data.get("otp")
+        remember = request.data.get("remember", False)  # new
 
         try:
             user = User.objects.get(id=user_id)
             if verify_otp_sms(user, token):
-                return login_with_otp_success(user)
+                # Generate JWT tokens
+                refresh = RefreshToken.for_user(user)
+                access = str(refresh.access_token)
+                refresh_token = str(refresh)
+
+                # Set token lifetimes
+                access_max_age = 300  # 5 minutes
+                refresh_max_age = 7*24*60*60  # 7 days
+
+                if remember:
+                    access_max_age = 60*60*24  # 1 day
+                    refresh_max_age = 30*24*60*60  # 30 days
+
+                response = Response({"message": "Login successful"}, status=status.HTTP_200_OK)
+                response.set_cookie(
+                    key="access_token",
+                    value=access,
+                    httponly=True,
+                    secure=False,  # True in production
+                    samesite="Strict",
+                    max_age=access_max_age,
+                )
+                response.set_cookie(
+                    key="refresh_token",
+                    value=refresh_token,
+                    httponly=True,
+                    secure=False,
+                    samesite="Strict",
+                    max_age=refresh_max_age,
+                )
+
+                return response
+
             else:
                 return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        
