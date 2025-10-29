@@ -3,11 +3,10 @@ import './Authentication.css'; // Your main CSS file
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeftLong } from '@fortawesome/free-solid-svg-icons';
-
-
 import Login from './Login';
 import Signup from './Signup';
 import ForgotPassword from './ForgotPassword';
+import Settings from '../HomePage/Settings';    
 
 function Authentication() {
     const navigate = useNavigate();
@@ -45,6 +44,7 @@ function Authentication() {
 
     return (
         <>
+            <Settings />
             <div className="signup-bg bg-green-300 h-screen flex flex-col">
                 <div className="absolute top-5 left-5 flex items-center">
                     <FontAwesomeIcon icon={faArrowLeftLong} className="mr-2 text-green-600" />

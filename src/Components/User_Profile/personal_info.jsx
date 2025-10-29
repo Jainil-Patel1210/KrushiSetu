@@ -2,6 +2,7 @@
 import React,{useRef,useState} from 'react';
 import Data from './assets/data.json';
 import Header from './Header';
+import Settings from '../HomePage/Settings.jsx';
 
 function Personal_info() {
     const fileInputRef = useRef(null);
@@ -106,6 +107,7 @@ function Personal_info() {
     return (
         <>
             <Header />
+            <Settings />
             {/* Main Section */}
             <div className="w-full max-w-5xl mx-auto px-8">
                 <h1 className="font-extrabold text-3xl text-gray-900 mt-8">Profile & Personal Details</h1>

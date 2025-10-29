@@ -3,6 +3,7 @@ import { FaPlus, FaEye, FaPlay } from 'react-icons/fa';
 import Header from "./Header";
 import './Support.css';
 import FAQ from '../HomePage/FAQ.jsx';
+import Settings from '../HomePage/Settings.jsx';
 
 function Support() {
     const grievances = [
@@ -37,6 +38,7 @@ function Support() {
     return (
         <>
             <Header />
+            <Settings />
             <div className="w-full mx-auto">
                 <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 md:px-10">
                     <h1 className="font-extrabold text-3xl text-gray-900 mt-1">Support & Help</h1>
