@@ -23,4 +23,7 @@ urlpatterns = [
     path('api/', include('app.urls')),
     path('', include('app.urls')),
     path('profile/', include('dashboard.urls')),
+
+    # changed: mount photo app at /photo/
+    path('photo/', include('photo.urls')),
 ]
