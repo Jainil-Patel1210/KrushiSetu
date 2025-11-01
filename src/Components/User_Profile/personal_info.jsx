@@ -439,10 +439,10 @@ function Personal_info() {
                         <input
                             type="text"
                             value={formData.address}
-                            onChange={(e) => handleInputChange(e, "address")}
+                            onChange={(e) => handleInputChange(e.target.value, "address")}
                             maxLength={150}
                             placeholder="Enter Address"
-                            className="w-full h-12 border border-gray-300 rounded-md px-4 text-sm mt-1"
+                            className="w-full h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"
                         />
                     </div>
                 </div>
@@ -595,9 +595,9 @@ function Personal_info() {
                         <input
                             type="text"
                             value={formData.bank_name}
-                            onChange={(e) => handleInputChange(e, "bank_name")}
+                            onChange={(e) => handleInputChange(e.target.value, "bank_name")}
                             placeholder="Enter Bank Name"
-                            className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"
+                            className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"
                         />
                     </div>
 
