@@ -121,8 +121,8 @@ function Personal_info() {
     }, []);
 
 
-    const handleInputChange = (e, fieldName) => {
-        setFormData((prev) => ({ ...prev, [fieldName]: e.target.value }));
+    const handleInputChange = (value, fieldName) => {
+        setFormData((prev) => ({ ...prev, [fieldName]: value }));
     };
 
     const handleInputFileSelection = (file, type) => {
@@ -272,7 +272,7 @@ function Personal_info() {
                                     value={formData.full_name}
                                     onChange={(e) => {
                                         const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
-                                        handleInputChange(e, 'full_name')
+                                        handleInputChange(value, 'full_name')
                                         if (validateName(value)) setFullNameError('');
                                     }}
                                     onBlur={() => {
@@ -294,8 +294,8 @@ function Personal_info() {
                                     value={formData.email}
                                     onChange={(e) => {
                                         const value = e.target.value.replace(/[^0-9a-zA-Z@._-]/g, '');
-                                        handleInputChange(e, 'email');
-                                        if (validateEmail(formData.email)) setEmailError('');
+                                        handleInputChange(value, 'email');
+                                        if (validateEmail(value)) setEmailError('');
                                     }}
                                     onBlur={() => {
                                         if (formData.email && !validateEmail(formData.email)) {
@@ -317,13 +317,13 @@ function Personal_info() {
                                     placeholder="Enter Phone Number"
                                     value={formData.phone}
                                     onChange={(e) => {
-                                        const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                        handleInputChange(e, 'phone');
-                                        if (digits.length === 13) setMobileError('');
+                                        const digits = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
+                                        handleInputChange(digits, 'phone');
+                                        if (digits.length !== 10) setMobileError('');
                                     }}
                                     onBlur={() => {
-                                        if (formData.phone && formData.phone.length !== 13) {
-                                            setMobileError('Add +91. Mobile number must be exactly 10 digits.');
+                                        if (formData.phone && formData.phone.length !== 10) {
+                                            setMobileError('Mobile number must be exactly 10 digits.');
                                         } else {
                                             setMobileError('');
                                         }
@@ -341,7 +341,7 @@ function Personal_info() {
                                     value={formData.aadhaar_number}
                                     onChange={(e) => {
                                         const digits = e.target.value.replace(/\D/g, '').slice(0, 12);
-                                        handleInputChange(e, 'aadhaar_number');
+                                        handleInputChange(digits, 'aadhaar_number');
                                         if (digits.length === 12) setAadhaarError('');
                                     }}
                                     onBlur={() => {
@@ -365,7 +365,7 @@ function Personal_info() {
                             <select
                                 value={formData.state}
                                 onChange={(e) => {
-                                    handleInputChange(e, 'state');
+                                    handleInputChange(e.target.value, 'state');
                                 }}
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white">
                                 <option value="">Select State</option>
@@ -382,7 +382,7 @@ function Personal_info() {
                             <select
                                 value={formData.district}
                                 onChange={(e) => {
-                                    handleInputChange(e, 'district');
+                                    handleInputChange(e.target.value, 'district');
                                 }}
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
                             >
@@ -398,7 +398,7 @@ function Personal_info() {
                             <select
                                 value={formData.taluka}
                                 onChange={(e) => {
-                                    handleInputChange(e, 'taluka');
+                                    handleInputChange(e.target.value, 'taluka');
                                 }}
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
                             >
@@ -416,7 +416,7 @@ function Personal_info() {
                             <select
                                 value={formData.village}
                                 onChange={(e) =>
-                                    handleInputChange(e, 'village')
+                                    handleInputChange(e.target.value, 'village')
                                 }
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
                             >
@@ -446,17 +446,20 @@ function Personal_info() {
                 {/* Land information */}
                 <div className="bg-white rounded-2xl p-6 mt-6 shadow-lg ring-1 ring-gray-100">
                     <h2 className="text-green-700 font-semibold mb-6 text-xl">Land Information</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="flex flex-col">
                             <label className="text-md font-semibold">Land Size</label>
                             <input type="text" value={formData.land_size}
-                                onChange={(e) => handleInputChange(e, "land_size")} placeholder="Enter Land Size" className="h-12 border border-gray-300 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none" />
+                                onChange={(e) => {
+                                    const digits = e.target.value.replace(/\D/g, '');
+                                    handleInputChange(digits, "land_size");
+                                }} placeholder="Enter Land Size" className="h-12 border border-gray-300 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none" />
                         </div>
                         <div className="flex flex-col">
                             <label className="text-md font-semibold">Unit</label>
                             <select
                                 value={formData.unit}
-                                onChange={(e) => handleInputChange(e, 'unit')}
+                                onChange={(e) => handleInputChange(e.target.value, 'unit')}
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
                             >
                                 <option value="">Select Unit</option>
@@ -468,7 +471,7 @@ function Personal_info() {
                             <label className="text-md font-semibold">Soil Type</label>
                             <select
                                 value={formData.soil_type}
-                                onChange={(e) => handleInputChange(e, 'soil_type')}
+                                onChange={(e) => handleInputChange(e.target.value, 'soil_type')}
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
                             >
                                 <option value="">Select Soil Type</option>
@@ -554,7 +557,7 @@ function Personal_info() {
                                 value={formData.bank_account_number}
                                 onChange={(e) => {
                                     const digits = e.target.value.replace(/\D/g, '');
-                                    handleInputChange(e, 'bank_account_number')
+                                    handleInputChange(digits, 'bank_account_number')
                                 }}
                                 className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none`}
                             />
@@ -567,7 +570,7 @@ function Personal_info() {
                                 value={formData.ifsc_code}
                                 onChange={(e) => {
                                     const digits = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 11);
-                                    handleInputChange(e, 'ifsc_code');
+                                    handleInputChange(digits, 'ifsc_code');
                                     if (validateIFSC(digits)) setIfscError('');
                                 }}
                                 onBlur={() => {
