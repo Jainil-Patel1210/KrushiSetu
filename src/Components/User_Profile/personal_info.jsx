@@ -63,6 +63,38 @@ function Personal_info() {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = response.data;
+                
+
+
+                // Populate file previews
+                if (data.land_proof) {
+                    setInputFileInfo({
+                        name: data.land_proof.split("/").pop(),
+                        preview: data.land_proof,
+                    });
+
+
+                }
+                if (data.pan_card) {
+                    setPanFileInfo({
+                        name: data.pan_card.split("/").pop(),
+                        preview: data.pan_card,
+                    });
+                }
+                if (data.aadhaar_card) {
+                  
+                    setAadhaarFileInfo({
+                        name: data.aadhaar_card.split("/").pop(),
+                        preview: data.aadhaar_card,
+                    });
+                }
+                if (data.photo) {
+                    console.log("Hai photo par bata nhi raha");
+                    setPhotoFileInfo({
+                        name: data.photo.split("/").pop(),
+                        preview: data.photo,
+                    });
+                }
                 setFormData((prev) => ({
                     ...prev,
                     full_name: data.full_name || "",
@@ -81,36 +113,8 @@ function Personal_info() {
                     bank_account_number: data.bank_account_number || "",
                     ifsc_code: data.ifsc_code || "",
                     bank_name: data.bank_name || "",
-                }));
+}));
 
-                console.log(data);
-
-                // Populate file previews
-                if (data.land_proof) {
-                    setInputFileInfo({
-                        name: data.land_proof.split("/").pop(),
-                        preview: data.land_proof,
-                    });
-                }
-                if (data.pan_card) {
-                    setPanFileInfo({
-                        name: data.pan_card.split("/").pop(),
-                        preview: data.pan_card,
-                    });
-                }
-                if (data.aadhaar_card) {
-                    setAadhaarFileInfo({
-                        name: data.aadhaar_card.split("/").pop(),
-                        preview: data.aadhaar_card,
-                    });
-                }
-                if (data.photo) {
-                    console.log("Hai photo par bata nhi raha");
-                    setPhotoFileInfo({
-                        name: data.photo.split("/").pop(),
-                        preview: data.photo,
-                    });
-                }
             } catch (err) {
                 console.error("Error fetching profile:", err);
             }

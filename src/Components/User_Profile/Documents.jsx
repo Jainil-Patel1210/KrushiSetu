@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Header from './Header';
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai';
-import api from './api';
+import api from './api1';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 

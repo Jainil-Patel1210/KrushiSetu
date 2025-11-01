@@ -17,7 +17,7 @@
     "@react-oauth/google": "^0.12.2",
     "@tailwindcss/vite": "^4.1.13",
     "aos": "^2.3.4",
-    "axios": "^1.12.2",
+    "axios": "^1.13.1",
     "google-oauth": "^0.0.2",
     "js-cookie": "^3.0.5",
     "react": "^18.2.0",
@@ -38,6 +38,6 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
     "tailwindcss": "^4.1.13",
-    "vite": "^7.1.9"
+    "vite": "^7.1.12"
   }
 }
