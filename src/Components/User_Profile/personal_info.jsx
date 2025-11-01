@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import api from "./api";
 import { Toaster, toast } from 'react-hot-toast';
 import Header from './Header';
+import Settings from '../HomePage/Settings.jsx';
 
 import Data from './assets/data.json';
 
@@ -209,6 +210,7 @@ function Personal_info() {
         <>
             <Toaster position="top-center" reverseOrder={false} />
             <Header />
+            <Settings />
             {/* Main Section */}
             <div className="w-full max-w-5xl mx-auto px-8">
                 <h1 className="font-extrabold text-3xl text-gray-900">Profile & Personal Details</h1>

@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Header from './Header';
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai';
+import { v4 as uuid } from 'uuid';
+import Settings from '../HomePage/Settings.jsx';
 import api from './api';
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -254,7 +256,7 @@ const Documents = () => {
             <div className={isBlurred ? 'blur-sm' : ''}>
                 <Header />
             </div>
-
+            <Settings />
             <div className={`w-full bg-gray-100 min-h-screen ${isBlurred ? 'blur-sm' : ''}`}>
                 <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 md:px-10">
                     <h1 className="text-3xl font-bold">Documents</h1>
