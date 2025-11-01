@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SocialLogin from './SocialLogin';
 import PasswordToggleIcon from './PasswordToggleIcon';
-import axios from 'axios'; // For the signup API call
+import api from './api'; // For the signup API call
+import { Toaster, toast } from 'react-hot-toast';
 
-function Signup({ onSignupSuccess }) {
-    const navigate = useNavigate(); 
+function Signup({ onSignupSuccess = null }) {
+    const navigate = useNavigate();
     const [signupMethod, setSignupMethod] = useState('email');
     const [signupFullName, setSignupFullName] = useState('');
     const [signupFullNameError, setSignupFullNameError] = useState('');
@@ -82,13 +83,17 @@ function Signup({ onSignupSuccess }) {
     // Signup email form submit
     const handleSignupEmailSubmit = async (e) => {
         e.preventDefault();
+        const btn = document.getElementById("btn5");
+        btn.disabled = true;
         try {
             if (signupPassword !== signupConfirmPassword) {
                 setSignupPasswordError('Passwords do not match.');
+                btn.disabled = false;
                 return;
             }
             if (signupFullNameError || signupAadhaarError || signupEmailError || signupPasswordError) {
-                alert("Please correct the errors in the form.");
+                toast.error("Please correct the errors in the form.");
+                btn.disabled = false;
                 return;
             }
 
@@ -105,8 +110,11 @@ function Signup({ onSignupSuccess }) {
             // Only proceed if response is successful
             if (response.status === 201 || response.status === 200) {
                 setSignupPasswordError('');
-                alert("Account created successfully!");
-                // Clear form after successful signup
+                toast.success("Account created successfully!");
+                setTimeout(() => {
+                    handlePageSwitch('login');
+                }, 1200);
+                btn.disabled = false;
                 setSignupFullName('');
                 setSignupAadhaar('');
                 setSignupEmail('');
@@ -114,91 +122,96 @@ function Signup({ onSignupSuccess }) {
                 setSignupConfirmPassword('');
                 onSignupSuccess(); // Notify parent to switch to login page
             } else {
-                // If API returns error but no exception is thrown
-                alert("Register failed! " + (response.data?.detail || 'Unknown error.'));
+                toast.error("Register failed! " + (response.data?.detail || 'Unknown error.'));
+                btn.disabled = false;
             }
         } catch (error) {
             // Only show error if an actual error occurs
             console.error("Register failed: ", error.response ? error.response.data : error.message);
-            alert("Register failed! " + (error.response?.data?.detail || error.message));
+            toast.error("Register failed! " + (error.response?.data?.detail || error.message));
+            btn.disabled = false;
         }
     };
 
     return (
-        <div>
-            <p className="text-black text-center text-xl font-bold mb-0.5">Create Your Account</p>
-            {signupMethod === 'email' && (
-                <form onSubmit={handleSignupEmailSubmit}>
-                    <div className="p-2">
-                        <input
-                            className="w-full p-1.5 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
-                            type="text"
-                            placeholder="Full Name"
-                            value={signupFullName}
-                            onChange={handleSignupFullNameChange}
-                            required
-                        />
-                        {signupFullNameError && <p className="text-red-600 text-xs mb-2">{signupFullNameError}</p>}
-                        <input
-                            className="w-full p-1.5 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
-                            type="text"
-                            placeholder="Mobile Number"
-                            value={signupAadhaar}
-                            onChange={handleSignupAadhaarChange}
-                            maxLength={10}
-                            required
-                        />
-                        {signupAadhaarError && <p className="text-red-600 text-xs mb-2">{signupAadhaarError}</p>}
-                        <input
-                            className="w-full p-1.5 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 "
-                            type="email"
-                            placeholder="Email"
-                            value={signupEmail}
-                            onChange={handleSignupEmailChange}
-                            required
-                        />
-                        {signupEmailError && <p className="text-red-600 text-xs mb-2">{signupEmailError}</p>}
-                        <div className="relative">
+        <>
+            <Toaster position="top-center" reverseOrder={false} />
+            <div>
+                <p className="text-black text-center text-xl font-bold mb-0.5">Create Your Account</p>
+                {signupMethod === 'email' && (
+                    <form onSubmit={handleSignupEmailSubmit}>
+                        <div className="p-2">
+                            <input
+                                className="w-full p-1.5 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+                                type="text"
+                                placeholder="Full Name"
+                                value={signupFullName}
+                                onChange={handleSignupFullNameChange}
+                                required
+                            />
+                            {signupFullNameError && <p className="text-red-600 text-xs mb-2">{signupFullNameError}</p>}
+                            <input
+                                className="w-full p-1.5 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+                                type="text"
+                                placeholder="Mobile Number"
+                                value={signupAadhaar}
+                                onChange={handleSignupAadhaarChange}
+                                maxLength={10}
+                                required
+                            />
+                            {signupAadhaarError && <p className="text-red-600 text-xs mb-2">{signupAadhaarError}</p>}
                             <input
                                 className="w-full p-1.5 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 "
-                                type={showSignupPassword ? "text" : "password"}
-                                placeholder="Password"
-                                value={signupPassword}
-                                onChange={handleSignupPasswordChange}
+                                type="email"
+                                placeholder="Email"
+                                value={signupEmail}
+                                onChange={handleSignupEmailChange}
                                 required
                             />
-                            <PasswordToggleIcon visible={showSignupPassword} onClick={() => setShowSignupPassword((prev) => !prev)} />
+                            {signupEmailError && <p className="text-red-600 text-xs mb-2">{signupEmailError}</p>}
+                            <div className="relative">
+                                <input
+                                    className="w-full p-1.5 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 "
+                                    type={showSignupPassword ? "text" : "password"}
+                                    placeholder="Password"
+                                    value={signupPassword}
+                                    onChange={handleSignupPasswordChange}
+                                    required
+                                />
+                                <PasswordToggleIcon visible={showSignupPassword} onClick={() => setShowSignupPassword((prev) => !prev)} />
+                            </div>
+                            <div className="relative">
+                                <input
+                                    className="w-full p-1.5 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 "
+                                    type={showSignupConfirmPassword ? "text" : "password"}
+                                    placeholder="Confirm Password"
+                                    value={signupConfirmPassword}
+                                    onChange={handleSignupConfirmPasswordChange}
+                                    required
+                                />
+                                <PasswordToggleIcon visible={showSignupConfirmPassword} onClick={() => setShowSignupConfirmPassword((prev) => !prev)} />
+                            </div>
+                            {signupPasswordError && <p className="text-red-600 text-xs mb-2">{signupPasswordError}</p>}
                         </div>
-                        <div className="relative">
-                            <input
-                                className="w-full p-1.5 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 "
-                                type={showSignupConfirmPassword ? "text" : "password"}
-                                placeholder="Confirm Password"
-                                value={signupConfirmPassword}
-                                onChange={handleSignupConfirmPasswordChange}
-                                required
-                            />
-                            <PasswordToggleIcon visible={showSignupConfirmPassword} onClick={() => setShowSignupConfirmPassword((prev) => !prev)} />
+                        <div className="flex items-center space-x-2 pl-4 mb-2">
+                            <input type="checkbox" id="agree" className="h-4 w-4 text-green-700 border-gray-300 rounded focus:ring-green-500" required />
+                            <label htmlFor="agree" className="text-black">I agree to the <span className='text-green-700'>Terms & Conditions</span></label>
                         </div>
-                        {signupPasswordError && <p className="text-red-600 text-xs mb-2">{signupPasswordError}</p>}
-                    </div>
-                    <div className="flex items-center space-x-2 pl-4 mb-2">
-                        <input type="checkbox" id="agree" className="h-4 w-4 text-green-700 border-gray-300 rounded focus:ring-green-500" required />
-                        <label htmlFor="agree" className="text-black">I agree to the <span className='text-green-700'>Terms & Conditions</span></label>
-                    </div>
-                    <div className="flex items-center justify-center pt-2">
-                        <button
-                            className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError) ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
-                            type="submit"
-                            disabled={!(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError)}
-                        >
-                            Create Account
-                        </button>
-                    </div>
-                    <SocialLogin />
-                </form>
-            )}
-        </div>
+                        <div className="flex items-center justify-center pt-2">
+                            <button
+                                className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError) ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
+                                type="submit"
+                                id="btn5"
+                                disabled={!(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError)}
+                            >
+                                Create Account
+                            </button>
+                        </div>
+                        <SocialLogin />
+                    </form>
+                )}
+            </div>
+        </>
     );
 }
 
