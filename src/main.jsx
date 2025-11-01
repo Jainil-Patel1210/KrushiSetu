@@ -5,7 +5,6 @@ import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } 
 import Homepage from '../src/Components/HomePage/Homepage.jsx';
 import Authentication from './Components/Signup_And_Login/Authentication.jsx';
 import Sidebar from './Components/User_Profile/Sidebar.jsx';
-import App from './App.jsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -13,7 +12,6 @@ const router = createBrowserRouter(
       <Route path="/" element={<Homepage />} />
       <Route path="/login" element={<Authentication />} />
       <Route path="/sidebar" element={<Sidebar />} />
-      <Route path="/app" element={<App />} />
     </>
   )
 );
