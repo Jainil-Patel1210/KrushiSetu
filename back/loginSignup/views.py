@@ -156,12 +156,13 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 refresh_max_age = 30*24*60*60  # 30 days
 
             # Set HttpOnly cookies
+              
             response.set_cookie(
                 key="access_token",
                 value=access,
                 httponly=True,
-                secure=False,  # Set to True in production with HTTPS
-                samesite="Lax",
+                secure=True,  # Set to True in production with HTTPS
+                samesite="None",
                 max_age=access_max_age,
                 domain=None,  # Allow cookie on localhost
                 path="/",  # Make cookie available for all paths
@@ -171,8 +172,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 key="refresh_token",
                 value=refresh,
                 httponly=True,
-                secure=False,
-                samesite="Lax",
+                secure=True,
+                samesite="None",
                 max_age=refresh_max_age,
                 domain=None,
                 path="/",
@@ -201,8 +202,8 @@ class CookieTokenRefreshView(APIView):
                 key="access_token",
                 value=access,
                 httponly=True,
-                secure=False,
-                samesite="Strict",
+                secure=True,
+                samesite="None",
                 max_age=300,   
             )
             return response
@@ -258,16 +259,16 @@ class VerifyOTPView(APIView):
                     'access_token',
                     access,
                     httponly=True,
-                    secure=False,  # Set to True in production with HTTPS
-                    samesite='Lax',
+                    secure=True,  # Set to True in production with HTTPS
+                    samesite="None",
                     max_age=access_max_age,
                 )
                 response.set_cookie(
                     'refresh_token',
                     refresh_token,
                     httponly=True,
-                    secure=False,
-                    samesite='Lax',
+                    secure=True,
+                    samesite="None",
                     max_age=refresh_max_age,
                 )
 
