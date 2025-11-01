@@ -1,4 +1,5 @@
 import React from 'react';
+import Settings from '../HomePage/Settings.jsx';
 
 function Subsidy_detail({ subsidy, onClose }) {
     if (!subsidy) return null;
@@ -17,6 +18,7 @@ function Subsidy_detail({ subsidy, onClose }) {
 
     return (
         <div className="fixed inset-0 bg-gray-100 bg-opacity-75 flex justify-center items-start p-4 z-50 overflow-y-auto">
+            <Settings />
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl p-8 relative my-8">
                 <button
                     onClick={onClose}

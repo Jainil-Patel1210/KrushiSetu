@@ -6,9 +6,9 @@ import Guidlines from './Guidlines'
 import Footer from './Footer'
 import FAQ from './FAQ'
 import News from './News'
+import Settings from './Settings'
 
 function Homepage() {
-    
     return (
         <>
             <Navbar />
@@ -27,6 +27,7 @@ function Homepage() {
             <Subsidy />
             {/* <Guidlines /> */}
             <News />
+            <Settings />
             <FAQ />
             <Footer />
         </>

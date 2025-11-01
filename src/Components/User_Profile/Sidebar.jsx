@@ -3,6 +3,8 @@ import Dashboard from './Dashboard.jsx';
 import Personal_info from './personal_info.jsx'
 import Subsidy_List from './Subsidy_List.jsx';
 import Documents from './Documents.jsx';
+import Support from './Support.jsx';
+
 function Sidebar() {
     const [page,setPage]=useState('Dashboard');
 

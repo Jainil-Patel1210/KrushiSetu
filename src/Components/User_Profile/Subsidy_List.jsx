@@ -3,6 +3,7 @@ import axios from "axios";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import Subsidy_detail from "./Subsidy_detail";
+import Settings from "../HomePage/Settings.jsx";
 
 function Subsidy_List() {
 
@@ -16,7 +17,8 @@ function Subsidy_List() {
         try {
             setLoading(true);
             setError(null);
-            const response = await axios.get("http://127.0.0.1:8000/api/subsidies/", { timeout: 10000 });
+            const BASE_URL = import.meta.env.VITE_BASE_URL; 
+            const response = await axios.get(`${BASE_URL}/api/subsidies/`, { timeout: 10000 });
             setSubsidies(response.data);
         }catch(error){
             console.error("Error fetching subsidies:",error);
@@ -83,6 +85,7 @@ function Subsidy_List() {
     return (
         <>
             <Header />
+            <Settings />
             <div className="w-full min-h-screen">
                 <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 md:px-10">
                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Subsidy Schemes</h1>

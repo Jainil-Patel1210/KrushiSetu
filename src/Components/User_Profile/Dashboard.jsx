@@ -1,5 +1,6 @@
 import React from "react";
 import Header from "./Header.jsx";
+import Settings from "../HomePage/Settings.jsx";
 
 const Dashboard = () => {
     const data = [
@@ -67,7 +68,7 @@ const Dashboard = () => {
     return (
         <>
             <Header />
-
+            <Settings />
             {/* Main Section */}
             <div className="w-full bg-gray-100 min-h-screen">
                 <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-10">
