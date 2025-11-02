@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_hotp',
     'app',
     'dashboard',
+    'support',
     'photo',
     'cloudinary',
 ]

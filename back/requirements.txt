@@ -69,3 +69,4 @@ python-decouple
 whitenoise
 sendgrid
 django-sendgrid-v5
+cloudinary

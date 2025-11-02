@@ -16,6 +16,8 @@ function Personal_info() {
     const [aadhaarFileInfo, setAadhaarFileInfo] = useState(null);
     const [inputFileError, setInputFileError] = useState("");
     const [photoFileInfo, setPhotoFileInfo] = useState(null);
+    // track created object URLs so we can revoke them on unmount
+    const createdObjectUrls = React.useRef([]);
 
     const [aadhaarError, setAadhaarError] = useState('');
     const [mobileError, setMobileError] = useState('');
@@ -64,36 +66,46 @@ function Personal_info() {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = response.data;
-                
 
 
-                // Populate file previews
+
+                // Populate file previews. Normalize returned paths to absolute URLs
+                const normalizeUrl = (u) => {
+                    if (!u) return null;
+                    // already absolute
+                    if (u.startsWith('http://') || u.startsWith('https://')) return u;
+                    // absolute path from backend (starts with /)
+                    if (u.startsWith('/')) return window.location.origin + u;
+                    // otherwise assume it's relative to backend root
+                    return `http://127.0.0.1:8000/${u}`;
+                };
+
                 if (data.land_proof) {
+                    const url = normalizeUrl(data.land_proof);
                     setInputFileInfo({
-                        name: data.land_proof.split("/").pop(),
-                        preview: data.land_proof,
+                        name: data.land_proof.split('/').pop(),
+                        preview: url,
                     });
-
-
                 }
                 if (data.pan_card) {
+                    const url = normalizeUrl(data.pan_card);
                     setPanFileInfo({
-                        name: data.pan_card.split("/").pop(),
-                        preview: data.pan_card,
+                        name: data.pan_card.split('/').pop(),
+                        preview: url,
                     });
                 }
                 if (data.aadhaar_card) {
-                  
+                    const url = normalizeUrl(data.aadhaar_card);
                     setAadhaarFileInfo({
-                        name: data.aadhaar_card.split("/").pop(),
-                        preview: data.aadhaar_card,
+                        name: data.aadhaar_card.split('/').pop(),
+                        preview: url,
                     });
                 }
                 if (data.photo) {
-                    console.log("Hai photo par bata nhi raha");
+                    const url = normalizeUrl(data.photo);
                     setPhotoFileInfo({
-                        name: data.photo.split("/").pop(),
-                        preview: data.photo,
+                        name: data.photo.split('/').pop(),
+                        preview: url,
                     });
                 }
                 setFormData((prev) => ({
@@ -114,7 +126,7 @@ function Personal_info() {
                     bank_account_number: data.bank_account_number || "",
                     ifsc_code: data.ifsc_code || "",
                     bank_name: data.bank_name || "",
-}));
+                }));
 
             } catch (err) {
                 console.error("Error fetching profile:", err);
@@ -122,6 +134,14 @@ function Personal_info() {
         };
 
         fetchProfile();
+        return () => {
+            // revoke any created object URLs on unmount
+            if (createdObjectUrls.current && createdObjectUrls.current.length) {
+                createdObjectUrls.current.forEach((u) => {
+                    try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
+                });
+            }
+        };
     }, []);
 
 
@@ -148,6 +168,9 @@ function Personal_info() {
             preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
         };
 
+        // remember object url to revoke later
+        if (previewObj.preview) createdObjectUrls.current.push(previewObj.preview);
+
         if (type === "land_proof") setInputFileInfo(previewObj);
         else if (type === "pan_card") setPanFileInfo(previewObj);
         else if (type === "aadhaar_card") setAadhaarFileInfo(previewObj);
@@ -167,6 +190,7 @@ function Personal_info() {
         if (file) {
             const preview = URL.createObjectURL(file);
             setPhotoFileInfo({ file, preview });
+            createdObjectUrls.current.push(preview);
         }
     };
 
@@ -527,13 +551,20 @@ function Personal_info() {
                             {inputFileInfo && (
                                 <div className="mt-3 text-sm text-gray-500">
                                     {inputFileInfo.preview ? (
-                                        <div className="flex items-center gap-3 justify-center">
-                                            <img src={inputFileInfo.preview} alt={inputFileInfo.name} className="w-20 h-14 object-cover rounded" />
-                                            <div>
-                                                <div className="font-medium">{inputFileInfo.name}</div>
-                                                <div className="text-xs">{(inputFileInfo.size / (1024 * 1024)).toFixed(1)} MB</div>
+                                        // show an image preview when preview url looks like an image; otherwise show filename with download link
+                                        /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(inputFileInfo.preview) ? (
+                                            <div className="flex items-center gap-3 justify-center">
+                                                <img src={inputFileInfo.preview} alt={inputFileInfo.name} className="w-20 h-14 object-cover rounded" />
+                                                <div>
+                                                    <div className="font-medium">{inputFileInfo.name}</div>
+                                                    {inputFileInfo.size && <div className="text-xs">{(inputFileInfo.size / (1024 * 1024)).toFixed(1)} MB</div>}
+                                                </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div className="text-center">
+                                                <a href={inputFileInfo.preview} target="_blank" rel="noreferrer" className="text-green-700 underline">{inputFileInfo.name}</a>
+                                            </div>
+                                        )
                                     ) : (
                                         <div className="text-center">{inputFileInfo.name}</div>
                                     )}
@@ -631,7 +662,11 @@ function Personal_info() {
                                 </div>
                             </div>
                             {panFileInfo && panFileInfo.preview && (
-                                <img src={panFileInfo.preview} alt={panFileInfo.name} className="mt-2 w-28 h-18 object-cover rounded" />
+                                /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(panFileInfo.preview) ? (
+                                    <img src={panFileInfo.preview} alt={panFileInfo.name} className="mt-2 w-28 h-18 object-cover rounded" />
+                                ) : (
+                                    <div className="mt-2"><a href={panFileInfo.preview} target="_blank" rel="noreferrer" className="text-green-700 underline">{panFileInfo.name}</a></div>
+                                )
                             )}
                         </div>
 
@@ -667,7 +702,11 @@ function Personal_info() {
                                 </div>
                             </div>
                             {aadhaarFileInfo && aadhaarFileInfo.preview && (
-                                <img src={aadhaarFileInfo.preview} alt={aadhaarFileInfo.name} className="mt-2 w-28 h-18 object-cover rounded" />
+                                /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(aadhaarFileInfo.preview) ? (
+                                    <img src={aadhaarFileInfo.preview} alt={aadhaarFileInfo.name} className="mt-2 w-28 h-18 object-cover rounded" />
+                                ) : (
+                                    <div className="mt-2"><a href={aadhaarFileInfo.preview} target="_blank" rel="noreferrer" className="text-green-700 underline">{aadhaarFileInfo.name}</a></div>
+                                )
                             )}
                         </div>
                     </div>
