@@ -16,8 +16,6 @@ function Personal_info() {
     const [aadhaarFileInfo, setAadhaarFileInfo] = useState(null);
     const [inputFileError, setInputFileError] = useState("");
     const [photoFileInfo, setPhotoFileInfo] = useState(null);
-    // track created object URLs so we can revoke them on unmount
-    const createdObjectUrls = React.useRef([]);
 
     const [aadhaarError, setAadhaarError] = useState('');
     const [mobileError, setMobileError] = useState('');
@@ -66,46 +64,36 @@ function Personal_info() {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = response.data;
+                
 
 
-
-                // Populate file previews. Normalize returned paths to absolute URLs
-                const normalizeUrl = (u) => {
-                    if (!u) return null;
-                    // already absolute
-                    if (u.startsWith('http://') || u.startsWith('https://')) return u;
-                    // absolute path from backend (starts with /)
-                    if (u.startsWith('/')) return window.location.origin + u;
-                    // otherwise assume it's relative to backend root
-                    return `http://127.0.0.1:8000/${u}`;
-                };
-
+                // Populate file previews
                 if (data.land_proof) {
-                    const url = normalizeUrl(data.land_proof);
                     setInputFileInfo({
-                        name: data.land_proof.split('/').pop(),
-                        preview: url,
+                        name: data.land_proof.split("/").pop(),
+                        preview: data.land_proof,
                     });
+
+
                 }
                 if (data.pan_card) {
-                    const url = normalizeUrl(data.pan_card);
                     setPanFileInfo({
-                        name: data.pan_card.split('/').pop(),
-                        preview: url,
+                        name: data.pan_card.split("/").pop(),
+                        preview: data.pan_card,
                     });
                 }
                 if (data.aadhaar_card) {
-                    const url = normalizeUrl(data.aadhaar_card);
+                  
                     setAadhaarFileInfo({
-                        name: data.aadhaar_card.split('/').pop(),
-                        preview: url,
+                        name: data.aadhaar_card.split("/").pop(),
+                        preview: data.aadhaar_card,
                     });
                 }
                 if (data.photo) {
-                    const url = normalizeUrl(data.photo);
+                    console.log("Hai photo par bata nhi raha");
                     setPhotoFileInfo({
-                        name: data.photo.split('/').pop(),
-                        preview: url,
+                        name: data.photo.split("/").pop(),
+                        preview: data.photo,
                     });
                 }
                 setFormData((prev) => ({
@@ -126,7 +114,7 @@ function Personal_info() {
                     bank_account_number: data.bank_account_number || "",
                     ifsc_code: data.ifsc_code || "",
                     bank_name: data.bank_name || "",
-                }));
+}));
 
             } catch (err) {
                 console.error("Error fetching profile:", err);
@@ -134,19 +122,11 @@ function Personal_info() {
         };
 
         fetchProfile();
-        return () => {
-            // revoke any created object URLs on unmount
-            if (createdObjectUrls.current && createdObjectUrls.current.length) {
-                createdObjectUrls.current.forEach((u) => {
-                    try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
-                });
-            }
-        };
     }, []);
 
 
-    const handleInputChange = (e, fieldName) => {
-        setFormData((prev) => ({ ...prev, [fieldName]: e.target.value }));
+    const handleInputChange = (value, fieldName) => {
+        setFormData((prev) => ({ ...prev, [fieldName]: value }));
     };
 
     const handleInputFileSelection = (file, type) => {
@@ -168,9 +148,6 @@ function Personal_info() {
             preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
         };
 
-        // remember object url to revoke later
-        if (previewObj.preview) createdObjectUrls.current.push(previewObj.preview);
-
         if (type === "land_proof") setInputFileInfo(previewObj);
         else if (type === "pan_card") setPanFileInfo(previewObj);
         else if (type === "aadhaar_card") setAadhaarFileInfo(previewObj);
@@ -190,7 +167,6 @@ function Personal_info() {
         if (file) {
             const preview = URL.createObjectURL(file);
             setPhotoFileInfo({ file, preview });
-            createdObjectUrls.current.push(preview);
         }
     };
 
@@ -300,7 +276,7 @@ function Personal_info() {
                                     value={formData.full_name}
                                     onChange={(e) => {
                                         const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
-                                        handleInputChange(e, 'full_name')
+                                        handleInputChange(value, 'full_name')
                                         if (validateName(value)) setFullNameError('');
                                     }}
                                     onBlur={() => {
@@ -322,8 +298,8 @@ function Personal_info() {
                                     value={formData.email}
                                     onChange={(e) => {
                                         const value = e.target.value.replace(/[^0-9a-zA-Z@._-]/g, '');
-                                        handleInputChange(e, 'email');
-                                        if (validateEmail(formData.email)) setEmailError('');
+                                        handleInputChange(value, 'email');
+                                        if (validateEmail(value)) setEmailError('');
                                     }}
                                     onBlur={() => {
                                         if (formData.email && !validateEmail(formData.email)) {
@@ -345,13 +321,13 @@ function Personal_info() {
                                     placeholder="Enter Phone Number"
                                     value={formData.phone}
                                     onChange={(e) => {
-                                        const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                        handleInputChange(e, 'phone');
-                                        if (digits.length === 13) setMobileError('');
+                                        const digits = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
+                                        handleInputChange(digits, 'phone');
+                                        if (digits.length !== 10) setMobileError('');
                                     }}
                                     onBlur={() => {
-                                        if (formData.phone && formData.phone.length !== 13) {
-                                            setMobileError('Add +91. Mobile number must be exactly 10 digits.');
+                                        if (formData.phone && formData.phone.length !== 10) {
+                                            setMobileError('Mobile number must be exactly 10 digits.');
                                         } else {
                                             setMobileError('');
                                         }
@@ -369,7 +345,7 @@ function Personal_info() {
                                     value={formData.aadhaar_number}
                                     onChange={(e) => {
                                         const digits = e.target.value.replace(/\D/g, '').slice(0, 12);
-                                        handleInputChange(e, 'aadhaar_number');
+                                        handleInputChange(digits, 'aadhaar_number');
                                         if (digits.length === 12) setAadhaarError('');
                                     }}
                                     onBlur={() => {
@@ -393,7 +369,7 @@ function Personal_info() {
                             <select
                                 value={formData.state}
                                 onChange={(e) => {
-                                    handleInputChange(e, 'state');
+                                    handleInputChange(e.target.value, 'state');
                                 }}
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white">
                                 <option value="">Select State</option>
@@ -410,7 +386,7 @@ function Personal_info() {
                             <select
                                 value={formData.district}
                                 onChange={(e) => {
-                                    handleInputChange(e, 'district');
+                                    handleInputChange(e.target.value, 'district');
                                 }}
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
                             >
@@ -426,7 +402,7 @@ function Personal_info() {
                             <select
                                 value={formData.taluka}
                                 onChange={(e) => {
-                                    handleInputChange(e, 'taluka');
+                                    handleInputChange(e.target.value, 'taluka');
                                 }}
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
                             >
@@ -444,7 +420,7 @@ function Personal_info() {
                             <select
                                 value={formData.village}
                                 onChange={(e) =>
-                                    handleInputChange(e, 'village')
+                                    handleInputChange(e.target.value, 'village')
                                 }
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
                             >
@@ -463,10 +439,10 @@ function Personal_info() {
                         <input
                             type="text"
                             value={formData.address}
-                            onChange={(e) => handleInputChange(e, "address")}
+                            onChange={(e) => handleInputChange(e.target.value, "address")}
                             maxLength={150}
                             placeholder="Enter Address"
-                            className="w-full h-12 border border-gray-300 rounded-md px-4 text-sm mt-1"
+                            className="w-full h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"
                         />
                     </div>
                 </div>
@@ -474,17 +450,20 @@ function Personal_info() {
                 {/* Land information */}
                 <div className="bg-white rounded-2xl p-6 mt-6 shadow-lg ring-1 ring-gray-100">
                     <h2 className="text-green-700 font-semibold mb-6 text-xl">Land Information</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="flex flex-col">
                             <label className="text-md font-semibold">Land Size</label>
                             <input type="text" value={formData.land_size}
-                                onChange={(e) => handleInputChange(e, "land_size")} placeholder="Enter Land Size" className="h-12 border border-gray-300 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none" />
+                                onChange={(e) => {
+                                    const digits = e.target.value.replace(/\D/g, '');
+                                    handleInputChange(digits, "land_size");
+                                }} placeholder="Enter Land Size" className="h-12 border border-gray-300 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none" />
                         </div>
                         <div className="flex flex-col">
                             <label className="text-md font-semibold">Unit</label>
                             <select
                                 value={formData.unit}
-                                onChange={(e) => handleInputChange(e, 'unit')}
+                                onChange={(e) => handleInputChange(e.target.value, 'unit')}
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
                             >
                                 <option value="">Select Unit</option>
@@ -496,7 +475,7 @@ function Personal_info() {
                             <label className="text-md font-semibold">Soil Type</label>
                             <select
                                 value={formData.soil_type}
-                                onChange={(e) => handleInputChange(e, 'soil_type')}
+                                onChange={(e) => handleInputChange(e.target.value, 'soil_type')}
                                 className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white"
                             >
                                 <option value="">Select Soil Type</option>
@@ -551,20 +530,13 @@ function Personal_info() {
                             {inputFileInfo && (
                                 <div className="mt-3 text-sm text-gray-500">
                                     {inputFileInfo.preview ? (
-                                        // show an image preview when preview url looks like an image; otherwise show filename with download link
-                                        /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(inputFileInfo.preview) ? (
-                                            <div className="flex items-center gap-3 justify-center">
-                                                <img src={inputFileInfo.preview} alt={inputFileInfo.name} className="w-20 h-14 object-cover rounded" />
-                                                <div>
-                                                    <div className="font-medium">{inputFileInfo.name}</div>
-                                                    {inputFileInfo.size && <div className="text-xs">{(inputFileInfo.size / (1024 * 1024)).toFixed(1)} MB</div>}
-                                                </div>
+                                        <div className="flex items-center gap-3 justify-center">
+                                            <img src={inputFileInfo.preview} alt={inputFileInfo.name} className="w-20 h-14 object-cover rounded" />
+                                            <div>
+                                                <div className="font-medium">{inputFileInfo.name}</div>
+                                                <div className="text-xs">{(inputFileInfo.size / (1024 * 1024)).toFixed(1)} MB</div>
                                             </div>
-                                        ) : (
-                                            <div className="text-center">
-                                                <a href={inputFileInfo.preview} target="_blank" rel="noreferrer" className="text-green-700 underline">{inputFileInfo.name}</a>
-                                            </div>
-                                        )
+                                        </div>
                                     ) : (
                                         <div className="text-center">{inputFileInfo.name}</div>
                                     )}
@@ -589,7 +561,7 @@ function Personal_info() {
                                 value={formData.bank_account_number}
                                 onChange={(e) => {
                                     const digits = e.target.value.replace(/\D/g, '');
-                                    handleInputChange(e, 'bank_account_number')
+                                    handleInputChange(digits, 'bank_account_number')
                                 }}
                                 className={`w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none`}
                             />
@@ -602,7 +574,7 @@ function Personal_info() {
                                 value={formData.ifsc_code}
                                 onChange={(e) => {
                                     const digits = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 11);
-                                    handleInputChange(e, 'ifsc_code');
+                                    handleInputChange(digits, 'ifsc_code');
                                     if (validateIFSC(digits)) setIfscError('');
                                 }}
                                 onBlur={() => {
@@ -623,9 +595,9 @@ function Personal_info() {
                         <input
                             type="text"
                             value={formData.bank_name}
-                            onChange={(e) => handleInputChange(e, "bank_name")}
+                            onChange={(e) => handleInputChange(e.target.value, "bank_name")}
                             placeholder="Enter Bank Name"
-                            className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-100"
+                            className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none"
                         />
                     </div>
 
@@ -662,11 +634,7 @@ function Personal_info() {
                                 </div>
                             </div>
                             {panFileInfo && panFileInfo.preview && (
-                                /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(panFileInfo.preview) ? (
-                                    <img src={panFileInfo.preview} alt={panFileInfo.name} className="mt-2 w-28 h-18 object-cover rounded" />
-                                ) : (
-                                    <div className="mt-2"><a href={panFileInfo.preview} target="_blank" rel="noreferrer" className="text-green-700 underline">{panFileInfo.name}</a></div>
-                                )
+                                <img src={panFileInfo.preview} alt={panFileInfo.name} className="mt-2 w-28 h-18 object-cover rounded" />
                             )}
                         </div>
 
@@ -702,11 +670,7 @@ function Personal_info() {
                                 </div>
                             </div>
                             {aadhaarFileInfo && aadhaarFileInfo.preview && (
-                                /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(aadhaarFileInfo.preview) ? (
-                                    <img src={aadhaarFileInfo.preview} alt={aadhaarFileInfo.name} className="mt-2 w-28 h-18 object-cover rounded" />
-                                ) : (
-                                    <div className="mt-2"><a href={aadhaarFileInfo.preview} target="_blank" rel="noreferrer" className="text-green-700 underline">{aadhaarFileInfo.name}</a></div>
-                                )
+                                <img src={aadhaarFileInfo.preview} alt={aadhaarFileInfo.name} className="mt-2 w-28 h-18 object-cover rounded" />
                             )}
                         </div>
                     </div>
