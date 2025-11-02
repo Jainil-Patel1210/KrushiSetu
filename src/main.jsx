@@ -5,11 +5,13 @@ import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } 
 import Homepage from '../src/Components/HomePage/Homepage.jsx';
 import Authentication from './Components/Signup_And_Login/Authentication.jsx';
 import Sidebar from './Components/User_Profile/Sidebar.jsx';
+import ApplySubsidy from './Components/User_Profile/ApplySubsidy.jsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
       <Route path="/" element={<Homepage />} />
+      <Route path="/apply/:id" element={<ApplySubsidy />} />
       <Route path="/login" element={<Authentication />} />
       <Route path="/sidebar" element={<Sidebar />} />
     </>
