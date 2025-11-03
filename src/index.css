@@ -1,2 +1,26 @@
 @import "tailwindcss";
 
+.skiptranslate,
+.goog-te-banner,
+.goog-te-gadget,
+#google_translate_element {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+
+html {
+  top: 0 !important;
+}
+
+body {
+  top: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+[style*="top: 40px"],
+[style*="top: 48px"] {
+  top: 0 !important;
+}
+
