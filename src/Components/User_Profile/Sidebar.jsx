@@ -24,7 +24,6 @@ function Sidebar() {
                         <button className={`flex flex-wrap gap-2 pl-4 ${page==="Documents" ? "bg-green-600 p-3 rounded-md" :""}`} onClick={(e)=>handlePageChange('Documents')}><img src="./Document.svg" className='h-5 w-5' />Documents</button>
                         <button className={`flex flex-wrap gap-2 pl-4 ${page==="Subsidies" ? "bg-green-600 p-3 rounded-md" :""}`} onClick={(e)=>handlePageChange('Subsidies')}><img src="./Note.svg" className='h-5 w-5' />Subsidies</button>
                         <button className={`flex flex-wrap gap-2 pl-4 ${page==="Support" ? "bg-green-600 p-3 rounded-md" :""}`} onClick={(e)=>handlePageChange('Support')}><img src="./Support.svg" className='h-5 w-5' />Support</button>
-                        <button className={`flex flex-wrap gap-2 pl-4 ${page==="Settings" ? "bg-green-600 p-3 rounded-md" :""}`} onClick={(e)=>handlePageChange('Settings')}><img src="./Setting.svg" className='h-5 w-5' />Settings</button>
                     </div>
                 </div>
                 <div className="w-px bg-gray-300" />
@@ -34,7 +33,6 @@ function Sidebar() {
                     {page==='Documents' && <Documents/>}
                     {page==='Subsidies' && <Subsidy_List/>}
                     {page==='Support' && <Support/>}
-                    {page==='Settings' && <Settings/>}
                 </div>
             </div>
         </>

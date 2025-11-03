@@ -20,11 +20,7 @@ function Navbar() {
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
           <div className="flex items-center space-x-2">
-            <img src='/Krushisetu_banner (1).jpg' className='h-12 w-12' />
-            <div className="flex flex-col">
-              <h1 className="font-bold text-md text-center text-green-600">KRUSHISETU</h1>
-              <p className="font-bold text-sm text-amber-950">PATH TO PROPERTY</p>
-            </div>
+            <img src='/Krushisetu_banner-removebg-preview.png' className='h-15 w-40 bg-transparent' />
           </div>
           
             <button
