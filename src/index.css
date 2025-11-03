@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* Hide Google Translate widget but keep functionality */
 .skiptranslate,
 .goog-te-banner,
 .goog-te-gadget,
@@ -9,7 +8,7 @@
   visibility: hidden !important;
 }
 
-/* Remove top: 40px that Google Translate injects */
+
 html {
   top: 0 !important;
 }
@@ -20,7 +19,6 @@ body {
   padding: 0 !important;
 }
 
-/* Target any element with top: 40px and reset it */
 [style*="top: 40px"],
 [style*="top: 48px"] {
   top: 0 !important;
