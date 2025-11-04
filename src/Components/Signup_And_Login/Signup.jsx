@@ -7,6 +7,9 @@ import { Toaster, toast } from 'react-hot-toast';
 
 function Signup({ onSignupSuccess = null }) {
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Signup form states
     const [signupMethod, setSignupMethod] = useState('email');
     const [signupFullName, setSignupFullName] = useState('');
     const [signupFullNameError, setSignupFullNameError] = useState('');
@@ -20,8 +23,12 @@ function Signup({ onSignupSuccess = null }) {
     const [showSignupPassword, setShowSignupPassword] = useState(false);
     const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
 
+
+    // Validation regex patterns
     const passwordRestriction = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
     const nameRestriction = /^[A-Za-z\s]+$/;
+
+    // Email validation
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
     // Name validation
@@ -46,6 +53,7 @@ function Signup({ onSignupSuccess = null }) {
         }
     };
 
+    // Email validation
     const handleSignupEmailChange = (e) => {
         setSignupEmail(e.target.value);
         if (e.target.value && !validateEmail(e.target.value)) {
@@ -68,6 +76,7 @@ function Signup({ onSignupSuccess = null }) {
         }
     };
 
+    // Confirm password match validation
     const handleSignupConfirmPasswordChange = (e) => {
         const value = e.target.value;
         setSignupConfirmPassword(value);
@@ -85,15 +94,18 @@ function Signup({ onSignupSuccess = null }) {
         e.preventDefault();
         const btn = document.getElementById("btn5");
         btn.disabled = true;
+        setIsLoading(true);
         try {
             if (signupPassword !== signupConfirmPassword) {
                 setSignupPasswordError('Passwords do not match.');
                 btn.disabled = false;
+                setIsLoading(false);
                 return;
             }
             if (signupFullNameError || signupAadhaarError || signupEmailError || signupPasswordError) {
                 toast.error("Please correct the errors in the form.");
                 btn.disabled = false;
+                setIsLoading(false);
                 return;
             }
 
@@ -107,7 +119,6 @@ function Signup({ onSignupSuccess = null }) {
                     "Content-Type": "application/json",
                 }
             });
-            // Only proceed if response is successful
             if (response.status === 201 || response.status === 200) {
                 setSignupPasswordError('');
                 toast.success("Account created successfully!");
@@ -120,16 +131,18 @@ function Signup({ onSignupSuccess = null }) {
                 setSignupEmail('');
                 setSignupPassword('');
                 setSignupConfirmPassword('');
-                onSignupSuccess(); // Notify parent to switch to login page
+                onSignupSuccess();
+                setIsLoading(false);
             } else {
                 toast.error("Register failed! " + (response.data?.detail || 'Unknown error.'));
                 btn.disabled = false;
+                setIsLoading(false);
             }
         } catch (error) {
-            // Only show error if an actual error occurs
             console.error("Register failed: ", error.response ? error.response.data : error.message);
             toast.error("Register failed! " + (error.response?.data?.detail || error.message));
             btn.disabled = false;
+            setIsLoading(false);
         }
     };
 
@@ -138,6 +151,7 @@ function Signup({ onSignupSuccess = null }) {
             <Toaster position="top-center" reverseOrder={false} />
             <div>
                 <p className="text-black text-center text-xl font-bold mb-0.5">Create Your Account</p>
+                {/* -----------------------------------Signup Form----------------------------------- */}
                 {signupMethod === 'email' && (
                     <form onSubmit={handleSignupEmailSubmit}>
                         <div className="p-2">
@@ -204,10 +218,16 @@ function Signup({ onSignupSuccess = null }) {
                                 id="btn5"
                                 disabled={!(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError)}
                             >
-                                Create Account
+                                {isLoading ? (
+                                    <div className="flex items-center justify-center space-x-2">
+                                        <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <span>In Progress...</span>
+                                    </div>
+                                ) : (
+                                    'Create Account'
+                                )}
                             </button>
                         </div>
-                        <SocialLogin />
                     </form>
                 )}
             </div>
