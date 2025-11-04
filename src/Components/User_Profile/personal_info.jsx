@@ -3,6 +3,7 @@ import api from "./api";
 import { Toaster, toast } from 'react-hot-toast';
 import Header from './Header';
 import Settings from '../HomePage/Settings.jsx';
+
 import Data from './assets/data.json';
 
 function Personal_info() {
@@ -10,18 +11,24 @@ function Personal_info() {
     const panInputRef = useRef(null);
     const aadhaarInputRef = useRef(null);
     const photoInputRef = useRef(null);
-
     const [inputFileInfo, setInputFileInfo] = useState(null);
     const [panFileInfo, setPanFileInfo] = useState(null);
     const [aadhaarFileInfo, setAadhaarFileInfo] = useState(null);
+    const [inputFileError, setInputFileError] = useState("");
     const [photoFileInfo, setPhotoFileInfo] = useState(null);
 
-    const [inputFileError, setInputFileError] = useState("");
     const [aadhaarError, setAadhaarError] = useState('');
     const [mobileError, setMobileError] = useState('');
     const [emailError, setEmailError] = useState('');
     const [ifscError, setIfscError] = useState('');
     const [fullNameError, setFullNameError] = useState('');
+
+    const stateDistrictData = Array.isArray(Data)
+        ? Data
+        : Data && Data.states
+            ? Data.states
+            : [];
+
 
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB file limit
     const Accepted_inputFile_Type = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
@@ -49,35 +56,6 @@ function Personal_info() {
         land_proof: null,
     });
 
-    const renderFilePreview = (fileInfo) => {
-        if (!fileInfo) return null;
-
-        // Determine what preview to show
-        let previewSrc = null;
-        if (fileInfo.preview) previewSrc = fileInfo.preview;
-        else if (fileInfo.url) previewSrc = fileInfo.url;
-
-        return (
-            <div className="flex items-center gap-3 justify-center mt-3">
-                {previewSrc ? (
-                    <img
-                        src={previewSrc}
-                        alt={fileInfo.name || "preview"}
-                        className="w-20 h-14 object-cover rounded"
-                    />
-                ) : (
-                    <div className="text-xs">{fileInfo.name}</div>
-                )}
-                {fileInfo.size && (
-                    <div className="text-xs">
-                        {(fileInfo.size / (1024 * 1024)).toFixed(1)} MB
-                    </div>
-                )}
-            </div>
-        );  
-    };
-
-
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -86,37 +64,39 @@ function Personal_info() {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = response.data;
-                console.log("Fetched profile data:", data);
-
-                const createFilePreview = (fileOrUrl) => {
-                    if (!fileOrUrl) return null;
-
-                    if (typeof fileOrUrl === "string") {
-                        // Could be full URL or just a file name
-                        const isUrl = fileOrUrl.startsWith("http") || fileOrUrl.includes("://");
-                        return {
-                            name: fileOrUrl.split("/").pop(),
-                            url: isUrl ? fileOrUrl : null,
-                            preview: isUrl ? fileOrUrl : null,
-                            size: null,
-                        };
-                    }
-
-                    // Local File object
-                    return {
-                        name: fileOrUrl.name,
-                        preview: fileOrUrl.type.startsWith("image/") ? URL.createObjectURL(fileOrUrl) : null,
-                        size: fileOrUrl.size,
-                    };
-                };
+                
 
 
-                setInputFileInfo(createFilePreview(data.land_proof_url));
-                setPanFileInfo(createFilePreview(data.pan_card_url));
-                setAadhaarFileInfo(createFilePreview(data.aadhaar_card_url));
-                setPhotoFileInfo(createFilePreview(data.photo_url));
+                // Populate file previews
+                if (data.land_proof) {
+                    setInputFileInfo({
+                        name: data.land_proof.split("/").pop(),
+                        preview: data.land_proof,
+                    });
 
-                setFormData(prev => ({
+
+                }
+                if (data.pan_card) {
+                    setPanFileInfo({
+                        name: data.pan_card.split("/").pop(),
+                        preview: data.pan_card,
+                    });
+                }
+                if (data.aadhaar_card) {
+                  
+                    setAadhaarFileInfo({
+                        name: data.aadhaar_card.split("/").pop(),
+                        preview: data.aadhaar_card,
+                    });
+                }
+                if (data.photo) {
+                    console.log("Hai photo par bata nhi raha");
+                    setPhotoFileInfo({
+                        name: data.photo.split("/").pop(),
+                        preview: data.photo,
+                    });
+                }
+                setFormData((prev) => ({
                     ...prev,
                     full_name: data.full_name || "",
                     email: data.email_address || "",
@@ -129,32 +109,43 @@ function Personal_info() {
                     address: data.address || "",
                     land_size: data.land_size || "",
                     unit: data.unit || "",
-                    soil_type: data.soil_type || "",  
+                    soil_type: data.soil_type || "",
                     ownership_type: data.ownership_type || "",
                     bank_account_number: data.bank_account_number || "",
                     ifsc_code: data.ifsc_code || "",
                     bank_name: data.bank_name || "",
-                }));
+}));
+
             } catch (err) {
                 console.error("Error fetching profile:", err);
-                toast.error("Failed to fetch profile.");
             }
         };
 
         fetchProfile();
     }, []);
 
+
     const handleInputChange = (value, fieldName) => {
         setFormData((prev) => ({ ...prev, [fieldName]: value }));
     };
 
     const handleInputFileSelection = (file, type) => {
-        if (!file) return;
+        setInputFileError("");
+
+        if (file.size > MAX_FILE_SIZE) {
+            setInputFileError("File is too large.");
+            return;
+        }
+
+        if (!Accepted_inputFile_Type.includes(file.type)) {
+            setInputFileError("Invalid file type. Please select a PDF or image file.");
+            return;
+        }
 
         const previewObj = {
             name: file.name,
-            preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
             size: file.size,
+            preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
         };
 
         if (type === "land_proof") setInputFileInfo(previewObj);
@@ -162,7 +153,6 @@ function Personal_info() {
         else if (type === "aadhaar_card") setAadhaarFileInfo(previewObj);
         else if (type === "photo") setPhotoFileInfo(previewObj);
     };
-
 
     const handleFileChange = (e, fieldName) => {
         const file = e.target.files[0];
@@ -176,18 +166,19 @@ function Personal_info() {
         const file = e.target.files[0];
         if (file) {
             const preview = URL.createObjectURL(file);
-            setFormData((prev) => ({ ...prev, [type]: file }));
-            handleInputFileSelection(file, type);
             setPhotoFileInfo({ file, preview });
         }
     };
 
-    const onDragOver = (e) => e.preventDefault();
+    const onDragOver = (e) => {
+        e.preventDefault();
+    }
+
     const onDrop = (e, type) => {
         e.preventDefault();
         const file = e.dataTransfer.files[0];
         if (file) handleInputFileSelection(file, type);
-    };
+    }
 
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     const validateIFSC = (ifsc) => /^[A-Za-z]{4}0\d{6}$/.test(ifsc);
@@ -198,7 +189,6 @@ function Personal_info() {
         btn.disabled = true;
         const token = localStorage.getItem("access");
         const data = new FormData();
-        console.log("Submitting form data:", formData);
         Object.keys(formData).forEach((key) => {
             if (formData[key]) data.append(key, formData[key]);
         });
@@ -211,10 +201,11 @@ function Personal_info() {
                 },
             });
             toast.success("Profile updated successfully!");
+            setTimeout('', 3000);
             btn.disabled = false;
         } catch (err) {
             console.error("Error updating profile:", err);
-            toast.error('Failed to update Profile.');
+            toast.error('Failed to update Profile.')
             btn.disabled = false;
         }
     };
@@ -254,28 +245,19 @@ function Personal_info() {
                                     onChange={(e) => handleInputFileUpload(e, 'photo')}
                                 />
 
-                                {photoFileInfo ? (
-                                  photoFileInfo.preview ? (
-                                      <img
-                                          src={photoFileInfo.preview}
-                                          alt={photoFileInfo.name || "profile preview"}
-                                          className="w-full h-full object-cover"
-                                      />
-                                  ) : (
-                                      <img
-                                          src="./Camero.jpg"
-                                          alt="default profile"
-                                          className="w-full h-full object-cover"
-                                      />
-                                  )
-                              ) : (
-                                  <img
-                                      src="./Camero.jpg"
-                                      alt="default profile"
-                                      className="w-full h-full object-cover"
-                                  />
-                              )}
-
+                                {photoFileInfo && photoFileInfo.preview ? (
+                                    <img
+                                        src={photoFileInfo.preview}
+                                        alt="profile preview"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <img
+                                        src="./Camero.jpg"
+                                        alt="default profile"
+                                        className="w-full h-full object-cover"
+                                    />
+                                )}
                             </div>
 
                             <p className="text-xs text-gray-500 text-center mt-2">
@@ -544,8 +526,8 @@ function Personal_info() {
                                     <div className="text-xs">PDF or Image (Max 5MB)</div>
                                 </div>
                             </div>
-                                {renderFilePreview(inputFileInfo)}
-                            {/* {inputFileInfo && (
+
+                            {inputFileInfo && (
                                 <div className="mt-3 text-sm text-gray-500">
                                     {inputFileInfo.preview ? (
                                         <div className="flex items-center gap-3 justify-center">
@@ -559,8 +541,8 @@ function Personal_info() {
                                         <div className="text-center">{inputFileInfo.name}</div>
                                     )}
                                 </div>
-                            )} */}
-                            
+                            )}
+
                             {inputFileError && <div className="text-sm text-red-600 mt-2">{inputFileError}</div>}
                         </div>
                     </div>
@@ -649,12 +631,11 @@ function Personal_info() {
                                         <path strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                                     </svg>
                                     <span className="text-sm">Click to upload PAN (PDF / Image)</span>
-                                    {renderFilePreview(panFileInfo)}
                                 </div>
                             </div>
-                            {/* {panFileInfo && panFileInfo.preview && (
+                            {panFileInfo && panFileInfo.preview && (
                                 <img src={panFileInfo.preview} alt={panFileInfo.name} className="mt-2 w-28 h-18 object-cover rounded" />
-                            )} */}
+                            )}
                         </div>
 
                         {/* Aadhaar Card Upload */}
@@ -686,12 +667,11 @@ function Personal_info() {
                                         <path strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                                     </svg>
                                     <span className="text-sm">Click to upload Aadhaar (PDF / Image)</span>
-                                    {renderFilePreview(aadhaarFileInfo)}
                                 </div>
                             </div>
-                            {/* {aadhaarFileInfo && aadhaarFileInfo.preview && (
+                            {aadhaarFileInfo && aadhaarFileInfo.preview && (
                                 <img src={aadhaarFileInfo.preview} alt={aadhaarFileInfo.name} className="mt-2 w-28 h-18 object-cover rounded" />
-                            )} */}
+                            )}
                         </div>
                     </div>
 
@@ -708,7 +688,7 @@ function Personal_info() {
                 </div>
             </div>
         </>
-    );  
+    );
 }
 
 export default Personal_info;
