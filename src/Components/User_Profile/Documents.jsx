@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import Header from './Header';
-import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai';
-import api from './api1';
-import axios from 'axios';
-import Cookies from 'js-cookie';
+import React, { useState, useEffect, useRef } from "react";
+import Header from "./Header";
+import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from "react-icons/ai";
+import api from "./api1";
+import axios from "axios";
 
 // Regex to validate document number format
 const NUMBER_REGEX = /^[A-Za-z0-9_-]{1,20}$/;
@@ -34,13 +33,8 @@ const Documents = () => {
     const fileInputRef = useRef();
     const isBlurred = showAddModal || showEditModal;
 
-    const API_URL = '/photo/api/documents/';
+    const API_URL = '/photo/documents/';
 
-    // Create axios instance for API calls
-    const apiClient = axios.create({
-        baseURL: 'http://localhost:8000',
-        withCredentials: true,
-    });
 
     // Fetch documents on component mount
     useEffect(() => {
@@ -49,27 +43,17 @@ const Documents = () => {
 
     const fetchDocuments = async () => {
         try {
-            console.log('=== DEBUG: Fetching Documents ===');
-            console.log('API URL:', API_URL);
-            console.log('Base URL:', import.meta.env.VITE_BASE_URL);
-            console.log('All Cookies:', document.cookie);
-            
-            const response = await api.get(API_URL);
-            console.log('Success! Documents:', response.data);
-            setDocuments(response.data);
+            const token = localStorage.getItem("access");
+            console.log(token);
+            const res = await api.get(API_URL, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            console.log(res.data);
+            setDocuments(res.data);
         } catch (error) {
-            console.error('=== ERROR DETAILS ===');
-            console.error('Status:', error.response?.status);
-            console.error('Error data:', error.response?.data);
-            console.error('Request headers:', error.config?.headers);
-            
-            if (error.response?.status === 401) {
-                alert('Please log in to view documents.');
-                window.location.href = '/login';
-            } else {
-                alert('Failed to load documents. Please try again.');
-            }
+            console.log('Failed to fetch documents. Please try again.');
         }
+
     };
 
     // Filter out documents that are already uploaded
@@ -108,16 +92,10 @@ const Documents = () => {
 
     // Update form field and validate it immediately
     const handleInputChange = (field, value) => {
-        setFormData((prev) => ({ ...prev, [field]: value }));
-        setErrors((prev) => ({
-            ...prev,
-            [field]:
-                field === 'name'
-                    ? validateDocumentName(value)
-                    : field === 'number'
-                        ? validateDocumentNumber(value)
-                        : '',
-        }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (field === "number") {
+        setErrors((prev) => ({ ...prev, number: validateDocumentNumber(value) }));
+        }
     };
 
     // Handle file selection and validation
@@ -137,7 +115,7 @@ const Documents = () => {
     // Open edit modal with selected document data
     const handleEdit = (doc) => {
         setCurrentDoc(doc);
-        setFormData({ name: doc.title, number: doc.document_number, file: null, document_type: doc.document_type });
+        setFormData({ title: doc.title, number: doc.document_number, file: null, document_type: doc.document_type });
         setErrors({ name: '', number: '', file: '', document_type: '' });
         setShowEditModal(true);
     };
@@ -149,25 +127,20 @@ const Documents = () => {
         setErrors(validation);
         if (validation.name || validation.number || validation.file || validation.document_type) return;
 
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', formData.file);
-        uploadFormData.append('document_type', formData.document_type);
-        uploadFormData.append('document_number', formData.number.trim());
+        const uploadForm = new FormData();
+        uploadForm.append("title", formData.title.trim());
+        uploadForm.append("document_number", formData.number.trim());
+        uploadForm.append("document_type", formData.document_type);
+        uploadForm.append("file", formData.file);
 
         setLoading(true);
 
         try {
-            const response = await api.post(API_URL, uploadFormData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'X-CSRFToken': Cookies.get('csrftoken'),
-                },
-            });
-
-            setDocuments([response.data, ...documents]);
+            const res = await api.post(API_URL, uploadForm);
+            setDocuments([res.data, ...documents]);
             resetForm();
             setShowAddModal(false);
-            alert('Document uploaded successfully!');
+            alert("Uploaded successfully");
         } catch (error) {
             console.error('Error uploading document:', error);
             alert(error.response?.data?.error || 'Failed to upload document. Please try again.');
@@ -176,62 +149,49 @@ const Documents = () => {
         }
     };
 
-    // Update existing document
     const handleUpdateDocument = async (e) => {
         e.preventDefault();
         const validation = validateAll(formData, false);
         setErrors(validation);
-        if (validation.name || validation.number || validation.file || validation.document_type) return;
+        if (validation.number || validation.file || validation.document_type) return;
 
-        const uploadFormData = new FormData();
-        uploadFormData.append('document_type', formData.document_type);
-        uploadFormData.append('document_number', formData.number.trim());
-        if (formData.file) {
-            uploadFormData.append('file', formData.file);
-        }
+        const uploadForm = new FormData();
+        uploadForm.append("title", formData.title.trim());
+        uploadForm.append("document_number", formData.number.trim());
+        uploadForm.append("document_type", formData.document_type);
+        if (formData.file) uploadForm.append("file", formData.file);
 
         setLoading(true);
 
         try {
-            const response = await api.put(`${API_URL}${currentDoc.id}/`, uploadFormData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            setDocuments((prev) =>
-                prev.map((doc) =>
-                    doc.id === currentDoc.id ? response.data : doc
-                )
-            );
+            const res = await api.patch(`${API_URL}${currentDoc.id}/`, uploadForm);
+            setDocuments((prev) => prev.map((doc) => (doc.id === currentDoc.id ? res.data : doc)));
             resetForm();
             setShowEditModal(false);
-            alert('Document updated successfully!');
+            alert("Updated successfully");
         } catch (error) {
-            console.error('Error updating document:', error);
-            alert('Failed to update document. Please try again.');
+            alert("Update failed");
         } finally {
             setLoading(false);
         }
     };
 
-    // Delete document with confirmation
-    const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this document?')) return;
 
+    const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this document?")) return;
         setLoading(true);
 
         try {
-            await api.delete(`${API_URL}${id}/`);
+            await api.delete(`${API_URL}${id}/delete/`);
             setDocuments((prev) => prev.filter((doc) => doc.id !== id));
-            alert('Document deleted successfully!');
+            alert("Document deleted successfully!");
         } catch (error) {
-            console.error('Error deleting document:', error);
-            alert('Failed to delete document. Please try again.');
+            alert("Failed to delete document. Please try again.");
         } finally {
             setLoading(false);
         }
     };
+
 
     // Clear form and reset file input
     const resetForm = () => {
@@ -276,7 +236,7 @@ const Documents = () => {
                                     <thead>
                                         <tr className="border-b-2 bg-[#F1F2F3] border-gray-200">
                                             <th className="text-left py-3 px-4 text-lg font-bold text-gray-700">Sr. No.</th>
-                                            <th className="text-left py-3 px-4 text-lg font-bold text-gray-700">Name</th>
+                                            <th className="text-left py-3 px-4 text-lg font-bold text-gray-700">Title</th>
                                             <th className="text-left py-3 px-4 text-lg font-bold text-gray-700">Number</th>
                                             <th className="text-left py-3 px-4 text-lg font-bold text-gray-700">Date</th>
                                             <th className="text-center py-3 px-4 text-lg font-bold text-gray-700">Actions</th>
@@ -354,7 +314,11 @@ const Documents = () => {
                                 <select
                                     name="document_type"
                                     value={formData.document_type}
-                                    onChange={e => setFormData(f => ({ ...f, document_type: e.target.value }))}
+                                    onChange={e => {
+                                        const value = e.target.value;
+                                        const match = DOC_TYPES.find(x => x.value === value);
+                                        setFormData(f => ({ ...f, document_type: value, title: match?.label || '' }));
+                                    }}
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                                         errors.document_type ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
                                     }`}
@@ -469,7 +433,7 @@ const Modal = ({
                     <label className="block text-gray-700 font-semibold mb-2">Document Name</label>
                     <input
                         type="text"
-                        value={formData.name}
+                        value={formData.title}
                         readOnly
                         disabled
                         className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"

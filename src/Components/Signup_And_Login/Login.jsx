@@ -7,6 +7,11 @@ import api from './api';
 import { Toaster, toast } from 'react-hot-toast';
 
 function Login({ onForgotPasswordClick, onLoginSuccess }) {
+    console.log(localStorage.getItem("access"));
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    console.log(localStorage.getItem("access"));
+
     const navigate = useNavigate();
     const [loginWithOtp, setLoginWithOtp] = useState(false);
     const [showLoginOtpForm, setShowLoginOtpForm] = useState(false);
