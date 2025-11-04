@@ -30,7 +30,7 @@ function Sidebar() {
     return (
         <>
             {/* ----------------------------Mobile Header---------------------------- */}
-            <div className="lg:hidden w-full sticky top-0 z-50 bg-white shadow-md">
+            <div className="lg:hidden sticky top-0 z-50 bg-white shadow-md">
                 <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-2 ">
                         <img src="./Krushisetu_banner-removebg-preview.png" className='h-10 w-30' />
