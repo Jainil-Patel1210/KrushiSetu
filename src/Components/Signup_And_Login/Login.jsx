@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RoleDropdown from './RoleDropDown';
 import SocialLogin from './SocialLogin';
@@ -30,6 +30,9 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
     const [role, setRole] = useState('');
     const [isOpen, setIsOpen] = useState(false);
 
+    const [otpTimer, setOtpTimer] = useState(0);
+
+
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
     const handleRoleSelect = (selectedRole) => {
@@ -48,6 +51,7 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
     // Login with OTP handlers
     const handleLoginOtpSwitch = () => {
         setLoginWithOtp(!loginWithOtp);
+        setOtpTimer(0);
         setShowLoginOtpForm(false);
         setLoginMobile('');
         setLoginOtp('');
@@ -56,6 +60,17 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
         setLoginEmailError('');
         setLoginMobileError('');
     };
+
+    useEffect(() => {
+        let interval;
+        if (otpTimer > 0) {
+            interval = setInterval(() => {
+                setOtpTimer(prev => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [otpTimer]);
+
 
     const handleLoginMobileSubmit = async (e) => {
         e.preventDefault();
@@ -79,13 +94,13 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
                 remember: remember,
             });
             setUserId(response.data.user_id); // save user_id for OTP step
-            toast("OTP sent to your mobile!");
+            toast.success(response.data.message || "OTP sent to your mobile number!");
+            setOtpTimer(15); 
             setShowLoginOtpForm(true);
-            setLoginMobile('');
             btn.disabled = false;
         } catch (error) {
             console.error("Login failed: ", error.response ? error.response.data : error.message);
-            toast.error("Login failed!");
+            toast.error(error.response?.data?.error || "Failed to send OTP");
             btn.disabled = false;
         }
     };
@@ -179,7 +194,7 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             btn.disabled = false;
         } catch (error) {
             console.error("Login failed: ", error.response ? error.response.data : error.message);
-            toast.error("Login failed!");
+            toast.error(error.response?.data?.error || "Login failed");
             btn.disabled = false;
         }
     };
@@ -253,6 +268,12 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
                                     required
                                 />
                                 {loginMobileError && <p className="text-red-600 text-xs mb-1">{loginMobileError}</p>}
+                                <RoleDropdown
+                                    role={role}
+                                    isOpen={isOpen}
+                                    onClick={handleClick}
+                                    onSelect={handleRoleSelect}
+                                />
                             </>
                         ) : (
                             <input
@@ -264,12 +285,22 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
                                 required
                             />
                         )}
-                        <RoleDropdown
-                            role={role}
-                            isOpen={isOpen}
-                            onClick={handleClick}
-                            onSelect={handleRoleSelect}
-                        />
+                        {showLoginOtpForm && (
+                            otpTimer > 0 ? (
+                                <p className="text-center text-gray-500 text-sm mb-2">
+                                    Resend OTP in {otpTimer}s
+                                </p>
+                            ) : (
+                                <p
+                                    className="text-center text-green-700 font-semibold mb-2 cursor-pointer"
+                                    onClick={handleLoginMobileSubmit}
+                                >
+                                    Resend OTP
+                                </p>
+                            )
+                        )}
+
+                        
                         <div className='flex justify-between text-green-700 font-semibold mb-2'>
                             <span
                                 className="cursor-pointer hover:underline "

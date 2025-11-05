@@ -29,7 +29,7 @@ function SocialLogin() {
             }, 3000);
         } catch (err) {
             console.error("Login failed:", err.response?.data || err.message);
-            toast.error("Login failed!");
+            toast.error(err.response?.data?.error || "Google login failed");
         }
     };
 
