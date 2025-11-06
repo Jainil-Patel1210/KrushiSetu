@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'support',
     'photo',
     'cloudinary',
+    'cloudinary_storage'
 ]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -266,3 +267,5 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

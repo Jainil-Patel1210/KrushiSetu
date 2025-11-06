@@ -7,10 +7,8 @@ import api from './api';
 import { Toaster, toast } from 'react-hot-toast';
 
 function Login({ onForgotPasswordClick, onLoginSuccess }) {
-    console.log(localStorage.getItem("access"));
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
-    console.log(localStorage.getItem("access"));
 
     const navigate = useNavigate();
     const [loginWithOtp, setLoginWithOtp] = useState(false);
@@ -99,7 +97,7 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             });
             setUserId(response.data.user_id); // save user_id for OTP step
             toast.success(response.data.message || "OTP sent to your mobile number!");
-            setOtpTimer(15); 
+            setOtpTimer(30); 
             setShowLoginOtpForm(true);
             btn.disabled = false;
             setIsLoading(false);
@@ -192,8 +190,6 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
                 role: role,
                 remember: remember,
             });
-
-            console.log(response);
 
             // Save JWT tokens (for later authenticated requests)
             localStorage.setItem("access", response.data.access);
