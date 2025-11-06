@@ -28,13 +28,13 @@ function News() {
     ]
 
     useEffect(() => {
-        AOS.init({ duration: 1000 });
+        AOS.init({ duration: 5000 });
     }, []);
 
     return (
         <>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <h1 className='text-4xl font-extrabold text-gray-900 mb-6 text-center mt-6' data-aos="fade-down" data-aos-delay="100">Latest News</h1>
+                <h1 className='text-4xl font-extrabold text-gray-900 mb-6 text-center mt-6' data-aos="fade-up" data-aos-delay="100">Latest News</h1>
 
                 <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mb-12'>
                     {newsData.map((newsItem, index) => (

@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     'support',
     'photo',
     'cloudinary',
-    'cloudinary_storage',
 ]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -225,8 +224,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 #cloudinary-Django integration
 import cloudinary
-import cloudinary.uploader
-import cloudinary.api
 
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
@@ -269,5 +266,3 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
