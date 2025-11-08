@@ -8,6 +8,14 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  // Dev server proxy: forward API calls to Django backend so cookies are same-origin
+  server: {
+    proxy: {
+      // Proxy any requests starting with /photo or /api to the Django dev server
+      '/photo': 'http://localhost:8000',
+      '/api': 'http://localhost:8000',
+    },
+  },
   build: {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {

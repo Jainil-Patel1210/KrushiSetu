@@ -157,23 +157,24 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
             # Set HttpOnly cookies
               
+            # In development we must avoid Secure=True (requires HTTPS). Use DEBUG to toggle.
             response.set_cookie(
                 key="access_token",
                 value=access,
                 httponly=True,
-                secure=True,  # Set to True in production with HTTPS
-                samesite="None",
+                secure=not settings.DEBUG,
+                samesite=("Lax" if settings.DEBUG else "None"),
                 max_age=access_max_age,
-                domain=None,  # Allow cookie on localhost
-                path="/",  # Make cookie available for all paths
+                domain=None,
+                path="/",
             )
 
             response.set_cookie(
                 key="refresh_token",
                 value=refresh,
                 httponly=True,
-                secure=True,
-                samesite="None",
+                secure=not settings.DEBUG,
+                samesite=("Lax" if settings.DEBUG else "None"),
                 max_age=refresh_max_age,
                 domain=None,
                 path="/",
@@ -255,20 +256,21 @@ class VerifyOTPView(APIView):
                 }, status=status.HTTP_200_OK)
                 
                 # Set cookies with proper settings
+                # Toggle secure/samesite based on DEBUG so local HTTP dev works
                 response.set_cookie(
                     'access_token',
                     access,
                     httponly=True,
-                    secure=True,  # Set to True in production with HTTPS
-                    samesite="None",
+                    secure=not settings.DEBUG,
+                    samesite=("Lax" if settings.DEBUG else "None"),
                     max_age=access_max_age,
                 )
                 response.set_cookie(
                     'refresh_token',
                     refresh_token,
                     httponly=True,
-                    secure=True,
-                    samesite="None",
+                    secure=not settings.DEBUG,
+                    samesite=("Lax" if settings.DEBUG else "None"),
                     max_age=refresh_max_age,
                 )
 

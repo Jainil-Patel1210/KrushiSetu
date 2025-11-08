@@ -1,7 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Settings from '../HomePage/Settings.jsx';
 
 function Subsidy_detail({ subsidy, onClose }) {
+    const navigate = useNavigate();
     if (!subsidy) return null;
 
     const formatDateRange = (start) => {
@@ -81,7 +83,13 @@ function Subsidy_detail({ subsidy, onClose }) {
                     </ol>
                 </div>
                 <div className="flex justify-center mt-8">
-                    <button className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">Apply Now</button>
+                    <button
+                        className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                        type="button"
+                        onClick={() => navigate(`/apply/${subsidy.id}`, { state: { subsidy } })}
+                    >
+                        Apply Now
+                    </button>
                 </div>
             </div>
         </div>

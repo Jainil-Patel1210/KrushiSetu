@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from 'react-router-dom';
 import Header from "./Header.jsx";
 import Settings from "../HomePage/Settings.jsx";
 
@@ -64,6 +65,8 @@ const Dashboard = () => {
             documents: ["Farmer ID", "Land documents", "Bank account details"],
         },
     ];
+
+    const navigate = useNavigate();
 
     return (
         <>
@@ -227,7 +230,11 @@ const Dashboard = () => {
                                 </div>
 
                                 {/* button */}
-                                <button className="mt-4 bg-[#009500] text-white text-base sm:text-lg font-medium py-2 rounded-md hover:bg-green-700 transition w-full">
+                                <button
+                                    type="button"
+                                    className="mt-4 bg-[#009500] text-white text-base sm:text-lg font-medium py-2 rounded-md hover:bg-green-700 transition w-full"
+                                    onClick={() => navigate(`/apply/${encodeURIComponent(item.title)}`, { state: { subsidy: item } })}
+                                >
                                     Apply Now
                                 </button>
                             </div>
