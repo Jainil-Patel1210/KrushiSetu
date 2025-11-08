@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
@@ -12,6 +13,7 @@ function Subsidy_List() {
     const [selectedSubsidy, setSelectedSubsidy] = useState(null);
     const [loading,setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
     
     const fetchSubsidies = async () => {
         try {
@@ -123,10 +125,10 @@ function Subsidy_List() {
                                         <p className="text-sm text-gray-600">Maximum Amount - ₹{parseFloat(subsidy.amount).toLocaleString('en-IN')}</p>
                                         <p className="text-sm text-gray-600">Date of Application - {formatDateRange(subsidy.application_start_date, subsidy.application_end_date)}</p>
                                     </div>
-                                    <div className="flex gap-3 items-center">
-                                        <button className="bg-green-600 text-white px-3 py-2 text-sm rounded-md cursor-pointer" onClick={()=>setSelectedSubsidy(subsidy)}>View More</button>
-                                        <button className="bg-green-600 text-white px-3 py-2 text-sm rounded-md">Apply</button>
-                                    </div>
+                                                    <div className="flex gap-3 items-center">
+                                                        <button className="bg-green-600 text-white px-3 py-2 text-sm rounded-md cursor-pointer" onClick={()=>setSelectedSubsidy(subsidy)}>View More</button>
+                                                        <button className="bg-green-600 text-white px-3 py-2 text-sm rounded-md" onClick={() => navigate(`/apply/${subsidy.id}`, { state: { subsidy } })}>Apply</button>
+                                                    </div>
                                 </div>
                             ))
                         )}
