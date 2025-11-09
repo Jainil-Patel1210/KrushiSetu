@@ -284,17 +284,25 @@ function Personal_info() {
                                         className="hidden"
                                         onChange={(e) => handleInputFileUpload(e, 'photo')}
                                     />
-                                    {photoFileInfo && photoFileInfo.preview ? (
-                                        <img
-                                            src={photoFileInfo.preview}
-                                            alt={photoFileInfo.name || "profile preview"}
-                                            className="w-full h-full object-cover"
-                                        />
+                                    {photoFileInfo ? (
+                                        photoFileInfo.preview ? (
+                                            <img
+                                                src={photoFileInfo.preview}
+                                                alt={photoFileInfo.name || "profile preview"}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <img
+                                                src="./Camero.jpg"
+                                                alt="default profile"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        )
                                     ) : (
                                         <img
                                             src="./Camero.jpg"
                                             alt="default profile"
-                                            className="w-15 h-15 object-cover"
+                                            className="w-full h-full object-cover"
                                         />
                                     )}
                                 </div>
