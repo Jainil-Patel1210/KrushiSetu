@@ -20,6 +20,11 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('loginSignup.urls')),
+    path('api/', include('app.urls')),
     path('', include('app.urls')),
     path('profile/', include('dashboard.urls')),
+
+    # changed: mount photo app at /photo/
+    path('photo/', include('photo.urls')),
+    path('support/', include('support.urls')),
 ]
