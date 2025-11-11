@@ -67,3 +67,7 @@ psycopg2-binary
 dj-database-url
 python-decouple
 whitenoise
+sendgrid
+django-sendgrid-v5
+cloudinary
+django-cloudinary-storage
