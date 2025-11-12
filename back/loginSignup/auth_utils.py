@@ -26,6 +26,7 @@ class GoogleLoginView(APIView):
         load_dotenv()
         api_key = os.getenv("GOOGLE_CLIENT_ID")
         token = request.data.get("token")
+        print(token)
         try:
             idinfo = id_token.verify_oauth2_token(token, requests.Request(),api_key)
 

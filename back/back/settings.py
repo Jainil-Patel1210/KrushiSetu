@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     'support',
     'photo',
     'cloudinary',
-    'cloudinary_storage'
+    'cloudinary_storage',
 ]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -218,8 +218,6 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')    
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 
-
-MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
