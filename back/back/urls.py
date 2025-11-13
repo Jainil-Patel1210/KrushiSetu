@@ -18,11 +18,12 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),                # admin app
-    path('api/', include('loginSignup.urls')),      # login & signup app
-    path('api/', include('app.urls')),              # subsidies app
-    path('', include('app.urls')),                  
-    path('profile/', include('dashboard.urls')),    # farmer dashboard app
-    path('photo/', include('photo.urls')),          # cloudinary app
-    path('support/', include('support.urls')),      # support app
+    path('admin/', admin.site.urls),
+    path('api/', include('loginSignup.urls')),
+    path('api/', include('app.urls')),
+    path('', include('app.urls')),
+    path('profile/', include('dashboard.urls')),
+    path('photo/', include('photo.urls')),
+    path('support/', include('support.urls')),
+    path('subsidy/', include("subsidy.urls")),
 ]
