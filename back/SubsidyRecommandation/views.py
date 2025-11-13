@@ -89,27 +89,14 @@ def recommend_subsidies(request):
         recommendation_result = cache.get(cache_key)
         
         if recommendation_result is None:
-            # Get recommendations using SubsidyRecommander
+            # Get recommendations using FastSubsidyRecommander
             try:
-                # Check if GROQ_API_KEY is set
-                if not os.getenv("GROQ_API_KEY"):
-                    return Response({
-                        "success": False,
-                        "error": "GROQ_API_KEY environment variable is not configured. Please set it in your .env file or environment variables."
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                
                 recommender = SubsidyRecommander()
                 recommendation_result = recommender.recommend_subsidies(farmer_profile, subsidies_list)
                 
                 # Cache the result for 5 minutes
                 cache.set(cache_key, recommendation_result, 300)
                 print(f"Generated new recommendations for farmer profile")
-            except ValueError as ve:
-                print(f"Configuration error: {ve}")
-                return Response({
-                    "success": False,
-                    "error": f"Configuration error: {str(ve)}"
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             except Exception as e:
                 print(f"Error creating or using recommender: {e}")
                 import traceback

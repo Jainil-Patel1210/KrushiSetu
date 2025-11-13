@@ -22,7 +22,7 @@ class SubsidyRecommander:
     def __init__(self):
         self.groq_api_key = os.getenv("GROQ_API_KEY")
         self.model = ChatGroq(
-            model = "openai/gpt-oss-20b", 
+            model = "openai/gpt-oss-120b", 
             temperature=0.3,
             max_tokens=1500,  
             timeout=30
