@@ -9,6 +9,7 @@ class Subsidy(models.Model):
     application_start_date = models.DateField(blank=True, null=True)
     application_end_date = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    rating = models.DecimalField(max_digits=3, decimal_places=1, default=4.5, help_text="Subsidy rating out of 5")
 
     def __str__(self):
         return self.title

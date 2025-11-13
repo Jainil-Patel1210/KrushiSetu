@@ -54,7 +54,8 @@ INSTALLED_APPS = [
     'support',
     'photo',
     'cloudinary',
-    'cloudinary_storage'
+    'cloudinary_storage',
+    'SubsidyRecommandation',
 ]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -131,6 +132,18 @@ CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost:
 
 WSGI_APPLICATION = 'back.wsgi.application'
 
+# Cache configuration for faster responses
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5 minutes default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            'CULL_FREQUENCY': 3,
+        }
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

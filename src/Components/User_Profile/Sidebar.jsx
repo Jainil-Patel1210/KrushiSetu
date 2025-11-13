@@ -4,6 +4,7 @@ import Personal_info from './personal_info.jsx'
 import Subsidy_List from './Subsidy_List.jsx';
 import Documents from './Documents.jsx';
 import Support from './Support.jsx';
+import RecommendSubsidy from './SubsidyRecommandation.jsx'; 
 
 
 function Sidebar() {
@@ -24,6 +25,7 @@ function Sidebar() {
         {id : 'Profile', label: 'Profile & Personal Details', icon: './Profile.svg'},
         {id : 'Documents', label: 'Documents', icon: './Document.svg'},
         {id : 'Subsidies', label: 'Subsidies', icon: './Note.svg'},
+        {id : 'RecommendSubsidy', label: 'Recommend Subsidy', icon: './Subsidy_Recommendation.svg'},
         {id : 'Support', label: 'Support', icon: './Support.svg'}
     ]
 
@@ -97,6 +99,7 @@ function Sidebar() {
                     {page==='Documents' && <Documents/>}
                     {page==='Subsidies' && <Subsidy_List/>}
                     {page==='Support' && <Support/>}
+                    {page==='RecommendSubsidy' && <RecommendSubsidy/>}
                 </div>
             </div>
         </>
