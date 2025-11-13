@@ -15,6 +15,7 @@ import {
   updateSubsidy,
   deleteSubsidy
 } from './api/subsidyApi';
+import { Toaster, toast } from "react-hot-toast";
 
 // List of all possible document types
 const DOC_TYPES = [
@@ -169,10 +170,11 @@ const Dashboard = () => {
       setSubsidies((prev) =>
         prev.map((sub) => (sub.id === updated.id ? updated : sub))
       );
+      toast.success("Subsidy succesfully updated.")
       handleCloseModal();
     } catch (error) {
       console.error("Error updating subsidy:", error);
-      alert("Failed to update subsidy!");
+      toast.error("Failed to update subsidy!");
     }
   };
 
@@ -189,10 +191,11 @@ const Dashboard = () => {
       };
       const newSubsidy = await createSubsidy(payload);
       setSubsidies([...subsidies, newSubsidy]);
+      toast.success("Subsidy added succesfully");
       handleCloseAddModal();
     } catch (error) {
       console.error("Error adding subsidy:", error.response?.data || error);
-      alert("Failed to add subsidy!");
+      toast.error("Failed to add subsidy!");
     }
   };
 
@@ -207,9 +210,10 @@ const Dashboard = () => {
       setSubsidies(subsidies.filter((sub) => sub.id !== selectedSubsidy.id));
       setShowDeleteModal(false);
       setSelectedSubsidy(null);
+      toast.success("Subsidy deleted successfully");
     } catch (error) {
       console.error("Error deleting subsidy:", error);
-      alert("Failed to delete subsidy!");
+      toast.error("Failed to delete subsidy!");
     }
   };
 
@@ -224,6 +228,7 @@ const Dashboard = () => {
 
   return (
     <>
+      <Toaster position="top-center" reverseOrder={false} />
       <Header />
       <Settings />
       <div className="w-full bg-gray-100 min-h-screen">

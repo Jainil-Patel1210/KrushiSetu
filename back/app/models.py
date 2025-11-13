@@ -13,19 +13,8 @@ class Subsidy(models.Model):
     application_start_date = models.DateField(blank=True, null=True)
     application_end_date = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='created_subsidies',
-        help_text='User who created this subsidy (subsidy_provider)'
-    )
-    rating = models.FloatField(
-        default=0,
-        validators=[MinValueValidator(0), MaxValueValidator(5)],
-        help_text="Average rating from 0 to 5 stars"
-    )
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_subsidies', help_text='User who created this subsidy (subsidy_provider)')
+    rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)], help_text="Average rating from 0 to 5 stars")
 
     def update_average_rating(self):
         """Recalculate and update the average rating."""
@@ -41,28 +30,14 @@ class Subsidy(models.Model):
 
 
 class SubsidyRating(models.Model):
-    subsidy = models.ForeignKey(
-        Subsidy,
-        on_delete=models.CASCADE,
-        related_name='ratings'
-    )
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='subsidy_ratings'
-    )
-    rating = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text="Rate this subsidy from 1 (poor) to 5 (excellent)"
-    )
-    review = models.TextField(
-        blank=True,
-        help_text="Optional review about the subsidy"
-    )
+    subsidy = models.ForeignKey(Subsidy, on_delete=models.CASCADE, related_name='ratings')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subsidy_ratings')
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], help_text="Rate this subsidy from 1 (poor) to 5 (excellent)")
+    review = models.TextField(blank=True, help_text="Optional review about the subsidy")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('subsidy', 'user')  # one rating per user per subsidy
+        unique_together = ('subsidy', 'user') # one rating per user
         ordering = ['-created_at']
 
     def __str__(self):

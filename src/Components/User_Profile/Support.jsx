@@ -4,6 +4,7 @@ import Header from "./Header";
 import './Support.css';
 import Settings from '../HomePage/Settings.jsx';
 import FileDropzone from './FileDropzone';
+import FAQ from '../HomePage/FAQ.jsx';
 
 function Support() {
     const [grievances, setGrievances] = useState([]);
@@ -57,6 +58,7 @@ function Support() {
                 status: g.status,
                 description: g.description || '',
                 attachmentUrl: g.attachment_url || null,
+                officerRemark: g.officer_remark || null,
             }));
             setGrievances(list);
         } catch (err) {
@@ -314,6 +316,7 @@ function Support() {
                             </div>
 
                             <div className="mt-4 space-y-3">
+
                                 <div className="flex justify-between">
                                     <div className="text-sm text-gray-600">Grievance ID</div>
                                     <div className="font-medium">{selectedGrievance.grievanceId}</div>
@@ -346,6 +349,15 @@ function Support() {
                                         <a href={selectedGrievance.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block mt-2 px-3 py-1 border rounded-md text-sm text-green-700 border-green-700 hover:bg-green-50">View attachment</a>
                                     </div>
                                 )}
+                                <br/>
+                                {selectedGrievance.officerRemark && (
+                                    <div>
+                                        <div className="text-sm text-gray-600">Officer Remark</div>
+                                        <div className="mt-2 text-sm text-gray-800 whitespace-pre-wrap">
+                                            {selectedGrievance.officerRemark}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex justify-end mt-4">
@@ -357,8 +369,7 @@ function Support() {
 
                 {/* ---------------------------------FAQ-------------------------------------- */}
                 <div className='bg-white rounded-xl p-4 sm:p-6 mx-4 sm:mx-8 md:mx-10 mb-3 shadow-lg ring-1 ring-gray-100'>
-                    <h1 className='text-green-700 font-semibold text-xl mb-6'>Frequently Asked Questions</h1>
-                    
+                    <FAQ />
                 </div>
 
                 {/* ---------------------------------Video Tutorials-------------------------------------- */}
