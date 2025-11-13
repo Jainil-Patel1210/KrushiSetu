@@ -4,10 +4,12 @@ import SocialLogin from './SocialLogin';
 import PasswordToggleIcon from './PasswordToggleIcon';
 import api from './api';
 import { Toaster, toast } from 'react-hot-toast';
+import { clearAuth, normalizeRole, storeTokens } from '../../utils/auth';
 
 function Login({ onForgotPasswordClick, onLoginSuccess }) {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
+    useEffect(() => {
+        clearAuth();
+    }, []);
 
     const [loginWithOtp, setLoginWithOtp] = useState(false);
     const [showLoginOtpForm, setShowLoginOtpForm] = useState(false);
@@ -122,7 +124,12 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             setLoginWithOtp(false);
             setLoginMobile('');
             setLoginOtp('');
-            const normalizedRole = role.toLowerCase().replace(/\s+/g, '_');
+            const normalizedRole = normalizeRole(role);
+            storeTokens({
+                access: response.data.access,
+                refresh: response.data.refresh,
+                role: normalizedRole,
+            });
             setRole('');
             setIsLoading(false);
             onLoginSuccess(normalizedRole);
@@ -190,11 +197,13 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
                 remember: remember,
             });
 
-            // Save JWT tokens (for later authenticated requests)
-            localStorage.setItem("access", response.data.access);
-            localStorage.setItem("refresh", response.data.refresh);
+            const normalizedRole = normalizeRole(role);
 
-            const normalizedRole = role.toLowerCase().replace(/\s+/g, '_');
+            storeTokens({
+                access: response.data.access,
+                refresh: response.data.refresh,
+                role: normalizedRole,
+            });
 
             setLoginEmailError("");
             toast.success("Logged in successfully!");
