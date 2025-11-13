@@ -14,9 +14,14 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 import dj_database_url
-load_dotenv()
+import sys
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env file explicitly from back directory
+env_path = BASE_DIR / '.env'
+load_dotenv(dotenv_path=env_path)
 
 
 # Quick-start development settings - unsuitable for production
@@ -273,7 +278,26 @@ if DATABASE_URL:
         )
     }
 else:
-    # Fallback for local dev if you don't have Postgres running
+    # ERROR: DATABASE_URL is required
+    print("\n" + "="*70)
+    print("⚠️  ERROR: DATABASE_URL environment variable is not set!")
+    print("="*70)
+    print("\nThis application requires a PostgreSQL database (NeonDB).")
+    print("\nPlease follow these steps:")
+    print("  1. Create a .env file in the 'back' directory")
+    print("  2. Add your NeonDB connection string:")
+    print("     DATABASE_URL=postgresql://user:pass@host/db?sslmode=require")
+    print("  3. Get your NeonDB URL from: https://neon.tech")
+    print("  4. Also add GROQ_API_KEY for subsidy recommendations")
+    print("\nSee .env.example for a template.")
+    print("="*70 + "\n")
+    
+    # Exit in production, use SQLite fallback only in development with warning
+    if not DEBUG:
+        sys.exit(1)
+    
+    print("⚠️  Using SQLite fallback (development only)")
+    print("⚠️  Run migrations: python manage.py migrate\n")
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
