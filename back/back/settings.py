@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import cloudinary
+from datetime import timedelta
 from pathlib import Path
 import os
 from dotenv import load_dotenv
@@ -54,13 +56,14 @@ INSTALLED_APPS = [
     'support',
     'photo',
     'cloudinary',
-    'cloudinary_storage'
+    'cloudinary_storage',
+    'apply',
 ]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "loginSignup.authentication.CookieJWTAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),    
+    ),
 }
 
 
@@ -71,7 +74,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'back.middleware.JWTAuthenticationFromCookie',  # Must be after AuthenticationMiddleware
+    # Must be after AuthenticationMiddleware
+    'back.middleware.JWTAuthenticationFromCookie',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -107,7 +111,8 @@ CSRF_COOKIE_DOMAIN = None
 
 # CORS settings
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+CORS_ALLOWED_ORIGINS = os.getenv(
+    "CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 CORS_ALLOW_HEADERS = [
     "content-type",
     "authorization",
@@ -127,7 +132,8 @@ CORS_ALLOW_METHODS = [
     "OPTIONS",
 ]
 
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost:5173").split(",")
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS", "http://localhost:5173").split(",")
 
 WSGI_APPLICATION = 'back.wsgi.application'
 
@@ -187,7 +193,6 @@ AUTH_USER_MODEL = "loginSignup.User"
 
 PHONENUMBER_DEFAULT_REGION = 'IN'
 
-from datetime import timedelta
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -211,20 +216,19 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
 # Google SMTP settings (as a fallback or alternative)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'   
-EMAIL_PORT = 587                               
-EMAIL_USE_TLS = True  
-EMAIL_USE_SSL = False                          
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')    
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-#cloudinary-Django integration
-import cloudinary
+# cloudinary-Django integration
 
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
@@ -249,7 +253,8 @@ LOGGING = {
 }
 
 # Database
-DATABASE_URL = os.getenv("DATABASE_URL")  # e.g. postgresql://user:pass@<neon-host>/<db>?sslmode=require
+# e.g. postgresql://user:pass@<neon-host>/<db>?sslmode=require
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
     DATABASES = {

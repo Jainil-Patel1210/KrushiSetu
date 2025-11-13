@@ -27,4 +27,5 @@ urlpatterns = [
     # changed: mount photo app at /photo/
     path('photo/', include('photo.urls')),
     path('support/', include('support.urls')),
+    path('api/', include('apply.urls')),
 ]
