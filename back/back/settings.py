@@ -15,9 +15,11 @@ import os
 from dotenv import load_dotenv
 import dj_database_url
 
-load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env file from the back directory
+load_dotenv(dotenv_path=BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -53,6 +55,7 @@ INSTALLED_APPS = [
     'photo',
     'cloudinary',
     'cloudinary_storage',
+    'SubsidyRecommandation',
     'subsidy', 
 ]
 
@@ -109,7 +112,7 @@ CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_DOMAIN = None
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:5174").split(",")
 CORS_ALLOW_HEADERS = [
     "content-type",
     "authorization",
@@ -129,10 +132,22 @@ CORS_ALLOW_METHODS = [
     "OPTIONS",
 ]
 
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost:5173").split(",")
+CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://localhost:5174").split(",")
 
 WSGI_APPLICATION = 'back.wsgi.application'
 
+# Cache configuration for faster responses
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5 minutes default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            'CULL_FREQUENCY': 3,
+        }
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
