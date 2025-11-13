@@ -6,7 +6,7 @@ import { faArrowLeftLong } from '@fortawesome/free-solid-svg-icons';
 import Login from './Login';
 import Signup from './Signup';
 import ForgotPassword from './ForgotPassword';
-import Settings from '../HomePage/Settings';    
+import Settings from '../HomePage/Settings';
 
 function Authentication() {
     const navigate = useNavigate();
@@ -21,8 +21,14 @@ function Authentication() {
     };
 
     // Callback for LoginPage to trigger navigation after successful login
-    const handleLoginSuccess = () => {
-        navigate('/sidebar');
+    const handleLoginSuccess = (role) => {
+        if (role === 'officer') {
+            navigate('/officer_sidebar');
+        } else if (role === 'subsidy_provider') {
+            navigate('/Subsidy_Provider_Sidebar');
+        } else {
+            navigate('/sidebar');
+        }
     };
 
     // Callback for SignupPage to trigger switch to login page after successful signup

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import RoleDropdown from './RoleDropDown';
 import SocialLogin from './SocialLogin';
 import PasswordToggleIcon from './PasswordToggleIcon';
@@ -10,7 +9,6 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
 
-    const navigate = useNavigate();
     const [loginWithOtp, setLoginWithOtp] = useState(false);
     const [showLoginOtpForm, setShowLoginOtpForm] = useState(false);
     const [userId, setUserId] = useState('');
@@ -124,9 +122,10 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             setLoginWithOtp(false);
             setLoginMobile('');
             setLoginOtp('');
+            const normalizedRole = role.toLowerCase().replace(/\s+/g, '_');
             setRole('');
             setIsLoading(false);
-            onLoginSuccess();
+            onLoginSuccess(normalizedRole);
         } catch (err) {
             console.error(err);
             toast.error(err.response?.data?.error || "OTP verification failed");
@@ -195,12 +194,14 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             localStorage.setItem("access", response.data.access);
             localStorage.setItem("refresh", response.data.refresh);
 
+            const normalizedRole = role.toLowerCase().replace(/\s+/g, '_');
+
             setLoginEmailError("");
             toast.success("Logged in successfully!");
             setLoginMobileOrEmail("");
             setLoginPassword("");
             setRole('');
-            onLoginSuccess();
+            onLoginSuccess(normalizedRole);
             btn.disabled = false;
             setIsLoading(false);
         } catch (error) {
