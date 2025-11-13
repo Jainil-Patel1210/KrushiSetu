@@ -5,17 +5,21 @@ from django.conf import settings
 
 
 class Document(models.Model):
+   
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='subsidy_documents',     # <= unique name
         related_query_name='subsidy_document' # <= optional
     )
-    document_type = models.CharField(max_length=100,null=True)
+    document_type = models.CharField(max_length=100)
     document_number = models.CharField(max_length=100, blank=True, null=True)
     file = models.FileField(upload_to="documents/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
-
+    class Meta:
+        unique_together = ('owner', 'document_type')
+    
+    
     def __str__(self):
         return f"{self.owner.full_name} - {self.document_type}"
 
@@ -30,6 +34,9 @@ class Subsidy(models.Model):
 
 
 class SubsidyApplication(models.Model):
+   
+    
+    
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subsidy_applications')
     subsidy = models.ForeignKey(
     'app.Subsidy',
@@ -60,6 +67,7 @@ class SubsidyApplication(models.Model):
     documents = models.ManyToManyField(Document, related_name="applications")
 
     submitted_at = models.DateTimeField(auto_now_add=True)
-
+    class Meta:
+        unique_together = ('user', 'subsidy')
     def __str__(self):
         return f"{self.user.full_name} - {self.subsidy.title}"

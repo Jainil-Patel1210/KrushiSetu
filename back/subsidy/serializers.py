@@ -33,6 +33,16 @@ class SubsidyApplicationSerializer(serializers.ModelSerializer):
             'documents', 'document_ids',
         ]
         read_only_fields = ('id', 'user', 'documents')
+    def validate(self, attrs):
+        user = self.context['request'].user
+        subsidy = attrs.get('subsidy')
+
+        if SubsidyApplication.objects.filter(user=user, subsidy=subsidy).exists():
+            raise serializers.ValidationError(
+                {"detail": "You have already applied for this subsidy."}
+            )
+
+        return attrs
 
     def to_internal_value(self, data):
         """

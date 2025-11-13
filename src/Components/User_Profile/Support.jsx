@@ -5,6 +5,8 @@ import './Support.css';
 import Settings from '../HomePage/Settings.jsx';
 import FileDropzone from './FileDropzone';
 import FAQ from '../HomePage/FAQ.jsx';
+import  {toast, Toaster} from 'react-hot-toast'
+
 
 function Support() {
     const [grievances, setGrievances] = useState([]);
@@ -89,6 +91,7 @@ function Support() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const newErrors = {};
+        const btn = document.getElementById('btn');
         if (!subject.trim()) newErrors.subject = 'Subject is required';
         if (!description.trim()) newErrors.description = 'Description is required';
         setErrors(newErrors);
@@ -100,8 +103,10 @@ function Support() {
         data.append('description', description.trim());
         data.append('preferred_contact', preferredContact);
         if (attachment) data.append('attachment', attachment);
+        btn.disabled = true;
 
         try {
+            
             const token = localStorage.getItem('access');
             const res = await fetch('http://127.0.0.1:8000/support/grievances/', {
                 method: 'POST',
@@ -132,10 +137,15 @@ function Support() {
             await fetchGrievances();
             resetForm();
             setShowForm(false);
+            toast.sucess("Grievance submitted successfully");
+            btn.disabled = false;
+            
         } catch (err) {
             console.error(err);
             // basic error handling - show in form errors
             setErrors({ form: err.message || 'Failed to submit' });
+          
+            btn.disabled = false;
         }
     }
 
@@ -166,7 +176,8 @@ function Support() {
     };
 
     return (
-        <>
+        <>  
+            <Toaster position="top-center" reverseOrder={false} />
             <Header />
             <Settings />
             <div className="w-full mx-auto">
@@ -227,7 +238,7 @@ function Support() {
 
                                 <div className="flex justify-end gap-3 mt-4">
                                     <button type="button" onClick={() => { resetForm(); setShowForm(false); }} className="px-4 py-2 rounded-md border border-gray-300">Cancel</button>
-                                    <button type="submit" className="px-4 py-2 rounded-md bg-green-700 text-white">Submit</button>
+                                    <button type="submit" id='btn' className="px-4 py-2 rounded-md bg-green-700 text-white">Submit</button>
                                 </div>
                             </form>
                         </div>
@@ -360,9 +371,7 @@ function Support() {
                                 )}
                             </div>
 
-                            <div className="flex justify-end mt-4">
-                                <button onClick={() => { setShowDetails(false); setSelectedGrievance(null); }} className="px-4 py-2 rounded-md border border-gray-300">Close</button>
-                            </div>
+                           
                         </div>
                     </div>
                 )}
