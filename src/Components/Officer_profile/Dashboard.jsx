@@ -4,8 +4,44 @@ import Settings from '../HomePage/Settings';
 import { AiOutlineEye, AiOutlineClose } from 'react-icons/ai';
 import api from '../Signup_And_Login/api';
 
+const STATUS_LABELS = {
+  approved: 'Approved',
+  under_review: 'Under Review',
+  rejected: 'Rejected',
+  submitted: 'Pending',
+};
+
+const DOCUMENT_STATUS_LABELS = {
+  verified: 'Verified',
+  rejected: 'Rejected',
+  pending: 'Pending',
+};
+
+const STATUS_BUTTONS = [
+  { key: 'all', label: 'All' },
+  { key: 'approved', label: STATUS_LABELS.approved },
+  { key: 'under_review', label: STATUS_LABELS.under_review },
+  { key: 'submitted', label: STATUS_LABELS.submitted },
+  { key: 'rejected', label: STATUS_LABELS.rejected, hideWhenZero: true },
+];
+
+const deriveStatusKey = (rawStatus) => {
+  const normalized = (rawStatus || '').toLowerCase();
+  if (STATUS_LABELS[normalized]) {
+    return normalized;
+  }
+  return 'submitted';
+};
+
+const deriveStatusLabel = (statusKey) => STATUS_LABELS[statusKey] || STATUS_LABELS.submitted;
+
+const deriveDocumentStatusLabel = (rawStatus) => {
+  const normalized = (rawStatus || '').toLowerCase();
+  return DOCUMENT_STATUS_LABELS[normalized] || DOCUMENT_STATUS_LABELS.pending;
+};
+
 const Dashboard = () => {
-  const [selectedFilter, setSelectedFilter] = useState('All');
+  const [selectedFilter, setSelectedFilter] = useState('submitted');
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -83,12 +119,16 @@ const Dashboard = () => {
     setProcessingAction(true);
     setDetailError(null);
     try {
-      await api.post(`/subsidy-applications/${selectedApplication.id}/${endpoint}/`, {
+      const { data } = await api.post(`/subsidy-applications/${selectedApplication.id}/${endpoint}/`, {
         officer_note: officerNote || '',
         ...payload,
       });
       await fetchApplications();
       await loadApplicationDetail(selectedApplication.id);
+      if (data?.status) {
+        const statusKey = deriveStatusKey(data.status);
+        setSelectedFilter(statusKey);
+      }
     } catch (err) {
       console.error(`Failed to ${endpoint}`, err);
       const message =
@@ -109,40 +149,48 @@ const Dashboard = () => {
   const handleReject = () => handleAction('reject');
 
   const normalizedApplications = useMemo(() => {
-    return applications.map((app, index) => ({
-      srNo: index + 1,
-      id: app.id,
-      applicationId: `APP-${app.id}`,
-      farmerName: app.applicant_name || 'N/A',
-      schemeName: app.subsidy_title || 'N/A',
-      status:
-        app.status_display ||
-        app.status?.replace(/_/g, ' ')?.replace(/\b\w/g, (l) => l.toUpperCase()) ||
-        'Submitted',
-      submittedAt: app.submitted_at,
-    }));
+    return applications.map((app, index) => {
+      const statusKey = deriveStatusKey(app.status || app.status_display);
+      return {
+        srNo: index + 1,
+        id: app.id,
+        applicationId: `APP-${app.id}`,
+        farmerName: app.applicant_name || 'N/A',
+        schemeName: app.subsidy_title || 'N/A',
+        statusKey,
+        statusLabel: deriveStatusLabel(statusKey),
+        submittedAt: app.submitted_at,
+      };
+    });
   }, [applications]);
 
   const statusCounts = useMemo(() => {
-    const counts = { Approved: 0, 'Under Review': 0, Pending: 0 };
+    const counts = {
+      approved: 0,
+      under_review: 0,
+      submitted: 0,
+      rejected: 0,
+    };
     normalizedApplications.forEach((item) => {
-      const status = item.status;
-      if (status.includes('Approved')) counts.Approved += 1;
-      else if (status.includes('Under Review')) counts['Under Review'] += 1;
-      else counts.Pending += 1;
+      if (counts[item.statusKey] !== undefined) {
+        counts[item.statusKey] += 1;
+      } else {
+        counts.submitted += 1;
+      }
     });
     return counts;
   }, [normalizedApplications]);
 
   const filteredData = useMemo(() => {
-    if (selectedFilter === 'All') return normalizedApplications;
-    return normalizedApplications.filter((item) => item.status === selectedFilter);
+    if (selectedFilter === 'all') return normalizedApplications;
+    return normalizedApplications.filter((item) => item.statusKey === selectedFilter);
   }, [normalizedApplications, selectedFilter]);
 
   const statusStyles = {
     Approved: 'bg-green-100 text-green-800',
     'Under Review': 'bg-sky-100 text-sky-800',
     Pending: 'bg-amber-100 text-amber-800',
+    Rejected: 'bg-red-100 text-red-700',
   };
 
   function StatusBadge({ status }) {
@@ -199,59 +247,29 @@ const Dashboard = () => {
             <div className="mb-6 bg-gray-50 rounded-lg p-4">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-gray-700 font-semibold text-sm sm:text-base">Filter by Status :</span>
-
-                <button
-                  onClick={() => setSelectedFilter('All')}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    selectedFilter === 'All'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
-                  }`}
-                >
-                  All
-                </button>
-
-                <button
-                  onClick={() => setSelectedFilter('Approved')}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${
-                    selectedFilter === 'Approved'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
-                  }`}
-                >
-                  Approved
-                  <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
-                    {statusCounts['Approved']}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setSelectedFilter('Under Review')}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${
-                    selectedFilter === 'Under Review'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
-                  }`}
-                >
-                  Under Review
-                  <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
-                    {statusCounts['Under Review']}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setSelectedFilter('Pending')}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${
-                    selectedFilter === 'Pending'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
-                  }`}
-                >
-                  Pending
-                  <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
-                    {statusCounts['Pending']}
-                  </span>
-                </button>
+                {STATUS_BUTTONS.map((button) => {
+                  if (button.hideWhenZero && !statusCounts[button.key]) {
+                    return null;
+                  }
+                  return (
+                    <button
+                      key={button.key}
+                      onClick={() => setSelectedFilter(button.key)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${
+                        selectedFilter === button.key
+                          ? 'bg-green-600 text-white'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >
+                      {button.label}
+                      {button.key !== 'all' && (
+                        <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
+                          {statusCounts[button.key] || 0}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -286,7 +304,7 @@ const Dashboard = () => {
                           {row.submittedAt ? new Date(row.submittedAt).toLocaleDateString() : '—'}
                         </td>
                         <td className="px-4 py-3">
-                          <StatusBadge status={row.status} />
+                          <StatusBadge status={row.statusLabel} />
                         </td>
                         <td className="px-4 py-3">
                           <ViewButton onClick={() => handleView(row)} />
@@ -313,7 +331,7 @@ const Dashboard = () => {
                         <p className="text-sm text-gray-700 mt-1">{row.schemeName}</p>
                         <p className="text-xs sm:text-sm text-gray-500 mt-1">{row.applicationId}</p>
                       </div>
-                      <StatusBadge status={row.status} />
+                      <StatusBadge status={row.statusLabel} />
                     </div>
 
                     <div className="text-sm mb-3">
@@ -375,9 +393,9 @@ const Dashboard = () => {
             ) : selectedApplication ? (
               <div className="p-6 space-y-6">
                 <div className="flex flex-wrap gap-3 items-center">
-                  <StatusBadge status={selectedApplication.status_display || 'Submitted'} />
+                  <StatusBadge status={deriveStatusLabel(deriveStatusKey(selectedApplication.status))} />
                   <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-700">
-                    Documents: {selectedApplication.document_status_display || 'Pending'}
+                    Documents: {deriveDocumentStatusLabel(selectedApplication.document_status)}
                   </span>
                   {selectedApplication.assigned_officer_name && (
                     <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 text-gray-700">
