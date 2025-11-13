@@ -71,3 +71,6 @@ sendgrid
 django-sendgrid-v5
 cloudinary
 django-cloudinary-storage
+langchain-groq
+langchain-core
+langgraph
