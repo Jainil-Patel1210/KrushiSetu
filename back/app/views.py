@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.utils import timezone
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -16,6 +17,13 @@ from .serializers import (
 from .permissions import IsApplicantOfficerOrAdmin, IsOfficerOrAdmin
 
 
+BASE_APPLICATION_QS = SubsidyApplication.objects.select_related(
+    "subsidy",
+    "applicant",
+    "assigned_officer",
+)
+
+
 def index(request):
     return render(request, "index.html")
 
@@ -27,23 +35,23 @@ class SubsidyViewSet(viewsets.ModelViewSet):
 
 
 class SubsidyApplicationViewSet(viewsets.ModelViewSet):
-    queryset = (
-        SubsidyApplication.objects.select_related("subsidy", "applicant", "assigned_officer")
-        .prefetch_related("documents")
-        .all()
-    )
     serializer_class = SubsidyApplicationSerializer
     permission_classes = [permissions.IsAuthenticated, IsApplicantOfficerOrAdmin]
     parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def get_queryset(self):
+        queryset = BASE_APPLICATION_QS
+
+        if self.action in {"retrieve", "documents", "mark_under_review", "verify_documents", "approve", "reject"}:
+            queryset = queryset.prefetch_related("documents")
+
         user = self.request.user
         user_role = getattr(user, "role", None)
 
         if user_role in {"officer", "admin"} or user.is_staff:
-            return self.queryset
+            return queryset
 
-        return self.queryset.filter(applicant=user)
+        return queryset.filter(applicant=user)
 
     def perform_create(self, serializer):
         serializer.save(applicant=self.request.user)

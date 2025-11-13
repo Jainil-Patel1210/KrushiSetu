@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.exceptions import PermissionDenied
 
 from .models import Subsidy, SubsidyApplication, ApplicationDocument
 
@@ -124,19 +125,22 @@ class SubsidyApplicationSerializer(serializers.ModelSerializer):
         return instance
 
     def _sync_documents(self, application, documents_data, acting_user, allow_verify):
+        if not documents_data:
+            return
+
         user_role = getattr(acting_user, "role", None)
         for doc_payload in documents_data:
             document_id = doc_payload.get("id")
 
             if document_id:
                 document = application.documents.get(id=document_id)
-                changes_made = False
 
-                if "verified" in doc_payload or "verification_note" in doc_payload:
+                verified_provided = "verified" in doc_payload
+                note_provided = "verification_note" in doc_payload
+
+                if verified_provided or note_provided:
                     if not allow_verify:
-                        raise serializers.ValidationError(
-                            "Only officers or admins can verify documents."
-                        )
+                        raise PermissionDenied("Only officers or admins can verify documents.")
                     verified_flag = bool(doc_payload.get("verified", document.verified))
                     note = doc_payload.get("verification_note", document.verification_note)
                     document.mark_verified(
@@ -144,18 +148,12 @@ class SubsidyApplicationSerializer(serializers.ModelSerializer):
                         note=note,
                         verified=verified_flag,
                     )
-                    changes_made = True
-
-                if document.document_type != doc_payload.get("document_type", document.document_type):
-                    raise serializers.ValidationError("Document type cannot be changed once uploaded.")
-
-                if changes_made:
-                    document.save()
+                    document.save(update_fields=["verified", "verification_note", "verified_at", "verified_by"])
 
                 continue
 
-            if user_role not in {"farmer"} and not allow_verify:
-                raise serializers.ValidationError("Only applicants can upload new documents.")
+            if user_role != "farmer" and not allow_verify:
+                raise PermissionDenied("Only applicants can upload new documents.")
 
             try:
                 document_type = doc_payload["document_type"]
