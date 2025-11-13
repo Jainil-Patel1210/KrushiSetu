@@ -70,3 +70,4 @@ whitenoise
 sendgrid
 django-sendgrid-v5
 cloudinary
+django-cloudinary-storage

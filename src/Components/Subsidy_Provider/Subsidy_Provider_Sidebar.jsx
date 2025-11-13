@@ -1,13 +1,9 @@
 import React,{useState} from 'react'
-import Dashboard from './Dashboard.jsx';
-import Personal_info from './personal_info.jsx'
-import Subsidy_List from './Subsidy_List.jsx';
-import Documents from './Documents.jsx';
-import Support from './Support.jsx';
+import Dashboard from './Dashboard';
+import Report from './Report';
 
-
-function Sidebar() {
-    const [page,setPage]=useState('Dashboard');
+const Subsidy_Provider_Sidebar = () => {
+   const [page,setPage]=useState('Dashboard');
     const [isOpen, setIsOpen] = useState(false);
 
     function handlePageChange(newPage){
@@ -21,10 +17,7 @@ function Sidebar() {
     // Sidebar options array
     const sidebar_options = [
         {id : 'Dashboard', label: 'Dashboard', icon: './Home.svg'},
-        {id : 'Profile', label: 'Profile & Personal Details', icon: './Profile.svg'},
-        {id : 'Documents', label: 'Documents', icon: './Document.svg'},
-        {id : 'Subsidies', label: 'Subsidies', icon: './Note.svg'},
-        {id : 'Support', label: 'Support', icon: './Support.svg'}
+        {id : 'Report', label: 'Report', icon: './Support.svg'}
     ]
 
     return (
@@ -93,14 +86,11 @@ function Sidebar() {
                 <div className="w-px bg-gray-300 hidden lg:block" />
                 <div className='flex-1'>
                     {page==='Dashboard' && <Dashboard/>}
-                    {page==='Profile' && <Personal_info/>}
-                    {page==='Documents' && <Documents/>}
-                    {page==='Subsidies' && <Subsidy_List/>}
-                    {page==='Support' && <Support/>}
+                    {page==='Report' && <Report/>}
                 </div>
             </div>
         </>
     )
 }
 
-export default Sidebar
+export default Subsidy_Provider_Sidebar

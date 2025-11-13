@@ -28,7 +28,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-default-key-for-dev")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(",")
 
 
 # Application definition
@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'support',
     'photo',
     'cloudinary',
+    'cloudinary_storage'
 ]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -106,7 +107,7 @@ CSRF_COOKIE_DOMAIN = None
 
 # CORS settings
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = ['http://localhost:5173']
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 CORS_ALLOW_HEADERS = [
     "content-type",
     "authorization",
@@ -126,7 +127,7 @@ CORS_ALLOW_METHODS = [
     "OPTIONS",
 ]
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5173']
+CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost:5173").split(",")
 
 WSGI_APPLICATION = 'back.wsgi.application'
 
@@ -202,19 +203,22 @@ TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
-EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-SENDGRID_SANDBOX_MODE_IN_DEBUG = False
-SENDGRID_ECHO_TO_STDOUT = True
+# SendGrid Email settings
+# EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+# SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+# SENDGRID_SANDBOX_MODE_IN_DEBUG = False
+# SENDGRID_ECHO_TO_STDOUT = True
 
-# EMAIL_HOST = 'smtp.gmail.com'   
-# EMAIL_PORT = 587                               
-# EMAIL_USE_TLS = True  
-# EMAIL_USE_SSL = False                          
+# Google SMTP settings (as a fallback or alternative)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'   
+EMAIL_PORT = 587                               
+EMAIL_USE_TLS = True  
+EMAIL_USE_SSL = False                          
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')    
-# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 
+
 MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -263,3 +267,5 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
