@@ -241,7 +241,7 @@ export default function ApplySubsidy() {
       if (profile) {
         const populatedForm = {
           fullName: profile.full_name || '',
-          mobile: profile.mobile_number || profile.mobile || '',
+          mobile: profile.mobile_number.slice(-10) || '',
           email: profile.email_address || profile.email || '',
           aadhar: profile.aadhaar_number || profile.aadhaar || '',
           state: profile.state || '',

@@ -1,4 +1,5 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 
 from django.contrib.auth.models import User
 from django.conf import settings
@@ -14,7 +15,7 @@ class Document(models.Model):
     )
     document_type = models.CharField(max_length=100)
     document_number = models.CharField(max_length=100, blank=True, null=True)
-    file = models.FileField(upload_to="documents/")
+    file = CloudinaryField('file', folder='documents/subsidy_documents/', blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         unique_together = ('owner', 'document_type')
