@@ -22,7 +22,7 @@ function Authentication() {
 
     // Callback for LoginPage to trigger navigation after successful login
     const handleLoginSuccess = () => {
-        navigate('/sidebar');
+        navigate('/sidebar');   
     };
 
     // Callback for SignupPage to trigger switch to login page after successful signup
