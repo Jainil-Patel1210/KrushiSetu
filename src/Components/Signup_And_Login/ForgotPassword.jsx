@@ -35,7 +35,7 @@ function ForgotPassword({ onBackToLogin }) {
             });
             // otpSent is not used for UI, but was in original logic
             setForgotStep(2);
-            toast('OTP sent to your email!');
+            toast.success('OTP sent to your email!');
             btn.disabled = false;
         }
         catch (err) {

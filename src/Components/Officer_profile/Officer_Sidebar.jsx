@@ -1,13 +1,8 @@
 import React,{useState} from 'react'
 import Dashboard from './Dashboard.jsx';
-import Personal_info from './personal_info.jsx'
-import Subsidy_List from './Subsidy_List.jsx';
-import Documents from './Documents.jsx';
-import Support from './Support.jsx';
-import RecommendSubsidy from './SubsidyRecommandation.jsx'; 
+import Grievance from './Grievance.jsx'; // Add this import
 
-
-function Sidebar() {
+function Officer_Sidebar() {
     const [page,setPage]=useState('Dashboard');
     const [isOpen, setIsOpen] = useState(false);
 
@@ -22,11 +17,7 @@ function Sidebar() {
     // Sidebar options array
     const sidebar_options = [
         {id : 'Dashboard', label: 'Dashboard', icon: './Home.svg'},
-        {id : 'Profile', label: 'Profile & Personal Details', icon: './Profile.svg'},
-        {id : 'Documents', label: 'Documents', icon: './Document.svg'},
-        {id : 'Subsidies', label: 'Subsidies', icon: './Note.svg'},
-        {id : 'RecommendSubsidy', label: 'Recommend Subsidy', icon: './Subsidy_Recommendation.svg'},
-        {id : 'Support', label: 'Support', icon: './Support.svg'}
+        {id : 'Grievance', label: 'Grievance', icon: './Support.svg'}
     ]
 
     return (
@@ -95,15 +86,11 @@ function Sidebar() {
                 <div className="w-px bg-gray-300 hidden lg:block" />
                 <div className='flex-1'>
                     {page==='Dashboard' && <Dashboard/>}
-                    {page==='Profile' && <Personal_info/>}
-                    {page==='Documents' && <Documents/>}
-                    {page==='Subsidies' && <Subsidy_List/>}
-                    {page==='Support' && <Support/>}
-                    {page==='RecommendSubsidy' && <RecommendSubsidy/>}
+                    {page==='Grievance' && <Grievance/>}
                 </div>
             </div>
         </>
     )
 }
 
-export default Sidebar
+export default Officer_Sidebar
