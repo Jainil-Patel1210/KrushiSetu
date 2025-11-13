@@ -20,7 +20,7 @@ function Subsidy_List() {
             setLoading(true);
             setError(null);
             const BASE_URL = import.meta.env.VITE_BASE_URL; 
-            const response = await axios.get(`${BASE_URL}/api/subsidies/`, { timeout: 10000 });
+            const response = await axios.get(`${BASE_URL}/api/subsidies/`, { timeout: 100000 });
             setSubsidies(response.data);
         }catch(error){
             console.error("Error fetching subsidies:",error);

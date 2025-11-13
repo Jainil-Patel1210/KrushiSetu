@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'photo',
     'cloudinary',
     'cloudinary_storage',
+    'subsidy', 
 ]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -71,7 +72,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'back.middleware.JWTAuthenticationFromCookie',  # Must be after AuthenticationMiddleware
+    #'back.middleware.JWTAuthenticationFromCookie',  # Must be after AuthenticationMiddleware
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

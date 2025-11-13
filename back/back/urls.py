@@ -25,4 +25,5 @@ urlpatterns = [
     path('profile/', include('dashboard.urls')),
     path('photo/', include('photo.urls')),
     path('support/', include('support.urls')),
+    path('subsidy/', include("subsidy.urls")),
 ]

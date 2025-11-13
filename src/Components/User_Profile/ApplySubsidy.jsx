@@ -1,17 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Data from './assets/data.json';
 import api from './api1';
 import Cookies from 'js-cookie';
 
 export default function ApplySubsidy() {
-  const [stateValue, setStateValue] = useState('');
-  const [districtValue, setDistrictValue] = useState('');
-  const [talukaValue, setTalukaValue] = useState('');
-  const [villageValue, setVillageValue] = useState('');
-  const [unitValue, setUnitValue] = useState('');
-  const [soilTypeValue, setSoilTypeValue] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const subsidyFromNav = location?.state?.subsidy || null;
+  const subsidyTitle = subsidyFromNav?.title || null;
 
   // Wizard step and shared form state
   const [step, setStep] = useState(0); // 0: Personal, 1: Land, 2: Bank, 3: Documents
@@ -22,23 +20,35 @@ export default function ApplySubsidy() {
     bankName: '', bankAccount: '', ifsc: ''
   });
   const [errors, setErrors] = useState({});
-  const location = useLocation();
-  const subsidyFromNav = location?.state?.subsidy || null;
-  const subsidyTitle = subsidyFromNav?.title || null;
 
-  // Documents: only show uploaded docs that match subsidy.required_documents
-  const [documents, setDocuments] = useState([]);
+  // location selects
+  const [stateValue, setStateValue] = useState('');
+  const [districtValue, setDistrictValue] = useState('');
+  const [talukaValue, setTalukaValue] = useState('');
+  const [villageValue, setVillageValue] = useState('');
+  const [unitValue, setUnitValue] = useState('');
+  const [soilTypeValue, setSoilTypeValue] = useState('');
+
+  // Documents
+  const [documents, setDocuments] = useState([]); // server-side uploaded documents
+  const [pendingUploads, setPendingUploads] = useState([]); // staged locally
+  const fileInputRef = useRef(null);
+
   const [showAddDocModal, setShowAddDocModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentDoc, setCurrentDoc] = useState(null);
-  const fileInputRef = useRef(null);
   const [docForm, setDocForm] = useState({ document_type: '', number: '', file: null, name: '' });
   const [docErrors, setDocErrors] = useState({ document_type: '', number: '', file: '' });
   const [loadingDocs, setLoadingDocs] = useState(false);
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  const API_URL = '/photo/documents/';
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Master doc types — used as fallback or for label lookup
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+  // API endpoints (ensure trailing slash to avoid 301)
+  const DOCUMENTS_URL = '/subsidy/documents/';
+  const APPLY_URL = '/subsidy/apply/';
+
+  // Master doc types — used for fallback/labels
   const DOC_TYPES = [
     { value: 'aadhar_card', label: 'Aadhaar' },
     { value: 'bank_passbook', label: 'Bank Passbook / Cancelled Cheque' },
@@ -48,47 +58,54 @@ export default function ApplySubsidy() {
     { value: 'shg_membership', label: 'SHG membership' },
   ];
 
-  // The list that drives the Add modal options (will be initialized from subsidy.required_documents)
-  const [addModalTypes, setAddModalTypes] = useState(() => {
-    // initial derived value (safe fallback)
-    const req = subsidyFromNav?.documents_required|| null;
-    return deriveTypesFromSubsidy(req);
-  });
+  // derive allowed values from subsidy
+  const subsidyRequiredValues = React.useMemo(() => {
+    const arr = subsidyFromNav?.documents_required || [];
+    if (!Array.isArray(arr)) return [];
+    return arr.map(item => (typeof item === 'string' ? item : (item.value || ''))).filter(Boolean);
+  }, [subsidyFromNav]);
 
-  // Helper: normalize subsidy.required_documents into array of {value,label}
-  function deriveTypesFromSubsidy(required) {
-    if (!required) return DOC_TYPES; // fallback to master list
-    // required might be array of strings or array of {value,label}
-    if (Array.isArray(required) && required.length > 0) {
-      return required.map(item => {
-        if (typeof item === 'string') {
-          const matched = DOC_TYPES.find(d => d.value === item);
-          return matched ? matched : { value: item, label: prettifyLabel(item) };
-        }
-        // assume object
-        if (item.value) return { value: item.value, label: item.label || prettifyLabel(item.value) };
+  const cleanedRequiredDocs = React.useMemo(() => {
+    const raw = subsidyFromNav?.documents_required || [];
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map(item => {
+        if (typeof item === "string") return item;
+        if (item && item.value) return item.value;
         return null;
-      }).filter(Boolean);
-    }
-    return DOC_TYPES;
-  }
+      })
+      .filter(Boolean);
+  }, [subsidyFromNav]);
+
+  const uploadedTypes = new Set([
+    ...documents.map(d => d.document_type),
+    ...pendingUploads.map(p => p.document_type)
+  ]);
+
+  const remainingRequiredDocs = cleanedRequiredDocs.filter(req => !uploadedTypes.has(req));
+
+  const [addModalTypes, setAddModalTypes] = useState(() => deriveTypesFromSubsidy(subsidyFromNav?.documents_required || null));
 
   function prettifyLabel(value) {
     if (!value) return 'Document';
-    // e.g., "aadhar_card" -> "Aadhar Card"
     return value.replace(/[_\-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  // derive a quick list of allowed document_type strings for filtering
-  const subsidyRequiredValues = React.useMemo(() => {
-    const types = subsidyFromNav?.documents_required || null;
-    if (!types) return [];
-    return types.map(item => (typeof item === 'string' ? item : (item.value || ''))).filter(Boolean);
-  }, [subsidyFromNav]);
+  function deriveTypesFromSubsidy(required) {
+    if (!required || !Array.isArray(required) || required.length === 0) return DOC_TYPES;
+    return required.map(item => {
+      if (typeof item === 'string') {
+        const m = DOC_TYPES.find(d => d.value === item);
+        return m || { value: item, label: prettifyLabel(item) };
+      }
+      if (item && item.value) return { value: item.value, label: item.label || prettifyLabel(item.value) };
+      return null;
+    }).filter(Boolean);
+  }
 
   const update = (name, value) => setForm(prev => ({ ...prev, [name]: value }));
 
-  // Validation helpers (same as before)
+  // ---------- Validation functions ----------
   const validateField = (name, value) => {
     let msg = '';
     switch (name) {
@@ -172,7 +189,7 @@ export default function ApplySubsidy() {
     return Object.keys(e).length === 0;
   }
 
-  // Document helper functions
+  // Document helpers
   const validateDocNumber = (num) => {
     if (!num) return 'Document number is required.';
     if (num.length > 40) return 'Too long';
@@ -194,36 +211,32 @@ export default function ApplySubsidy() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Fetch documents endpoint (filtered by subsidy.required_documents if present)
+  // Fetch documents (server) but filter by subsidy required types
   const fetchDocuments = async () => {
     try {
-      const resp = await api.get(API_URL);
+      const resp = await api.get(DOCUMENTS_URL, { withCredentials: true });
       let docs = resp.data || [];
-      // filter by subsidy required list if it's provided
       if (Array.isArray(subsidyRequiredValues) && subsidyRequiredValues.length > 0) {
         docs = docs.filter(d => subsidyRequiredValues.includes(d.document_type));
       }
       setDocuments(docs);
     } catch (err) {
-      console.error('Failed to fetch documents', err);
+      console.error('Failed to fetch documents', err, err.response?.data);
       setDocuments([]);
     }
   };
 
-  // Fetch profile — still populate form fields; documents fetched separately or via profile.documents if provided
+  // Fetch profile and documents
   const fetchProfile = async () => {
     try {
-      // try multiple endpoints if needed
       const tries = ['profile/profile/', '/profile/', 'profile/'];
       let profile = null;
       for (const endpoint of tries) {
         try {
-          const res = await api.get(endpoint);
+          const res = await api.get(endpoint, { withCredentials: true });
           profile = res.data;
           break;
-        } catch (err) {
-          // try next
-        }
+        } catch (err) { /* try next */ }
       }
       if (profile) {
         const populatedForm = {
@@ -252,7 +265,7 @@ export default function ApplySubsidy() {
         if (populatedForm.unit) setUnitValue(populatedForm.unit);
         if (populatedForm.soilType) setSoilTypeValue(populatedForm.soilType);
 
-        // If profile contains documents array, use it (normalized), else fetch documents via documents endpoint
+        // profile.documents -> normalize & filter
         if (Array.isArray(profile.documents) && profile.documents.length > 0) {
           let normalized = profile.documents.map(d => ({
             id: d.id,
@@ -262,7 +275,6 @@ export default function ApplySubsidy() {
             file_url: d.file_url || d.file || d.url || '',
             document_type: d.document_type || '',
           }));
-          // filter by subsidy required
           if (Array.isArray(subsidyRequiredValues) && subsidyRequiredValues.length > 0) {
             normalized = normalized.filter(d => subsidyRequiredValues.includes(d.document_type));
           }
@@ -271,7 +283,6 @@ export default function ApplySubsidy() {
           await fetchDocuments();
         }
       } else {
-        // no profile found — just fetch documents
         await fetchDocuments();
       }
     } catch (err) {
@@ -281,88 +292,88 @@ export default function ApplySubsidy() {
   };
 
   useEffect(() => {
-    // ensure addModalTypes stays in sync if subsidyFromNav changes
     setAddModalTypes(deriveTypesFromSubsidy(subsidyFromNav?.documents_required || null));
     fetchProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subsidyFromNav]);
 
-  // Simple UI helpers: view/edit/delete
+  // merged docs for UI = pendingUploads first then server documents
+  const mergedDocs = [...pendingUploads, ...documents];
+
+  // missing required docs (by type) — used for banner
+  const presentTypes = new Set(mergedDocs.map(d => d.document_type));
+  const missingDocs = (subsidyFromNav?.documents_required || []).filter(r => !presentTypes.has((typeof r === 'string' ? r : (r.value || '')))).map(x => (typeof x === 'string' ? x : (x.label || x.value)));
+
+  // ---------- Document actions ----------
   const handleView = (doc) => {
+    if (doc.file) {
+      // staged local file -> create blob URL
+      if (!doc.file_url) {
+        const url = URL.createObjectURL(doc.file);
+        window.open(url, '_blank');
+        return;
+      }
+    }
     if (!doc.file_url) return alert('No file uploaded for this document.');
     window.open(doc.file_url, '_blank');
   };
 
   const handleEdit = (doc) => {
     setCurrentDoc(doc);
-    setDocForm({ name: doc.title, number: doc.document_number || '', file: null, document_type: doc.document_type || '' });
+    setDocForm({ name: doc.title || '', number: doc.document_number || '', file: null, document_type: doc.document_type || '' });
     setDocErrors({ document_type: '', number: '', file: '' });
+
+    // If doc is pending (staged), remove it from pendingUploads temporarily — will be re-added on save
+    if (doc.tempId) {
+      setPendingUploads(prev => prev.filter(p => p.tempId !== doc.tempId));
+      setCurrentDoc({ ...doc, isPending: true });
+    }
+
     setShowEditModal(true);
   };
 
-  const handleUpdateDocument = async (e) => {
-    e.preventDefault();
-    const validation = { number: validateDocNumber(docForm.number), file: docForm.file ? validateDocFile(docForm.file) : '' };
-    setDocErrors(validation);
-    if (validation.number || validation.file) return;
-
-    const uploadFormData = new FormData();
-    uploadFormData.append('document_type', docForm.document_type || currentDoc.document_type);
-    uploadFormData.append('document_number', docForm.number.trim());
-    if (docForm.file) uploadFormData.append('file', docForm.file);
-
-    setLoadingDocs(true);
-    try {
-      const response = await api.put(`${API_URL}${currentDoc.id}/`, uploadFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      // Only update local list if updated doc is one of the subsidy-required types (or subsidy doesn't specify)
-      const respDoc = response.data;
-      if (!subsidyRequiredValues.length || subsidyRequiredValues.includes(respDoc.document_type)) {
-        setDocuments(prev => prev.map(d => d.id === currentDoc.id ? respDoc : d));
-      } else {
-        // If updated doc_type now not required, remove it from view
-        setDocuments(prev => prev.filter(d => d.id !== currentDoc.id));
-      }
-      resetDocForm();
-      setShowEditModal(false);
-      alert('Document updated successfully!');
-    } catch (error) {
-      console.error('Error updating document:', error);
-      alert('Failed to update document. Please try again.');
-    } finally {
-      setLoadingDocs(false);
+  const handleDelete = async (idOrTemp) => {
+    // if tempId (starts with 'temp_') -> delete locally
+    if (typeof idOrTemp === 'string' && idOrTemp.startsWith('temp_')) {
+      setPendingUploads(prev => prev.filter(p => p.tempId !== idOrTemp));
+      return;
     }
-  };
-
-  const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this document?')) return;
     setLoadingDocs(true);
     try {
-      await api.delete(`${API_URL}${id}/`);
-      setDocuments(prev => prev.filter(doc => doc.id !== id));
+      await api.delete(`${DOCUMENTS_URL}${idOrTemp}/`, { withCredentials: true });
+      setDocuments(prev => prev.filter(doc => doc.id !== idOrTemp));
       alert('Document deleted successfully!');
     } catch (error) {
-      console.error('Error deleting document:', error);
+      console.error('Error deleting document:', error, error.response?.data);
       alert('Failed to delete document. Please try again.');
     } finally {
       setLoadingDocs(false);
     }
   };
 
-  // Open Add modal and set allowed types to subsidy.required_documents (prefill optional)
-  const openAddModalForRequired = (prefillValue = '') => {
-    const allowed = deriveTypesFromSubsidy(subsidyFromNav?.documents_required || null);
-    // optionally filter out already-uploaded types so user doesn't upload duplicates:
-    // const allowedFiltered = allowed.filter(t => !documents.some(d => d.document_type === t.value));
-    const allowedFiltered = allowed; // keep duplicates allowed unless you want to forbid
-    setAddModalTypes(allowedFiltered);
-    setDocForm(f => ({ ...f, document_type: prefillValue || (allowedFiltered[0] ? allowedFiltered[0].value : '') }));
+  // Stage document locally instead of POSTing immediately
+  const openAddModalForRequired = () => {
+    const typesToShow = remainingRequiredDocs.map(req => {
+      const match = DOC_TYPES.find(t => t.value === req);
+      return match || { value: req, label: prettifyLabel(req) };
+    });
+
+    setAddModalTypes(typesToShow);
+    setDocForm(f => ({
+      ...f,
+      document_type: typesToShow.length ? typesToShow[0].value : ""
+    }));
+
     setShowAddDocModal(true);
   };
 
-  const handleAddDocument = async (e) => {
+  const handleAddDocument = (e) => {
     e.preventDefault();
+    if (uploadedTypes.has(docForm.document_type)) {
+      alert("This document is already uploaded.");
+      return;
+    }
     const errs = {
       document_type: docForm.document_type ? '' : 'Select document type',
       number: validateDocNumber(docForm.number),
@@ -371,38 +382,189 @@ export default function ApplySubsidy() {
     setDocErrors(errs);
     if (errs.document_type || errs.number || errs.file) return;
 
-    // Prevent uploading a type not in subsidy.required_documents (safer)
-    if (subsidyRequiredValues.length && !subsidyRequiredValues.includes(docForm.document_type)) {
+    // Check allowed by subsidy
+    if (subsidyRequiredValues.length > 0 && !subsidyRequiredValues.includes(docForm.document_type)) {
       alert('This document type is not required for this subsidy.');
       return;
     }
 
+    const temp = {
+      tempId: `temp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      document_type: docForm.document_type,
+      document_number: docForm.number.trim(),
+      file: docForm.file,
+      uploaded_at: new Date().toISOString(),
+    };
+
+    setPendingUploads(prev => [temp, ...prev]);
+    resetDocForm();
+    setShowAddDocModal(false);
+  };
+
+  // Update a staged doc or server doc
+  const handleUpdateDocument = async (e) => {
+    e.preventDefault();
+    const validation = { number: validateDocNumber(docForm.number), file: docForm.file ? validateDocFile(docForm.file) : '' };
+    setDocErrors(validation);
+    if (validation.number || validation.file) return;
+
+    // If editing a staged doc (currentDoc.isPending)
+    if (currentDoc?.isPending && currentDoc?.tempId) {
+      const updated = {
+        tempId: currentDoc.tempId,
+        document_type: docForm.document_type || currentDoc.document_type,
+        document_number: docForm.number,
+        file: docForm.file || currentDoc.file,
+        uploaded_at: new Date().toISOString(),
+      };
+      setPendingUploads(prev => [updated, ...prev]);
+      setShowEditModal(false);
+      resetDocForm();
+      setCurrentDoc(null);
+      return;
+    }
+
+    // Else update server document
     const uploadFormData = new FormData();
-    uploadFormData.append('file', docForm.file);
-    uploadFormData.append('document_type', docForm.document_type);
+    uploadFormData.append('document_type', docForm.document_type || currentDoc.document_type);
     uploadFormData.append('document_number', docForm.number.trim());
+    if (docForm.file) uploadFormData.append('file', docForm.file);
 
     setLoadingDocs(true);
     try {
-      const response = await api.post(API_URL, uploadFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'X-CSRFToken': Cookies.get('csrftoken'),
-        },
+      const response = await api.put(`${DOCUMENTS_URL}${currentDoc.id}/`, uploadFormData, {
+        headers: { 'X-CSRFToken': Cookies.get('csrftoken') }, // do NOT set Content-Type
+        withCredentials: true,
       });
       const respDoc = response.data;
-      // Only add to UI if this document is in subsidy.required_documents (or subsidy doesn't specify)
-      if (!subsidyRequiredValues.length || subsidyRequiredValues.includes(respDoc.document_type)) {
-        setDocuments(prev => [respDoc, ...prev]);
+      if (subsidyRequiredValues.length === 0 || subsidyRequiredValues.includes(respDoc.document_type)) {
+        setDocuments(prev => prev.map(d => d.id === currentDoc.id ? respDoc : d));
+      } else {
+        setDocuments(prev => prev.filter(d => d.id !== currentDoc.id));
       }
       resetDocForm();
-      setShowAddDocModal(false);
-      alert('Document uploaded successfully!');
+      setShowEditModal(false);
+      setCurrentDoc(null);
+      alert('Document updated successfully!');
     } catch (error) {
-      console.error('Error uploading document:', error);
-      alert(error.response?.data?.error || 'Failed to upload document. Please try again.');
+      console.error('Error updating document:', error, error.response?.data);
+      alert('Failed to update document. Please try again.');
     } finally {
       setLoadingDocs(false);
+    }
+  };
+
+  // ---------- Improved uploadPendingDocuments ----------
+  // Upload all pending files in parallel using FormData and return created docs.
+  async function uploadPendingDocuments() {
+    if (!pendingUploads.length) return [];
+
+    const uploadOne = async (p) => {
+      const fd = new FormData();
+      fd.append('file', p.file);
+      fd.append('document_type', p.document_type || '');
+      if (p.document_number) fd.append('document_number', p.document_number);
+
+      try {
+        const res = await api.post(DOCUMENTS_URL, fd, {
+          headers: {
+            // DO NOT set Content-Type — browser will set it including boundary
+            'X-CSRFToken': Cookies.get('csrftoken'),
+          },
+          withCredentials: true,
+        });
+        return res.data;
+      } catch (err) {
+        const server = err?.response;
+        console.error('upload error', { status: server?.status, data: server?.data, message: err.message });
+        const pretty = server?.data?.detail || JSON.stringify(server?.data) || err.message;
+        throw new Error(`Uploading ${p.document_type || 'document'} failed: ${pretty}`);
+      }
+    };
+
+    // Option A: parallel upload (fail-fast)
+    const created = await Promise.all(pendingUploads.map(p => uploadOne(p)));
+    // append created to server documents
+    setDocuments(prev => [...created, ...prev]);
+    // clear pending uploads
+    setPendingUploads([]);
+    return created;
+  }
+
+  const handleSubmitApplication = async () => {
+    const missing = {};
+    if (!form.fullName?.trim()) missing.fullName = 'Full name required';
+    if (!/^[6-9]\d{9}$/.test(form.mobile || '')) missing.mobile = 'Mobile invalid';
+    if (!/\S+@\S+\.\S+/.test(form.email || '')) missing.email = 'Email invalid';
+    if (!/^\d{12}$/.test(form.aadhar || '')) missing.aadhar = 'Aadhaar invalid';
+    setErrors(missing);
+    if (Object.keys(missing).length) {
+      alert('Please fill missing fields in personal details.');
+      setStep(0);
+      return;
+    }
+
+    const mergedTypesBeforeUpload = new Set([...documents.map(d => d.document_type), ...pendingUploads.map(p => p.document_type)]);
+    const stillMissing = (subsidyFromNav?.documents_required || []).filter(r => {
+      const val = typeof r === 'string' ? r : (r.value || '');
+      return !mergedTypesBeforeUpload.has(val);
+    });
+    if (stillMissing.length) {
+      alert(`You must provide required documents before submitting: ${stillMissing.map(prettifyLabel).join(', ')}`);
+      setStep(3);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let newlyCreatedDocs = [];
+      if (pendingUploads.length) {
+        newlyCreatedDocs = await uploadPendingDocuments();
+      }
+
+      const serverDocIds = [
+        ...documents.filter(d => !d.tempId).map(d => d.id),
+        ...newlyCreatedDocs.map(d => d.id),
+      ];
+
+      const payload = {
+        subsidy: subsidyFromNav?.id || null,
+        document_ids: serverDocIds,
+        full_name: form.fullName,
+        mobile: form.mobile,
+        email: form.email,
+        aadhaar: form.aadhar,
+        address: form.address,
+        state: form.state,
+        district: form.district,
+        taluka: form.taluka,
+        village: form.village,
+        land_area: form.landArea,
+        land_unit: form.unit,
+        soil_type: form.soilType,
+        ownership: form.ownership,
+        bank_name: form.bankName,
+        account_number: form.bankAccount,
+        ifsc: form.ifsc,
+      };
+
+      console.log('Submitting payload:', payload);
+
+      await api.post(APPLY_URL, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': Cookies.get('csrftoken'),
+        },
+        withCredentials: true,
+      });
+
+      navigate('/sidebar');
+    } catch (err) {
+      console.error('Submission failed', err, err.response?.data);
+      const serverData = err?.response?.data;
+      alert(serverData?.detail || JSON.stringify(serverData) || err.message || 'Submission failed. Try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -419,7 +581,7 @@ export default function ApplySubsidy() {
         <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-3xl">
           <h2 className="text-2xl font-bold mb-2 text-center">{subsidyTitle ? `${subsidyTitle} Application Form` : 'Subsidy Application Form'}</h2>
           <p className="text-center text-sm text-gray-600 mb-4">Step {step + 1} of 4</p>
-          <form className="flex items-start gap-x-20 gap-y-auto flex-wrap space-y-6 mx-auto">
+          <form className="flex items-start gap-x-20 gap-y-auto flex-wrap space-y-6 mx-auto" onSubmit={e => e.preventDefault()}>
             {/* Step 0: Personal */}
             <div className={`${step === 0 ? '' : 'hidden'} w-full flex flex-wrap gap-x-20 gap-y-4`}>
               <h1 className='w-full text-green-600 font-extrabold text-2xl mb-2'>Personal Information</h1>
@@ -595,12 +757,17 @@ export default function ApplySubsidy() {
             <div className={`${step === 3 ? '' : 'hidden'} w-full flex flex-col gap-4`}>
               <h1 className='w-full text-green-600 font-extrabold text-2xl mb-2'>Upload Documents</h1>
 
+              {/* Missing documents banner */}
+              {missingDocs.length > 0 && (
+                <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+                  <strong>Missing required documents:</strong> {missingDocs.map(prettifyLabel).join(', ')}
+                </div>
+              )}
+
               <div className="max-w-3xl w-full mt-2">
                 <div className="bg-white rounded-lg shadow-md p-6">
-                  <h2 className="text-2xl font-bold text-green-700 mb-4">Uploaded Documents</h2>
-
                   <div className="min-h-[120px]">
-                    {documents.length === 0 ? (
+                    {mergedDocs.length === 0 ? (
                       <div className="text-center py-8">
                         <p className="text-gray-500 text-lg">No documents uploaded yet.</p>
                         <p className="text-gray-400 text-sm mt-2">Use the button below to upload documents required by this subsidy.</p>
@@ -618,8 +785,8 @@ export default function ApplySubsidy() {
                             </tr>
                           </thead>
                           <tbody>
-                            {documents.map((doc, i) => (
-                              <tr key={doc.id} className="border-b hover:bg-gray-50">
+                            {mergedDocs.map((doc, i) => (
+                              <tr key={doc.id ?? doc.tempId} className="border-b hover:bg-gray-50">
                                 <td className="py-2">{i + 1}.</td>
                                 <td className="py-2">{doc.title || DOC_TYPES.find(d => d.value === doc.document_type)?.label || prettifyLabel(doc.document_type)}</td>
                                 <td className="py-2">{doc.document_number || ''}</td>
@@ -628,7 +795,7 @@ export default function ApplySubsidy() {
                                   <div className="flex gap-2">
                                     <button type="button" onClick={() => handleView(doc)} className="px-2 py-1 border-2 border-green-600 text-green-600 rounded-md">View</button>
                                     <button type="button" onClick={() => handleEdit(doc)} className="px-2 py-1 border-2 border-blue-600 text-blue-600 rounded-md">Edit</button>
-                                    <button type="button" onClick={() => handleDelete(doc.id)} className="px-2 py-1 border-2 border-red-600 text-red-600 rounded-md">Delete</button>
+                                    <button type="button" onClick={() => handleDelete(doc.id ?? doc.tempId)} className="px-2 py-1 border-2 border-red-600 text-red-600 rounded-md">Delete</button>
                                   </div>
                                 </td>
                               </tr>
@@ -639,14 +806,13 @@ export default function ApplySubsidy() {
                     )}
 
                     <div className="flex justify-center mt-4">
-                      {/* Open Add modal — modal will show only subsidy.required_documents (or fallback) */}
                       <button type="button" onClick={() => { resetDocForm(); openAddModalForRequired(); }} className="bg-green-600 text-white px-4 py-2 rounded-md">Add Documents</button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Add Document Modal */}
+              {/* Add Document Modal (staging only) */}
               {showAddDocModal && (
                 <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
                   <div className="bg-white rounded-lg p-6 max-w-md w-full">
@@ -680,7 +846,7 @@ export default function ApplySubsidy() {
                       </div>
 
                       <div className="flex gap-3">
-                        <button type="button" onClick={handleAddDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Add Document</button>
+                        <button type="button" onClick={handleAddDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Stage Document</button>
                         <button type="button" onClick={() => { resetDocForm(); setShowAddDocModal(false); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
                       </div>
                     </div>
@@ -713,21 +879,20 @@ export default function ApplySubsidy() {
                       </div>
 
                       <div className="flex gap-3">
-                        <button type="button" onClick={handleUpdateDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Update Document</button>
-                        <button type="button" onClick={() => { resetDocForm(); setShowEditModal(false); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
+                        <button type="button" onClick={handleUpdateDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Save</button>
+                        <button type="button" onClick={() => { resetDocForm(); setShowEditModal(false); setCurrentDoc(null); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
-
             </div>
 
             <div className="w-full"></div>
             <div className="flex justify-between mt-4 w-full">
               {step > 0 ? (<button type="button" className="border px-4 py-2 rounded" onClick={prevStep}>Back</button>) : <span />}
               {step < 3 ? (<button type="button" className="bg-green-600 text-white rounded-lg px-4 py-2" onClick={nextStep}>Next</button>) : (
-                <button type="button" className="bg-green-600 text-white rounded-lg px-4 py-2" onClick={() => { if (validateCurrentStep()) { alert('Demo submit. Hook API next.'); } }}>Submit</button>
+                <button type="button" disabled={isSubmitting} className="bg-green-600 text-white rounded-lg px-4 py-2" onClick={handleSubmitApplication}>{isSubmitting ? 'Submitting...' : 'Submit'}</button>
               )}
             </div>
 
