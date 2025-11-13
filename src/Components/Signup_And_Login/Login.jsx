@@ -7,8 +7,6 @@ import api from './api';
 import { Toaster, toast } from 'react-hot-toast';
 
 function Login({ onForgotPasswordClick, onLoginSuccess }) {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
 
     const navigate = useNavigate();
     const [loginWithOtp, setLoginWithOtp] = useState(false);
@@ -30,6 +28,21 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
     const [isOpen, setIsOpen] = useState(false);
 
     const [otpTimer, setOtpTimer] = useState(0);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                // Try refreshing the token silently
+                await api.post("/token/refresh/");
+                toast.success(" User already logged in ");
+                navigate("/sidebar"); // redirect if valid refresh token
+            } catch (err) {
+                toast.error("❌ Not logged in or refresh failed");
+                // do nothing, stay on login
+            }
+        };
+        checkAuth();
+    }, [navigate]);
 
 
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -200,13 +213,24 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             setLoginMobileOrEmail("");
             setLoginPassword("");
             setRole('');
-            onLoginSuccess();
-            btn.disabled = false;
-            setIsLoading(false);
+            if(role == 'Officer'){
+                btn.disabled = false;
+                setIsLoading(false);
+                navigate('/officer_sidebar');
+            }else if(role == 'Subsidy_Provider'){
+                btn.disabled = false;
+                setIsLoading(false);
+                navigate('sub');
+            }else{
+                onLoginSuccess();
+                btn.disabled = false;
+                setIsLoading(false);
+            }
         } catch (error) {
             console.error("Login failed: ", error.response ? error.response.data : error.message);
             toast.error(error.response?.data?.error || "Login failed");
             btn.disabled = false;
+            setIsLoading(false);
         }
     };
 

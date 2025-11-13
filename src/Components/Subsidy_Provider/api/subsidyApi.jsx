@@ -7,32 +7,31 @@ const api = axios.create({
   withCredentials: true, 
 });
 
-// Subsidy API Functions
 
-// ✅ Get current user’s subsidies (uses access_token cookie automatically)
+// Fetch Subsidy Provider's subsidies
 export const getMySubsidies = async () => {
   const res = await api.get("/my_subsidies/");
   return res.data;
 };
 
-// ✅ Create a new subsidy entry
+// Create a new subsidy 
 export const createSubsidy = async (data) => {
   const res = await api.post("/", data);
   return res.data;
 };
 
-// ✅ Update a subsidy
+//  Update a subsidy
 export const updateSubsidy = async (id, data) => {
   const res = await api.put(`/${id}/`, data);
   return res.data;
 };
 
-// ✅ Delete a subsidy
+//  Delete a subsidy
 export const deleteSubsidy = async (id) => {
   await api.delete(`/${id}/`);
 };
 
-// ✅ Get all subsidies (public/admin endpoint)
+// Get all subsidies (public/admin endpoint)
 export const getAllSubsidies = async () => {
   const res = await api.get("/");
   return res.data;

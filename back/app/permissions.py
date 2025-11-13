@@ -1,9 +1,7 @@
 from rest_framework.permissions import BasePermission
 
 class IsSubsidyProviderOrAdmin(BasePermission):
-    """
-    Allow access if user.role == 'subsidy_provider' OR user.role == 'admin' (and authenticated).
-    """
+    # Allow access if user.role == 'subsidy_provider' OR user.role == 'admin' (and authenticated).
 
     def has_permission(self, request, view):
         user = request.user

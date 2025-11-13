@@ -15,8 +15,8 @@ def login_with_otp_success(user):
     refresh_token = str(refresh)
 
     response = Response({"message": "Login successful"})
-    response.set_cookie("access_token", access, httponly=True, max_age=300)  # 5 Min
-    response.set_cookie("refresh_token", refresh_token, httponly=True, max_age=7*24*60*60) # 7 days
+    response.set_cookie("access_token", access, httponly=True, max_age=300)
+    response.set_cookie("refresh_token", refresh_token, httponly=True, max_age=7*24*60*60)
     return response
 
 User = get_user_model()
@@ -33,10 +33,8 @@ class GoogleLoginView(APIView):
             email_address = idinfo["email"]
             full_name = idinfo.get("name", "")
             
-            # Create or get user
             user= User.objects.get(email_address=email_address)
 
-            # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
             return Response({
                 "refresh": str(refresh),
