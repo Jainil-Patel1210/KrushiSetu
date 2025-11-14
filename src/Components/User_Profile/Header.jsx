@@ -13,6 +13,7 @@ function Header() {
     const fetchPhoto = async () => {
       try {
         const res = await api.get("/profile/user/photo/");
+        console.log("PHOTO RESPONSE:", res.data);   // ← CHECK THIS
         setPhotoUrl(res.data.photo_url);
       } catch (err) {
         console.error("Failed to load photo:", err);
