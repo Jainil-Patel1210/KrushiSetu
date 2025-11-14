@@ -4,7 +4,6 @@ import Header from "./Header";
 import './Support.css';
 import Settings from '../HomePage/Settings.jsx';
 import FileDropzone from './FileDropzone';
-import FAQ from '../HomePage/FAQ.jsx';
 import  {toast, Toaster} from 'react-hot-toast'
 
 
@@ -378,7 +377,45 @@ function Support() {
 
                 {/* ---------------------------------FAQ-------------------------------------- */}
                 <div className='bg-white rounded-xl p-4 sm:p-6 mx-4 sm:mx-8 md:mx-10 mb-3 shadow-lg ring-1 ring-gray-100'>
-                    <FAQ />
+                    <h2 className="text-green-700 font-semibold text-xl mb-4">Frequently Asked Questions</h2>
+                    <div className="divide-y divide-gray-200">
+                      {[
+                        {
+                          q: 'How do I raise a grievance?',
+                          a: 'Click the "New Grievance" button above, fill out the form, and submit. You can track your grievance status in the table.'
+                        },
+                        {
+                          q: 'How long does it take to resolve a grievance?',
+                          a: 'Resolution time depends on the complexity of the issue. Most grievances are addressed within 7 working days.'
+                        },
+                        {
+                          q: 'Can I attach documents or images?',
+                          a: 'Yes, you can attach supporting files when submitting a grievance. Accepted formats: PDF, JPG, PNG.'
+                        },
+                        {
+                          q: 'How will I be contacted about my grievance?',
+                          a: 'You can choose your preferred contact method (email or phone) when submitting the grievance.'
+                        },
+                        {
+                          q: 'What if my grievance is rejected?',
+                          a: 'If your grievance is rejected, you will receive a reason in the officer remark. You may edit and resubmit if needed.'
+                        }
+                      ].map((faq, idx) => (
+                        <div key={idx} className="py-3">
+                          <button
+                            type="button"
+                            className="w-full flex justify-between items-center text-left font-medium text-gray-900 focus:outline-none"
+                            onClick={() => setAnswerno(answerno === idx ? null : idx)}
+                          >
+                            <span>{faq.q}</span>
+                            <span className="ml-2 text-green-700">{answerno === idx ? '-' : '+'}</span>
+                          </button>
+                          {answerno === idx && (
+                            <div className="mt-2 text-gray-700 text-sm pl-2 border-l-2 border-green-200">{faq.a}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                 </div>
 
                 {/* ---------------------------------Video Tutorials-------------------------------------- */}
