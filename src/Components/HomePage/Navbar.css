@@ -17,3 +17,24 @@
     color: #16a34a; /* Tailwind's green-600 */
     transform: scale(1.05);
 }
+
+/* Active state for desktop nav items */
+.Navbar.active {
+    color: #16a34a;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 2px;
+}
+
+/* Active state for mobile nav items */
+.Navbar-mobile.active {
+    background-color: #e8f5e9;
+    color: #16a34a;
+    font-weight: 600;
+    border-left: 4px solid #16a34a;
+}
+
+/* Smooth transitions */
+.Navbar, .Navbar-mobile {
+    transition: all 200ms ease-in-out;
+}
