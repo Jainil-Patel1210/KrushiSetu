@@ -60,7 +60,7 @@ const Dashboard = () => {
             <Header />
             <Settings />
             <div className="w-full bg-gray-100 min-h-screen">
-                <div className="max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-10">
+                <div className="max-w-7xl mx-auto py-6 sm:py-8 px-6 sm:px-6 lg:px-10">
                     <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
                         Application Dashboard
                     </h1>

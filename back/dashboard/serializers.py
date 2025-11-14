@@ -40,5 +40,8 @@ class UserPhotoSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ["photo_url"]
 
-def get_photo_url(self, obj):
-        return obj.photo.url if obj.photo else None
+    def get_photo_url(self, obj):
+        try:
+            return obj.photo.url if obj.photo else None
+        except:
+            return None

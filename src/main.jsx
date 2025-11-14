@@ -42,7 +42,6 @@ function AppWrapper() {
         <Route path="/apply/:id" element={<ApplySubsidy />} />
         <Route path="/login" element={<Authentication />} />
         <Route path="/sidebar" element={<Sidebar />} />
-        <Route path="/subsidy-list" element={<Subsidy_List />} />
         <Route path="/officer_sidebar" element={<Officer_Sidebar />} />
         <Route path="/sub" element={<Subsidy_Provider_Sidebar />} />
         <Route path="/change-password" element={<ChangePassword />} />

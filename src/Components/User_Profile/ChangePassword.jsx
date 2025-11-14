@@ -10,6 +10,9 @@ function ChangePassword() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  const onClose = () => {
+    navigate('/sidebar');
+  }
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!oldPassword || !newPassword || !confirmPassword) {
@@ -44,8 +47,15 @@ function ChangePassword() {
   return (
     <>
       <Toaster position="top-center" reverseOrder={false} />
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <div className="bg-white shadow-lg rounded-xl p-6 w-full max-w-md">
+      <div className="fixed inset-0 flex justify-center items-center bg-gray-50 md:p-auto p-6">
+        <div className="bg-white shadow-lg rounded-xl p-6 w-full max-w-md relative">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-gray-500 hover:rounded-full hover:bg-gray-200 transition-all duration-200 text-2xl font-bold hover:shadow-md"
+            aria-label="Close"
+          >
+            &times;
+          </button>
           <h2 className="text-2xl font-bold text-center text-green-700 mb-4">
             Change Password
           </h2>

@@ -185,7 +185,7 @@ const Grievance = () => {
 
       {/* MAIN PAGE */}
       <div className="w-full bg-gray-100 min-h-screen">
-        <div className="max-w-7xl mx-auto py-6 px-4">
+        <div className="max-w-7xl mx-auto py-6 px-6">
           <h1 className="text-3xl font-bold">Grievance Management</h1>
           <p className="text-gray-600 mt-2 text-lg">
             Track and resolve farmer grievances

@@ -1,5 +1,5 @@
 # app/views.py
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions    
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import UserProfile
 from .serializers import UserProfileSerializer, UserPhotoSerializer
@@ -16,6 +16,7 @@ class UserPhotoView(APIView):
             profile = request.user.cloud_profile
             serializer = UserPhotoSerializer(profile)
             return Response(serializer.data)
+
         except Exception:
             return Response({"photo_url": None})
 
