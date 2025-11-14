@@ -91,7 +91,7 @@ function RecommendSubsidy() {
         console.log('Submitting form data:', formData);
 
         try {
-            const BASE_URL = "http://localhost:8000";
+            const BASE_URL = `${import.meta.env.VITE_BASE_URL}`;
             
             // Prepare data in correct format
             const requestData = {
