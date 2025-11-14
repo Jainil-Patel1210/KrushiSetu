@@ -14,6 +14,9 @@ import ApplySubsidy from "./Components/User_Profile/ApplySubsidy.jsx";
 import Officer_Sidebar from "./Components/Officer_profile/Officer_Sidebar.jsx";
 import Subsidy_Provider_Sidebar from "./Components/Subsidy_Provider/Subsidy_Provider_Sidebar.jsx";
 import ChangePassword from "./Components/User_Profile/ChangePassword.jsx";
+import Subsidy_List from "./Components/User_Profile/Subsidy_List.jsx";
+import LearnMore from "./Components/HomePage/LearnMore.jsx";
+import NewsDetail from "./Components/HomePage/NewsDetail.jsx";
 import api from "./Components/Signup_And_Login/api.js";
 
 function AppWrapper() {
@@ -34,12 +37,14 @@ function AppWrapper() {
     createRoutesFromElements(
       <>
         <Route path="/" element={<Homepage />} />
+        <Route path="/learn-more" element={<LearnMore />} />
+        <Route path="/news/:id" element={<NewsDetail />} />
         <Route path="/apply/:id" element={<ApplySubsidy />} />
         <Route path="/login" element={<Authentication />} />
         <Route path="/sidebar" element={<Sidebar />} />
+        <Route path="/subsidy-list" element={<Subsidy_List />} />
         <Route path="/officer_sidebar" element={<Officer_Sidebar />} />
-        <Route path="/sub" element={<Subsidy_Provider_Sidebar />}
-        />
+        <Route path="/sub" element={<Subsidy_Provider_Sidebar />} />
         <Route path="/change-password" element={<ChangePassword />} />
       </>
     )
