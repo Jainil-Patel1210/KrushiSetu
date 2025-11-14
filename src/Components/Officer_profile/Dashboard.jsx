@@ -244,9 +244,9 @@ const Dashboard = () => {
           <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
             <h1 className="text-green-700 text-xl sm:text-2xl font-bold mb-4">Farmer Subsidy Application</h1>
 
-            <div className="mb-6 bg-gray-50 rounded-lg p-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-gray-700 font-semibold text-sm sm:text-base">Filter by Status :</span>
+            <div className="mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="text-gray-700 font-semibold text-xs sm:text-sm md:text-base w-full sm:w-auto mb-2 sm:mb-0">Filter by Status :</span>
                 {STATUS_BUTTONS.map((button) => {
                   if (button.hideWhenZero && !statusCounts[button.key]) {
                     return null;
@@ -255,7 +255,7 @@ const Dashboard = () => {
                     <button
                       key={button.key}
                       onClick={() => setSelectedFilter(button.key)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${
+                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 sm:gap-2 ${
                         selectedFilter === button.key
                           ? 'bg-green-600 text-white'
                           : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
@@ -263,7 +263,7 @@ const Dashboard = () => {
                     >
                       {button.label}
                       {button.key !== 'all' && (
-                        <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
+                        <span className="bg-gray-200 text-gray-700 px-1.5 sm:px-2 py-0.5 rounded-full text-xs">
                           {statusCounts[button.key] || 0}
                         </span>
                       )}
@@ -364,18 +364,18 @@ const Dashboard = () => {
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4 py-8">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-height-[90vh] max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b px-6 py-4">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Application Details</h2>
+            <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
+              <div className="flex-1 min-w-0 pr-2">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">Application Details</h2>
                 {selectedApplication && (
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
                     #{selectedApplication.id} • {selectedApplication.subsidy_title}
                   </p>
                 )}
               </div>
               <button
                 onClick={closeModal}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
+                className="text-gray-500 hover:text-gray-700 text-xl sm:text-2xl flex-shrink-0"
                 aria-label="Close"
               >
                 <AiOutlineClose />
@@ -492,10 +492,10 @@ const Dashboard = () => {
                   <div className="bg-red-100 border border-red-200 text-red-700 rounded-lg p-3">{detailError}</div>
                 )}
 
-                <div className="flex flex-wrap gap-3 justify-end pt-4 border-t">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3 justify-end pt-4 border-t">
                   <button
                     onClick={closeModal}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 order-last sm:order-first"
                     disabled={processingAction}
                   >
                     Close
@@ -504,40 +504,40 @@ const Dashboard = () => {
                     <button
                       onClick={handleMarkUnderReview}
                       disabled={processingAction}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm sm:text-base"
                     >
                       Mark Under Review
                     </button>
                   )}
                   {selectedApplication.document_status !== 'verified' && (
-                    <button
-                      onClick={() => handleVerifyDocuments(true)}
-                      disabled={processingAction}
-                      className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
-                    >
-                      Mark Documents Verified
-                    </button>
-                  )}
-                  {selectedApplication.document_status !== 'verified' && (
-                    <button
-                      onClick={() => handleVerifyDocuments(false)}
-                      disabled={processingAction}
-                      className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50"
-                    >
-                      Flag Documents (Reject)
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleVerifyDocuments(true)}
+                        disabled={processingAction}
+                        className="px-3 sm:px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50 text-sm sm:text-base"
+                      >
+                        Mark Documents Verified
+                      </button>
+                      <button
+                        onClick={() => handleVerifyDocuments(false)}
+                        disabled={processingAction}
+                        className="px-3 sm:px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 text-sm sm:text-base"
+                      >
+                        Flag Documents
+                      </button>
+                    </>
                   )}
                   <button
                     onClick={handleApprove}
                     disabled={processingAction}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm sm:text-base"
                   >
                     Approve
                   </button>
                   <button
                     onClick={handleReject}
                     disabled={processingAction}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                    className="px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm sm:text-base"
                   >
                     Reject
                   </button>
