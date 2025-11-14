@@ -13,7 +13,7 @@ function Subsidy_List() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const subsidiesPerPage = 10; // ✅ Show 10 per page
+  const subsidiesPerPage = 10; 
 
   const navigate = useNavigate();
 

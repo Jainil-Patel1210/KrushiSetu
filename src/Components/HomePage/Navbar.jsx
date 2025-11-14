@@ -1,10 +1,12 @@
-import React,{useState} from "react";
-import { useNavigate } from 'react-router-dom';
+import React,{useState, useEffect} from "react";
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Navbar.css';
 
 function Navbar() {
-    const navigate = useNavigate();   
+    const navigate = useNavigate();
+    const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
+    const [activeSection, setActiveSection] = useState('home');
 
     const handleLoginClick = () => {
       navigate('/login'); // Navigate to /login route
@@ -13,6 +15,125 @@ function Navbar() {
     const handleNavbarToggle = () =>{
       setIsOpen(!isOpen);
     }
+
+    const handleHomeClick = () => {
+      if (location.pathname === '/') {
+        // If on homepage, scroll to top
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+        setActiveSection('home');
+      } else {
+        // If on other page, navigate to homepage
+        navigate('/');
+      }
+      setIsOpen(false);
+    };
+
+    const scrollToSection = (sectionId) => {
+      // If not on homepage, navigate to homepage first
+      if (location.pathname !== '/') {
+        navigate('/');
+        // Wait for navigation then scroll
+        setTimeout(() => {
+          const element = document.getElementById(sectionId);
+          if (element) {
+            const navbarHeight = 64;
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        }, 100);
+      } else {
+        // Already on homepage, just scroll
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const navbarHeight = 64;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
+          
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        }
+      }
+      setActiveSection(sectionId);
+      setIsOpen(false);
+    };
+
+    useEffect(() => {
+      // If on news detail page, set news as active
+      if (location.pathname.startsWith('/news/')) {
+        setActiveSection('news');
+        return;
+      }
+      
+      // If not on homepage, set home as active
+      if (location.pathname !== '/') {
+        setActiveSection('home');
+        return;
+      }
+
+      const handleScroll = () => {
+        const sections = ['home', 'subsidy', 'news', 'faq', 'contact'];
+        
+        // Get the center point of viewport for more stable detection
+        const viewportCenter = window.scrollY + (window.innerHeight / 2);
+        
+        let minDistance = Infinity;
+        let closestSection = 'home';
+        
+        // Find which section center is closest to viewport center
+        sections.forEach(sectionId => {
+          const element = document.getElementById(sectionId);
+          if (element) {
+            const rect = element.getBoundingClientRect();
+            const elementCenter = window.scrollY + rect.top + (rect.height / 2);
+            const distance = Math.abs(viewportCenter - elementCenter);
+            
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestSection = sectionId;
+            }
+          }
+        });
+        
+        setActiveSection(closestSection);
+      };
+
+      // Throttle with RAF for smooth, consistent updates
+      let rafId = null;
+      let lastKnownScrollPosition = 0;
+      let ticking = false;
+
+      const onScroll = () => {
+        lastKnownScrollPosition = window.scrollY;
+        
+        if (!ticking) {
+          rafId = window.requestAnimationFrame(() => {
+            handleScroll();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      handleScroll(); // Set initial active section
+      
+      return () => {
+        window.removeEventListener('scroll', onScroll);
+        if (rafId) {
+          window.cancelAnimationFrame(rafId);
+        }
+      };
+    }, []);
 
     return (
     <>
@@ -39,25 +160,23 @@ function Navbar() {
             </button>
 
             <div className="lg:flex space-x-6 hidden md:hidden">
-              <button className="Navbar">Home</button>
-              <button className="Navbar">Subsidy</button>
-              <button className="Navbar">Guide</button>
-              <button className="Navbar">News</button>
-              <button className="Navbar">FAQ</button>
-              <button className="Navbar">Contact Us</button>
+              <button onClick={handleHomeClick} className={`Navbar ${activeSection === 'home' ? 'active' : ''}`}>Home</button>
+              <button onClick={() => scrollToSection('subsidy')} className={`Navbar ${activeSection === 'subsidy' ? 'active' : ''}`}>Subsidy</button>
+              <button onClick={() => scrollToSection('news')} className={`Navbar ${activeSection === 'news' ? 'active' : ''}`}>News</button>
+              <button onClick={() => scrollToSection('faq')} className={`Navbar ${activeSection === 'faq' ? 'active' : ''}`}>FAQ</button>
+              <button onClick={() => scrollToSection('contact')} className={`Navbar ${activeSection === 'contact' ? 'active' : ''}`}>Contact Us</button>
               <button onClick={handleLoginClick} className="bg-green-600 hover:scale-105 text-white font-semibold text-xl text-center px-8 p-0.5 pb-1.5 rounded-full">Login</button>
             </div>
 
             {isOpen && (
               <div className="lg:hidden absolute top-16 right-0 bg-white w-2/4 shadow-md z-40">
-                <button className="Navbar-mobile">Home</button>
-                <button className="Navbar-mobile">Subsidy</button>
-                <button className="Navbar-mobile">Guide</button>
-                <button className="Navbar-mobile">News</button>
-                <button className="Navbar-mobile">FAQ</button>
-                <button className="Navbar-mobile">Contact Us</button>
+                <button onClick={handleHomeClick} className={`Navbar-mobile ${activeSection === 'home' ? 'active' : ''}`}>Home</button>
+                <button onClick={() => scrollToSection('subsidy')} className={`Navbar-mobile ${activeSection === 'subsidy' ? 'active' : ''}`}>Subsidy</button>
+                <button onClick={() => scrollToSection('news')} className={`Navbar-mobile ${activeSection === 'news' ? 'active' : ''}`}>News</button>
+                <button onClick={() => scrollToSection('faq')} className={`Navbar-mobile ${activeSection === 'faq' ? 'active' : ''}`}>FAQ</button>
+                <button onClick={() => scrollToSection('contact')} className={`Navbar-mobile ${activeSection === 'contact' ? 'active' : ''}`}>Contact Us</button>
                 <button
-                  onClick={handleLoginClick} // Navigate to login
+                  onClick={handleLoginClick}
                   className="Navbar-mobile mb-2 font-semibold">
                   Login
                 </button>
