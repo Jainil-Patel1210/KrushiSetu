@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaSeedling, FaRupeeSign, FaLightbulb } from 'react-icons/fa';
 import Header from './Header';
+import stateDistrictData from './assets/data.json';
 
 function RecommendSubsidy() {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [recommendations, setRecommendations] = useState(null);
     const [error, setError] = useState(null);
+    const [availableDistricts, setAvailableDistricts] = useState([]);
 
     const [formData, setFormData] = useState({
         income: '',
@@ -31,12 +33,34 @@ function RecommendSubsidy() {
     const rainfallRegions = ['High rainfall', 'Moderate rainfall', 'Low rainfall', 'Semi-arid', 'Arid'];
     const temperatureZones = ['Tropical', 'Sub-tropical', 'Temperate', 'Cold', 'Moderate'];
 
+    // Update available districts when state changes
+    useEffect(() => {
+        if (formData.state) {
+            const selectedState = stateDistrictData.find(s => s.state === formData.state);
+            if (selectedState) {
+                setAvailableDistricts(selectedState.districts.map(d => d.district));
+            }
+        } else {
+            setAvailableDistricts([]);
+        }
+    }, [formData.state]);
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        
+        // If state changes, reset district
+        if (name === 'state') {
+            setFormData(prev => ({
+                ...prev,
+                state: value,
+                district: ''
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -329,30 +353,43 @@ function RecommendSubsidy() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                         State <span className="text-red-500">*</span>
                     </label>
-                    <input
-                        type="text"
+                    <select
                         name="state"
                         value={formData.state}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
-                        placeholder="e.g., Gujarat"
                         required
-                    />
+                    >
+                        <option value="">Select state</option>
+                        {stateDistrictData.map(stateObj => (
+                            <option key={stateObj.state} value={stateObj.state}>
+                                {stateObj.state}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                         District <span className="text-red-500">*</span>
                     </label>
-                    <input
-                        type="text"
+                    <select
                         name="district"
                         value={formData.district}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
-                        placeholder="e.g., Gandhinagar"
                         required
-                    />
+                        disabled={!formData.state}
+                    >
+                        <option value="">
+                            {formData.state ? 'Select district' : 'Select state first'}
+                        </option>
+                        {availableDistricts.map(district => (
+                            <option key={district} value={district}>
+                                {district}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 <div>
@@ -394,7 +431,7 @@ function RecommendSubsidy() {
                 <button
                     type="button"
                     onClick={prevStep}
-                    className="px-8 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
+                    className="md:px-8 md:py-3 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
                 >
                     ← Previous
                 </button>
@@ -402,7 +439,7 @@ function RecommendSubsidy() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:bg-gray-400"
+                    className="md:px-8 md:-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:bg-gray-400"
                 >
                     {loading ? 'Analyzing...' : 'Get Recommendations'}
                 </button>
@@ -418,7 +455,6 @@ function RecommendSubsidy() {
                 <h2 className="text-3xl font-bold text-gray-800">Your Personalized Recommendations</h2>
             </div>
 
-            {/* Summary */}
             <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl border-2 border-green-200">
                 <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
                     <FaLightbulb className="mr-2 text-green-600" />
@@ -497,13 +533,13 @@ function RecommendSubsidy() {
         <>
         <Header />
         <div className="min-h-screen py-12 px-4">
-            <div className="max-w-4xl mx-auto">
+            <div className=" mx-auto">
                 {/* Header */}
                 <div className="text-center mb-12">
-                    <h1 className="text-4xl font-bold text-gray-800 mb-3">
+                    <h1 className="md:text-4xl text-2xl font-bold text-gray-800 mb-3">
                         AI-Powered Subsidy Recommendations
                     </h1>
-                    <p className="text-gray-600 text-lg">
+                    <p className="text-gray-600 md:text-lg text-md ">
                         Get personalized subsidy suggestions based on your farm profile
                     </p>
                 </div>
@@ -513,24 +549,24 @@ function RecommendSubsidy() {
                     <div className="mb-12">
                         <div className="flex items-center justify-center">
                             <div className={`flex items-center ${step >= 1 ? 'text-green-600' : 'text-gray-400'}`}>
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-green-600 text-white' : 'bg-gray-300'}`}>
+                                <div className={`hidden md:flex md:w-10 md:h-10 md:rounded-full items-center justify-center ${step >= 1 ? 'md:bg-green-600 text-white' : 'md:bg-gray-300'}`}>
                                     1
                                 </div>
-                                <span className="ml-2 font-semibold">Basic Info</span>
+                                <span className="md:ml-2 font-medium md:font-semibold">Basic Info</span>
                             </div>
-                            <div className={`w-24 h-1 mx-4 ${step >= 2 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+                            <div className={`w-12 md:w-24 h-1 mx-1 md:mx-4 ${step >= 2 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
                             <div className={`flex items-center ${step >= 2 ? 'text-green-600' : 'text-gray-400'}`}>
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-green-600 text-white' : 'bg-gray-300'}`}>
+                                <div className={`hidden md:flex md:w-10 md:h-10 md:rounded-full items-center justify-center ${step >= 2 ? 'md:bg-green-600 text-white' : 'md:bg-gray-300'}`}>
                                     2
                                 </div>
-                                <span className="ml-2 font-semibold">Farm Details</span>
+                                <span className="md:ml-2 font-medium md:font-semibold">Farm Details</span>
                             </div>
-                            <div className={`w-24 h-1 mx-4 ${step >= 3 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+                            <div className={`w-12 md:w-24 h-1 mx-1 md:mx-4 ${step >= 3 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
                             <div className={`flex items-center ${step >= 3 ? 'text-green-600' : 'text-gray-400'}`}>
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-green-600 text-white' : 'bg-gray-300'}`}>
+                                <div className={`hidden md:flex md:w-10 md:h-10 md:rounded-full items-center justify-center ${step >= 3 ? 'md:bg-green-600 text-white' : 'md:bg-gray-300'}`}>
                                     3
                                 </div>
-                                <span className="ml-2 font-semibold">Results</span>
+                                <span className="md:ml-2 font-medium md:font-semibold">Results</span>
                             </div>
                         </div>
                     </div>
