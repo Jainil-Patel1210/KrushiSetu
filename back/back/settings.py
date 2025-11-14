@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'cloudinary_storage',
     'SubsidyRecommandation',
     'subsidy', 
+    "anymail",
 ]
 
 
@@ -227,14 +228,14 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 # SENDGRID_ECHO_TO_STDOUT = True
 
 # Google SMTP settings (as a fallback or alternative)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'   
-EMAIL_PORT = 587                               
-EMAIL_USE_TLS = True  
-EMAIL_USE_SSL = False                          
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')    
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'   
+# EMAIL_PORT = 587                               
+# EMAIL_USE_TLS = True  
+# EMAIL_USE_SSL = False                          
+# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')    
+# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -283,3 +284,12 @@ else:
     }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+#Email Provider
+EMAIL_BACKEND = "anymail.backends.sendinblue.EmailBackend"
+
+ANYMAIL = {
+    "SENDINBLUE_API_KEY": os.getenv("BREVO_API_KEY"),  # Your Brevo API key
+}
+
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")  # Your verified custom domain email
