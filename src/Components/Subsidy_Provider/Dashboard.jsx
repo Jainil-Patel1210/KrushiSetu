@@ -52,10 +52,12 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const data = await getMySubsidies();
-        setSubsidies(data);
+        // Ensure data is always an array
+        setSubsidies(Array.isArray(data) ? data : []);
         console.log(data);
       } catch (error) {
         console.error("Error fetching subsidies:", error);
+        toast.error("Failed to load subsidies");
       } finally {
         setLoading(false);
       }
@@ -253,7 +255,8 @@ const Dashboard = () => {
 
           {/* Subsidy Cards */}
           <div className="space-y-4">
-            {subsidies.map((subsidy) => (
+            {subsidies && subsidies.length > 0 ? (
+              subsidies.map((subsidy) => (
               <div key={subsidy.id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                   <h2 className="text-xl sm:text-2xl font-bold text-[#006400]">
@@ -323,7 +326,12 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-            ))}
+            ))
+            ) : (
+              <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                <p className="text-gray-500 text-lg">No subsidies available. Click "Add New Subsidy" to create one.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

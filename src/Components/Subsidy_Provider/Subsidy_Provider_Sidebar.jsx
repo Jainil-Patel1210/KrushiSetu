@@ -1,5 +1,6 @@
 import React,{useState} from 'react'
 import Dashboard from './Dashboard';
+import News from './News';
 import Report from './Report';
 
 const Subsidy_Provider_Sidebar = () => {
@@ -17,6 +18,7 @@ const Subsidy_Provider_Sidebar = () => {
     // Sidebar options array
     const sidebar_options = [
         {id : 'Dashboard', label: 'Dashboard', icon: './Home.svg'},
+        {id : 'News', label: 'Post News', icon: './Note.svg'},
         {id : 'Report', label: 'Report', icon: './Support.svg'}
     ]
 
@@ -86,6 +88,7 @@ const Subsidy_Provider_Sidebar = () => {
                 <div className="w-px bg-gray-300 hidden lg:block" />
                 <div className='flex-1'>
                     {page==='Dashboard' && <Dashboard/>}
+                    {page==='News' && <News/>}
                     {page==='Report' && <Report/>}
                 </div>
             </div>
