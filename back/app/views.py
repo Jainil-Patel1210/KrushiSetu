@@ -1,27 +1,18 @@
 from django.shortcuts import render
-from django.utils import timezone
-from rest_framework import permissions, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework import viewsets, status
+from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+import sys
+import os
+from SubsidyRecommandation import SubsidyRecommander
 
-from .models import Subsidy, SubsidyApplication, ApplicationDocument
-from .serializers import (
-    SubsidySerializer,
-    SubsidyApplicationSerializer,
-    ApplicationDocumentSerializer,
-    OfficerDecisionSerializer,
-    DocumentVerificationSerializer,
-    DocumentUploadSerializer,
-)
-from .permissions import IsApplicantOfficerOrAdmin, IsOfficerOrAdmin
+# Add SubsidyRecommandation to path
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'SubsidyRecommandation'))
 
-
-BASE_APPLICATION_QS = SubsidyApplication.objects.select_related(
-    "subsidy",
-    "applicant",
-    "assigned_officer",
-)
+from .models import Subsidy, SubsidyRating
+from .serializers import SubsidySerializer, SubsidyRatingSerializer
+from .permissions import IsSubsidyProviderOrAdmin 
 
 
 def index(request):
@@ -29,148 +20,95 @@ def index(request):
 
 
 class SubsidyViewSet(viewsets.ModelViewSet):
-    queryset = Subsidy.objects.all().order_by("-created_at")
+    """
+    Main ViewSet for Subsidy management.
+    """
+    queryset = Subsidy.objects.all().order_by('-created_at')
     serializer_class = SubsidySerializer
-    permission_classes = [permissions.AllowAny]
 
+    # 🔹 PERMISSIONS HANDLING
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsAuthenticated(), IsSubsidyProviderOrAdmin()]
+        elif self.action in ['rate', 'my_subsidies']:
+            return [IsAuthenticated()]
+        return [AllowAny()]
 
-class SubsidyApplicationViewSet(viewsets.ModelViewSet):
-    serializer_class = SubsidyApplicationSerializer
-    permission_classes = [permissions.IsAuthenticated, IsApplicantOfficerOrAdmin]
-    parser_classes = [JSONParser, FormParser, MultiPartParser]
-
-    def get_queryset(self):
-        queryset = BASE_APPLICATION_QS
-
-        if self.action in {"retrieve", "documents", "mark_under_review", "verify_documents", "approve", "reject"}:
-            queryset = queryset.prefetch_related("documents")
-
-        user = self.request.user
-        user_role = getattr(user, "role", None)
-
-        if user_role in {"officer", "admin"} or user.is_staff:
-            return queryset
-
-        return queryset.filter(applicant=user)
-
+    # 🔹 Auto-assign creator
     def perform_create(self, serializer):
-        serializer.save(applicant=self.request.user)
+        serializer.save(created_by=self.request.user)
 
-    @action(
-        detail=True,
-        methods=["get"],
-        permission_classes=[permissions.IsAuthenticated, IsApplicantOfficerOrAdmin],
-    )
-    def documents(self, request, pk=None):
-        application = self.get_object()
-        serializer = ApplicationDocumentSerializer(application.documents.all(), many=True)
+    # 🔹 RATE subsidy
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def rate(self, request, pk=None):
+        subsidy = self.get_object()
+        user = request.user
+
+        rating_value = request.data.get("rating")
+        review_text = request.data.get("review", "")
+
+        if not rating_value:
+            return Response({"error": "Rating value is required."}, status=400)
+        try:
+            rating_value = int(rating_value)
+        except:
+            return Response({"error": "Rating must be an integer."}, status=400)
+
+        if not (1 <= rating_value <= 5):
+            return Response({"error": "Rating must be between 1 and 5."}, status=400)
+
+        rating_obj, created = SubsidyRating.objects.update_or_create(
+            subsidy=subsidy,
+            user=user,
+            defaults={"rating": rating_value, "review": review_text}
+        )
+
+        serializer = SubsidyRatingSerializer(rating_obj)
+        message = "Rating submitted!" if created else "Rating updated!"
+
+        return Response({
+            "message": message,
+            "subsidy_average": subsidy.rating,
+            "rating": serializer.data
+        })
+
+    # 🔹 GET ALL Ratings
+    @action(detail=True, methods=['get'])
+    def ratings(self, request, pk=None):
+        subsidy = self.get_object()
+        ratings = SubsidyRating.objects.filter(subsidy=subsidy)
+        serializer = SubsidyRatingSerializer(ratings, many=True)
         return Response(serializer.data)
 
-    @action(
-        detail=True,
-        methods=["post"],
-        permission_classes=[permissions.IsAuthenticated, IsApplicantOfficerOrAdmin],
-        parser_classes=[FormParser, MultiPartParser],
-        url_path="upload-document",
-    )
-    def upload_document(self, request, pk=None):
-        application = self.get_object()
-        if application.applicant_id != request.user.id:
-            return Response(
-                {"detail": "Only the applicant can upload documents."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+    # 🔹 TOP 5 rated subsidies
+    @action(detail=False, methods=['get'])
+    def top_rated(self, request):
+        top = Subsidy.objects.order_by('-rating')[:5]
+        serializer = SubsidySerializer(top, many=True)
+        return Response(serializer.data)
 
-        serializer = DocumentUploadSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    # 🔹 MY SUBSIDIES
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_subsidies(self, request):
+        user = request.user
+        qs = Subsidy.objects.filter(created_by=user)
+        serializer = SubsidySerializer(qs, many=True)
+        return Response(serializer.data)
 
-        document = ApplicationDocument.objects.create(
-            application=application,
-            document_type=serializer.validated_data["document_type"],
-            file=serializer.validated_data["file"],
-        )
-        application.document_status = SubsidyApplication.DOCUMENT_PENDING
-        application.document_verified_at = None
-        application.save(update_fields=["document_status", "document_verified_at", "updated_at"])
 
-        return Response(
-            ApplicationDocumentSerializer(document).data,
-            status=status.HTTP_201_CREATED,
-        )
+# 🔹 RECOMMENDATION API (outside the ViewSet)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_subsidy_recommendations(request):
+    try:
 
-    @action(
-        detail=True,
-        methods=["post"],
-        permission_classes=[permissions.IsAuthenticated, IsOfficerOrAdmin],
-        url_path="mark-under-review",
-    )
-    def mark_under_review(self, request, pk=None):
-        application = self.get_object()
-        serializer = OfficerDecisionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        farmer_profile = request.data.get("farmer_profile")
+        if not farmer_profile:
+            return Response({"error": "farmer_profile required"}, status=400)
 
-        application.mark_under_review(officer=request.user, note=serializer.validated_data.get("officer_note", ""))
-        application.save(update_fields=["status", "officer_note", "assigned_officer", "updated_at"])
+        recommender = SubsidyRecommander()
+        recommendations = recommender.recommend_subsidies(farmer_profile)
 
-        return Response(SubsidyApplicationSerializer(application, context={"request": request}).data)
-
-    @action(
-        detail=True,
-        methods=["post"],
-        permission_classes=[permissions.IsAuthenticated, IsOfficerOrAdmin],
-        url_path="verify-documents",
-    )
-    def verify_documents(self, request, pk=None):
-        application = self.get_object()
-        serializer = DocumentVerificationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        application.mark_documents_verified(
-            officer=request.user,
-            note=serializer.validated_data.get("officer_note", ""),
-            verified=serializer.validated_data["verified"],
-        )
-        application.save(update_fields=["document_status", "document_verified_at", "officer_note", "assigned_officer", "updated_at"])
-
-        return Response(SubsidyApplicationSerializer(application, context={"request": request}).data)
-
-    @action(
-        detail=True,
-        methods=["post"],
-        permission_classes=[permissions.IsAuthenticated, IsOfficerOrAdmin],
-        url_path="approve",
-    )
-    def approve(self, request, pk=None):
-        application = self.get_object()
-        serializer = OfficerDecisionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        application.mark_approved(
-            officer=request.user,
-            note=serializer.validated_data.get("officer_note", ""),
-        )
-        application.save(update_fields=["status", "approved_at", "officer_note", "assigned_officer", "updated_at"])
-
-        return Response(SubsidyApplicationSerializer(application, context={"request": request}).data)
-
-    @action(
-        detail=True,
-        methods=["post"],
-        permission_classes=[permissions.IsAuthenticated, IsOfficerOrAdmin],
-        url_path="reject",
-    )
-    def reject(self, request, pk=None):
-        application = self.get_object()
-        serializer = OfficerDecisionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        application.mark_rejected(
-            officer=request.user,
-            note=serializer.validated_data.get("officer_note", ""),
-        )
-        application.save(update_fields=["status", "rejected_at", "document_status", "officer_note", "assigned_officer", "updated_at"])
-
-        return Response(
-            SubsidyApplicationSerializer(application, context={"request": request}).data,
-            status=status.HTTP_200_OK,
-        )
+        return Response({"success": True, "data": recommendations})
+    except Exception as e:
+        return Response({"success": False, "error": str(e)}, status=500)

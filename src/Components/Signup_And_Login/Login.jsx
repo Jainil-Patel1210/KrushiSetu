@@ -31,6 +31,21 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
 
     const [otpTimer, setOtpTimer] = useState(0);
 
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                // Try refreshing the token silently
+                await api.post("/token/refresh/");
+                toast.success(" User already logged in ");
+                navigate("/sidebar"); // redirect if valid refresh token
+            } catch (err) {
+                toast.error("❌ Not logged in or refresh failed");
+                // do nothing, stay on login
+            }
+        };
+        checkAuth();
+    }, [navigate]);
+
 
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -217,6 +232,7 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             console.error("Login failed: ", error.response ? error.response.data : error.message);
             toast.error(error.response?.data?.error || "Login failed");
             btn.disabled = false;
+            setIsLoading(false);
         }
     };
 

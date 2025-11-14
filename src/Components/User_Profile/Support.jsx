@@ -4,6 +4,8 @@ import Header from "./Header";
 import './Support.css';
 import Settings from '../HomePage/Settings.jsx';
 import FileDropzone from './FileDropzone';
+import  {toast, Toaster} from 'react-hot-toast'
+
 
 function Support() {
     const [grievances, setGrievances] = useState([]);
@@ -38,7 +40,7 @@ function Support() {
     const fetchGrievances = async () => {
         try {
             const token = localStorage.getItem('access');
-            const res = await fetch('http://127.0.0.1:8000/support/grievances/', {
+            const res = await fetch(`${import.meta.env.VITE_BASE_URL}/support/grievances/`, {
                 method: 'GET',
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
                 credentials: 'include',
@@ -57,6 +59,7 @@ function Support() {
                 status: g.status,
                 description: g.description || '',
                 attachmentUrl: g.attachment_url || null,
+                officerRemark: g.officer_remark || null,
             }));
             setGrievances(list);
         } catch (err) {
@@ -87,6 +90,7 @@ function Support() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const newErrors = {};
+        const btn = document.getElementById('btn');
         if (!subject.trim()) newErrors.subject = 'Subject is required';
         if (!description.trim()) newErrors.description = 'Description is required';
         setErrors(newErrors);
@@ -98,10 +102,12 @@ function Support() {
         data.append('description', description.trim());
         data.append('preferred_contact', preferredContact);
         if (attachment) data.append('attachment', attachment);
+        btn.disabled = true;
 
         try {
+            
             const token = localStorage.getItem('access');
-            const res = await fetch('http://127.0.0.1:8000/support/grievances/', {
+            const res = await fetch(`${import.meta.env.VITE_BASE_URL}/support/grievances/`, {
                 method: 'POST',
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
                 body: data,
@@ -130,10 +136,15 @@ function Support() {
             await fetchGrievances();
             resetForm();
             setShowForm(false);
+            toast.sucess("Grievance submitted successfully");
+            btn.disabled = false;
+            
         } catch (err) {
             console.error(err);
             // basic error handling - show in form errors
             setErrors({ form: err.message || 'Failed to submit' });
+          
+            btn.disabled = false;
         }
     }
 
@@ -164,7 +175,8 @@ function Support() {
     };
 
     return (
-        <>
+        <>  
+            <Toaster position="top-center" reverseOrder={false} />
             <Header />
             <Settings />
             <div className="w-full mx-auto">
@@ -225,7 +237,7 @@ function Support() {
 
                                 <div className="flex justify-end gap-3 mt-4">
                                     <button type="button" onClick={() => { resetForm(); setShowForm(false); }} className="px-4 py-2 rounded-md border border-gray-300">Cancel</button>
-                                    <button type="submit" className="px-4 py-2 rounded-md bg-green-700 text-white">Submit</button>
+                                    <button type="submit" id='btn' className="px-4 py-2 rounded-md bg-green-700 text-white">Submit</button>
                                 </div>
                             </form>
                         </div>
@@ -314,6 +326,7 @@ function Support() {
                             </div>
 
                             <div className="mt-4 space-y-3">
+
                                 <div className="flex justify-between">
                                     <div className="text-sm text-gray-600">Grievance ID</div>
                                     <div className="font-medium">{selectedGrievance.grievanceId}</div>
@@ -346,19 +359,63 @@ function Support() {
                                         <a href={selectedGrievance.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block mt-2 px-3 py-1 border rounded-md text-sm text-green-700 border-green-700 hover:bg-green-50">View attachment</a>
                                     </div>
                                 )}
+                                <br/>
+                                {selectedGrievance.officerRemark && (
+                                    <div>
+                                        <div className="text-sm text-gray-600">Officer Remark</div>
+                                        <div className="mt-2 text-sm text-gray-800 whitespace-pre-wrap">
+                                            {selectedGrievance.officerRemark}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="flex justify-end mt-4">
-                                <button onClick={() => { setShowDetails(false); setSelectedGrievance(null); }} className="px-4 py-2 rounded-md border border-gray-300">Close</button>
-                            </div>
+                           
                         </div>
                     </div>
                 )}
 
                 {/* ---------------------------------FAQ-------------------------------------- */}
                 <div className='bg-white rounded-xl p-4 sm:p-6 mx-4 sm:mx-8 md:mx-10 mb-3 shadow-lg ring-1 ring-gray-100'>
-                    <h1 className='text-green-700 font-semibold text-xl mb-6'>Frequently Asked Questions</h1>
-                    
+                    <h2 className="text-green-700 font-semibold text-xl mb-4">Frequently Asked Questions</h2>
+                    <div className="divide-y divide-gray-200">
+                      {[
+                        {
+                          q: 'How do I raise a grievance?',
+                          a: 'Click the "New Grievance" button above, fill out the form, and submit. You can track your grievance status in the table.'
+                        },
+                        {
+                          q: 'How long does it take to resolve a grievance?',
+                          a: 'Resolution time depends on the complexity of the issue. Most grievances are addressed within 7 working days.'
+                        },
+                        {
+                          q: 'Can I attach documents or images?',
+                          a: 'Yes, you can attach supporting files when submitting a grievance. Accepted formats: PDF, JPG, PNG.'
+                        },
+                        {
+                          q: 'How will I be contacted about my grievance?',
+                          a: 'You can choose your preferred contact method (email or phone) when submitting the grievance.'
+                        },
+                        {
+                          q: 'What if my grievance is rejected?',
+                          a: 'If your grievance is rejected, you will receive a reason in the officer remark. You may edit and resubmit if needed.'
+                        }
+                      ].map((faq, idx) => (
+                        <div key={idx} className="py-3">
+                          <button
+                            type="button"
+                            className="w-full flex justify-between items-center text-left font-medium text-gray-900 focus:outline-none"
+                            onClick={() => setAnswerno(answerno === idx ? null : idx)}
+                          >
+                            <span>{faq.q}</span>
+                            <span className="ml-2 text-green-700">{answerno === idx ? '-' : '+'}</span>
+                          </button>
+                          {answerno === idx && (
+                            <div className="mt-2 text-gray-700 text-sm pl-2 border-l-2 border-green-200">{faq.a}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                 </div>
 
                 {/* ---------------------------------Video Tutorials-------------------------------------- */}
@@ -384,3 +441,4 @@ function Support() {
 }
 
 export default Support
+

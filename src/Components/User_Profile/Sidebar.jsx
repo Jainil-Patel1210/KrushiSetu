@@ -1,22 +1,71 @@
-import React,{useState} from 'react'
+import React,{useState, useEffect, useRef} from 'react'
+import { useNavigate } from 'react-router-dom';
 import Dashboard from './Dashboard.jsx';
 import Personal_info from './personal_info.jsx'
 import Subsidy_List from './Subsidy_List.jsx';
 import Documents from './Documents.jsx';
 import Support from './Support.jsx';
+import RecommendSubsidy from './SubsidyRecommandation.jsx'; 
+import api from './api1';
+import { Toaster, toast } from 'react-hot-toast';
 
 
 function Sidebar() {
     const [page,setPage]=useState('Dashboard');
     const [isOpen, setIsOpen] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [photoUrl, setPhotoUrl] = useState(null);
+    const dropdownRef = useRef(null);
+    const navigate = useNavigate();
 
     function handlePageChange(newPage){
         setPage(newPage);
+        setIsOpen(false); // Close mobile menu when page changes
     }
 
     function sidebarToggle() {
         setIsOpen(!isOpen);
     }
+
+    // Fetch user photo
+    useEffect(() => {
+        const fetchPhoto = async () => {
+            try {
+                const res = await api.get("/profile/user/photo/");
+                setPhotoUrl(res.data.photo_url);
+            } catch (err) {
+                console.error("Failed to load photo:", err);
+            }
+        };
+        fetchPhoto();
+    }, []);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleLogout = async () => {
+        try {
+            await api.post("/api/logout/");
+            toast.success("Logged out successfully!");
+            navigate("/login");
+        } catch (error) {
+            console.error("Logout failed:", error);
+            toast.error("Logout failed!");
+        }
+    };
+
+    const handleChangePassword = () => {
+        setDropdownOpen(false);
+        navigate("/change-password");
+    };
 
     // Sidebar options array
     const sidebar_options = [
@@ -24,11 +73,13 @@ function Sidebar() {
         {id : 'Profile', label: 'Profile & Personal Details', icon: './Profile.svg'},
         {id : 'Documents', label: 'Documents', icon: './Document.svg'},
         {id : 'Subsidies', label: 'Subsidies', icon: './Note.svg'},
+        {id : 'RecommendSubsidy', label: 'Recommend Subsidy', icon: './Subsidy_Recommendation.svg'},
         {id : 'Support', label: 'Support', icon: './Support.svg'}
     ]
 
     return (
         <>
+            <Toaster position="top-center" reverseOrder={false} />
             {/* ----------------------------Mobile Header---------------------------- */}
             <div className="lg:hidden sticky top-0 z-50 bg-white shadow-md">
                 <div className="flex items-center justify-between p-4">
@@ -37,11 +88,40 @@ function Sidebar() {
                     </div>
                     <div className="flex items-center gap-2 md:gap-4">
                         <img src="./Notification.svg" alt="Notifications" className="h-8 w-8 cursor-pointer" />
-                        <img
-                            src="./Account.svg"
-                            alt="Account"
-                            className="h-8 w-8 cursor-pointer rounded-full"
-                        />
+                        
+                        {/* Profile image with dropdown */}
+                        <div className="relative" ref={dropdownRef}>
+                            <img
+                                src={photoUrl || "./Account.svg"}
+                                alt="Account"
+                                onClick={() => setDropdownOpen(!dropdownOpen)}
+                                className="h-8 w-8 cursor-pointer rounded-full object-cover border border-gray-200 hover:ring-2 hover:ring-green-600 transition"
+                            />
+                            
+                            {dropdownOpen && (
+                                <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                                    <ul className="py-2 text-sm text-gray-700">
+                                        <li>
+                                            <button
+                                                onClick={handleChangePassword}
+                                                className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                                            >
+                                                Change Password
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                                            >
+                                                Logout
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+
                         <button type="button"
                                 className="inline-flex items-center justify-center p-2 rounded-md border border-gray-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-600 transition"
                                 aria-label="Toggle menu"
@@ -97,6 +177,7 @@ function Sidebar() {
                     {page==='Documents' && <Documents/>}
                     {page==='Subsidies' && <Subsidy_List/>}
                     {page==='Support' && <Support/>}
+                    {page==='RecommendSubsidy' && <RecommendSubsidy/>}
                 </div>
             </div>
         </>

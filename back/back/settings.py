@@ -14,21 +14,21 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 import dj_database_url
-load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env file from the back directory
+load_dotenv(dotenv_path=BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-default-key-for-dev")
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
-
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 
 # Application definition
@@ -54,8 +54,12 @@ INSTALLED_APPS = [
     'support',
     'photo',
     'cloudinary',
-    'cloudinary_storage'
+    'cloudinary_storage',
+    'SubsidyRecommandation',
+    'subsidy', 
 ]
+
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "loginSignup.authentication.CookieJWTAuthentication",
@@ -71,13 +75,14 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'back.middleware.JWTAuthenticationFromCookie',  # Must be after AuthenticationMiddleware
+    #'back.middleware.JWTAuthenticationFromCookie',  # Must be after AuthenticationMiddleware
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 
 ROOT_URLCONF = 'back.urls'
+
 
 TEMPLATES = [
     {
@@ -94,7 +99,8 @@ TEMPLATES = [
     },
 ]
 
-# Session and Cookie settings
+
+# Session and Cookie, CSRF, CORS settings
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False  # True in production
@@ -105,9 +111,8 @@ CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_DOMAIN = None
 
-# CORS settings
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:5174").split(",")
 CORS_ALLOW_HEADERS = [
     "content-type",
     "authorization",
@@ -127,10 +132,22 @@ CORS_ALLOW_METHODS = [
     "OPTIONS",
 ]
 
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost:5173").split(",")
+CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://localhost:5174").split(",")
 
 WSGI_APPLICATION = 'back.wsgi.application'
 
+# Cache configuration for faster responses
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5 minutes default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            'CULL_FREQUENCY': 3,
+        }
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -218,8 +235,6 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')    
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 
-
-MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -233,7 +248,7 @@ cloudinary.config(
     secure=True
 )
 
-# Enable logging
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -248,8 +263,8 @@ LOGGING = {
     },
 }
 
-# Database
-DATABASE_URL = os.getenv("DATABASE_URL")  # e.g. postgresql://user:pass@<neon-host>/<db>?sslmode=require
+
+DATABASE_URL = os.getenv("DATABASE_URL") 
 
 if DATABASE_URL:
     DATABASES = {
@@ -260,7 +275,6 @@ if DATABASE_URL:
         )
     }
 else:
-    # Fallback for local dev if you don't have Postgres running
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",

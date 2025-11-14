@@ -196,11 +196,18 @@ const Dashboard = () => {
   function StatusBadge({ status }) {
     const cls = statusStyles[status] || 'bg-gray-100 text-gray-800';
     return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-lg text-sm font-medium ${cls}`}>
-        {status}
-      </span>
-    );
-  }
+        <>
+            <Header />
+            <Settings />
+            <div className="w-full bg-gray-100 min-h-screen">
+                <div className="max-w-7xl mx-auto py-6 sm:py-8 px-6 sm:px-6 lg:px-10">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
+                        Application Dashboard
+                    </h1>
+                    <p className="text-[#77797C] font-semibold mt-2 text-sm sm:text-base lg:text-lg">
+                        Review and Manage Farmer Subsidy Applications
+                    </p>
+                </div>
 
   function ViewButton({ onClick }) {
     return (

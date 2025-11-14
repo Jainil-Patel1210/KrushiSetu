@@ -1,44 +1,34 @@
 from django.contrib import admin
+from .models import Subsidy, SubsidyRating
 
-from .models import Subsidy, SubsidyApplication, ApplicationDocument
-
+class SubsidyRatingInline(admin.TabularInline):
+    model = SubsidyRating
+    extra = 0
+    fields = ('user', 'rating', 'review', 'created_at')
+    readonly_fields = ('created_at',)
+    ordering = ('-created_at',)
 
 @admin.register(Subsidy)
 class SubsidyAdmin(admin.ModelAdmin):
-    list_display = ("title", "amount", "application_start_date", "application_end_date", "created_at")
-    search_fields = ("title", "description", "eligibility")
-    list_filter = ("application_start_date", "application_end_date")
-
-
-@admin.register(SubsidyApplication)
-class SubsidyApplicationAdmin(admin.ModelAdmin):
     list_display = (
-        "id",
-        "subsidy",
-        "applicant",
-        "assigned_officer",
-        "status",
-        "document_status",
-        "submitted_at",
-        "updated_at",
+        "title",
+        "amount",
+        "rating",
+        "created_by",
+        "application_start_date",
+        "application_end_date",
+        "created_at",
     )
-    list_filter = ("status", "document_status", "submitted_at", "approved_at")
-    search_fields = (
-        "subsidy__title",
-        "applicant__full_name",
-        "applicant__email_address",
-        "assigned_officer__full_name",
-    )
-    autocomplete_fields = ("subsidy", "applicant", "assigned_officer")
+    search_fields = ("title", "description", "eligibility")
+    list_filter = ("application_start_date", "application_end_date", "rating")
+    inlines = [SubsidyRatingInline]
+    readonly_fields = ("rating", "created_at")
+    raw_id_fields = ("created_by",)
 
-
-@admin.register(ApplicationDocument)
-class ApplicationDocumentAdmin(admin.ModelAdmin):
-    list_display = ("id", "application", "document_type", "verified", "verified_by", "uploaded_at")
-    list_filter = ("verified", "uploaded_at", "document_type")
-    search_fields = (
-        "application__subsidy__title",
-        "application__applicant__full_name",
-        "document_type",
-    )
-    autocomplete_fields = ("application", "verified_by")
+@admin.register(SubsidyRating)
+class SubsidyRatingAdmin(admin.ModelAdmin):
+    list_display = ("subsidy", "user", "rating", "created_at")
+    list_filter = ("rating", "created_at")
+    search_fields = ("subsidy__title", "user__full_name", "review")
+    ordering = ("-created_at",)
+    readonly_fields = ("created_at",)

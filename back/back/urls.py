@@ -23,8 +23,10 @@ urlpatterns = [
     path('api/', include('app.urls')),
     path('', include('app.urls')),
     path('profile/', include('dashboard.urls')),
-
-    # changed: mount photo app at /photo/
     path('photo/', include('photo.urls')),
     path('support/', include('support.urls')),
+    
+    # Subsidy Recommendation API
+    path('api/subsidy-recommendations/', include('SubsidyRecommandation.urls')),
+    path('subsidy/', include("subsidy.urls")),
 ]
