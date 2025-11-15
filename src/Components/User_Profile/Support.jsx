@@ -40,7 +40,7 @@ function Support() {
     const fetchGrievances = async () => {
         try {
             const token = localStorage.getItem('access');
-            const res = await fetch('http://127.0.0.1:8000/support/grievances/', {
+            const res = await fetch(`${import.meta.env.VITE_BASE_URL}/support/grievances/`, {
                 method: 'GET',
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
                 credentials: 'include',
@@ -107,7 +107,7 @@ function Support() {
         try {
             
             const token = localStorage.getItem('access');
-            const res = await fetch('http://127.0.0.1:8000/support/grievances/', {
+            const res = await fetch(`${import.meta.env.VITE_BASE_URL}/support/grievances/`, {
                 method: 'POST',
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
                 body: data,
@@ -441,3 +441,4 @@ function Support() {
 }
 
 export default Support
+
