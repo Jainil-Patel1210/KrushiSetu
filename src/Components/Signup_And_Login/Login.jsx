@@ -5,8 +5,12 @@ import PasswordToggleIcon from './PasswordToggleIcon';
 import api from './api';
 import { Toaster, toast } from 'react-hot-toast';
 import { clearAuth, normalizeRole, storeTokens } from '../../utils/auth';
+import { useNavigate } from 'react-router-dom';
 
 function Login({ onForgotPasswordClick, onLoginSuccess }) {
+
+    const navigate = useNavigate();
+
     useEffect(() => {
         clearAuth();
     }, []);
@@ -35,8 +39,9 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
         const checkAuth = async () => {
             try {
                 // Try refreshing the token silently
-                await api.post("/token/refresh/");
+                const res = await api.post("/token/refresh/");
                 toast.success(" User already logged in ");
+                console.log(res.data);
                 navigate("/sidebar"); // redirect if valid refresh token
             } catch (err) {
                 toast.error("❌ Not logged in or refresh failed");
