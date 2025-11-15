@@ -220,7 +220,7 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             }else if(role == 'Subsidy_Provider'){
                 btn.disabled = false;
                 setIsLoading(false);
-                navigate('sub');
+                navigate('/sub');
             }else{
                 onLoginSuccess();
                 btn.disabled = false;
