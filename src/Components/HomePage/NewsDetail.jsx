@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
+import Homepage from './Homepage';
 import Settings from './Settings';
 
 function NewsDetail() {
@@ -82,43 +83,25 @@ function NewsDetail() {
 
   const article = newsArticles[id];
 
-  if (!article) {
-    return (
-      <div className="min-h-screen bg-[#F3FFF1] flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Article Not Found</h2>
-          <button 
-            onClick={() => navigate('/')}
-            className="bg-[#1B7A43] text-white px-6 py-3 rounded-lg hover:bg-[#145a32] transition-colors"
-          >
-            Back to Home
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-white">
       {/* Navbar */}
       <Navbar />
       <Settings />
 
-      {/* Article Content */}
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Category Badge */}
         <div className="mb-4">
           <span className="bg-[#1B7A43] text-white px-4 py-1 rounded-full text-sm font-semibold">
             {article.category}
           </span>
         </div>
 
-        {/* Title */}
+
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
           {article.title}
         </h1>
 
-        {/* Meta Information */}
+
         <div className="flex items-center gap-6 text-gray-600 mb-6 flex-wrap">
           <div className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -135,34 +118,35 @@ function NewsDetail() {
           </div>
         </div>
 
-        {/* Navigation Arrows */}
         <div className="flex justify-between items-center mb-6">
-          <button
-            onClick={handlePrevious}
-            className="flex items-center gap-2 bg-[#1B7A43] text-white px-4 py-2 rounded-lg hover:bg-[#145a32] transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            <span>Previous</span>
-          </button>
+          {currentId > 1 ? (
+            <button
+              onClick={handlePrevious}
+              className="flex items-center gap-2 bg-[#1B7A43] text-white px-4 py-2 rounded-lg hover:bg-[#145a32] transition-all duration-300 shadow-md hover:shadow-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              <span>Previous</span>
+            </button>
+          ) : <div />}
           <span className="text-gray-600 font-semibold">
             {currentId} / {totalNews}
           </span>
-          <button
-            onClick={handleNext}
-            className="flex items-center gap-2 bg-[#1B7A43] text-white px-4 py-2 rounded-lg hover:bg-[#145a32] transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            <span>Next</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
+          {currentId < totalNews ? (
+            <button
+              onClick={handleNext}
+              className="flex items-center gap-2 bg-[#1B7A43] text-white px-4 py-2 rounded-lg hover:bg-[#145a32] transition-all duration-300 shadow-md hover:shadow-lg"
+            >
+              <span>Next</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          ) : <div />}
         </div>
 
-        {/* Article Content with Image */}
         <div className="bg-white rounded-lg shadow-md p-4 md:p-8">
-          {/* Featured Image - Newspaper Style */}
           <div className="float-none md:float-left md:mr-6 mb-4 w-full md:w-80 rounded-lg overflow-hidden shadow-lg">
             <img 
               src={article.image} 
@@ -171,7 +155,6 @@ function NewsDetail() {
             />
           </div>
 
-          {/* Article Content */}
           <div className="prose prose-lg max-w-none">
             {article.content.map((paragraph, index) => (
               <p key={index} className="text-gray-700 mb-6 leading-relaxed text-justify">
@@ -179,33 +162,13 @@ function NewsDetail() {
               </p>
             ))}
           </div>
-          <div className="clear-both"></div>
-        </div>
-
-        {/* Related Actions */}
-        <div className="mt-12 bg-[#C3FFC8] rounded-lg p-8 text-center">
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">
-            Interested in Learning More?
-          </h3>
-          <p className="text-gray-700 mb-6">
-            Explore available subsidies and programs that can help you implement these practices on your farm.
-          </p>
-          <div className="flex gap-4 justify-center flex-wrap">
-            <button 
-              onClick={() => navigate('/subsidy-list')}
-              className="bg-[#1B7A43] text-white px-8 py-3 rounded-lg hover:bg-[#145a32] transition-all duration-300 font-semibold"
-            >
-              Browse Subsidies
-            </button>
-            <button 
-              onClick={() => navigate('/login')}
-              className="bg-white text-[#1B7A43] border-2 border-[#1B7A43] px-8 py-3 rounded-lg hover:bg-[#F3FFF1] transition-all duration-300 font-semibold"
-            >
-              Register Now
+          <div className='flex justify-center items-center'>
+            <button onClick={() => navigate('/')} className='bg-green-700 text-black px-4 py-2 rounded-lg'>
+                Back
             </button>
           </div>
         </div>
-      </div>
+      </div> 
     </div>
   );
 }

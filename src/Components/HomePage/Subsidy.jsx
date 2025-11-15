@@ -34,6 +34,16 @@ const Subsidy = () => {
   useEffect(()=>{
     Aos.init({duration:1000});
   },[]);
+  const handleApplyClick = (subsidy) => {
+    const token = localStorage.getItem('access');
+    if (token) {
+      // user logged in -> go to apply page
+      navigate(`/apply/${subsidy.id}`, { state: { subsidy } });
+    } else {
+      // not logged in -> send to login and preserve target
+      navigate('/login', { state: { redirectTo: `/apply/${subsidy.id}` } });
+    }
+  };
   
   return (
     <>
@@ -56,14 +66,18 @@ const Subsidy = () => {
               <h3 className="text-2xl text-center font-bold text-gray-800 mb-8">{subsidy.title}</h3>
               <p className="text-l text-black  flex-grow">{subsidy.description}</p>
               <p className="text-center text-2xl font-semibold text-[#2E2E2E] mb-8 mt-5">{subsidy.amount}</p>
-              <button className="w-30  bg-[#477E60] text-white font-bold py-1.5 rounded-lg hover:bg-green-700 transition-colors duration-300 mt-auto self-center">Apply</button>
+              <button
+                className="w-30  bg-[#477E60] text-white font-bold py-1.5 rounded-lg hover:bg-green-700 transition-colors duration-300 mt-auto self-center"
+                onClick={() => handleApplyClick(subsidy)}
+              >
+                Apply
+              </button>
               </div>
             ))}
           </div>
           <div className="text-center mt-4" data-aos="fade-up" >
-          <button className="bg-green-600 text-xl pl-5 pr-5 pt-2 pb-2 mb-4  text-white font-bold rounded-lg hover:bg-emerald-800 transition-colors" onClick={() => {<Subsidy_List />}}>Explore More</button>
+          <button className="bg-green-600 text-xl pl-5 pr-5 pt-2 pb-2 mb-4  text-white font-bold rounded-lg" onClick={() => navigate('/subsidy-list')}>Explore More</button>
         </div>
-      
       </div>
     </>
   );

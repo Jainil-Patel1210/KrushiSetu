@@ -14,10 +14,10 @@ import ApplySubsidy from "./Components/User_Profile/ApplySubsidy.jsx";
 import Officer_Sidebar from "./Components/Officer_profile/Officer_Sidebar.jsx";
 import Subsidy_Provider_Sidebar from "./Components/Subsidy_Provider/Subsidy_Provider_Sidebar.jsx";
 import ChangePassword from "./Components/User_Profile/ChangePassword.jsx";
-import Subsidy_List from "./Components/User_Profile/Subsidy_List.jsx";
 import LearnMore from "./Components/HomePage/LearnMore.jsx";
 import NewsDetail from "./Components/HomePage/NewsDetail.jsx";
 import api from "./Components/Signup_And_Login/api.js";
+import Subsidy_List from "./Components/User_Profile/Subsidy_List.jsx";
 
 function AppWrapper() {
   useEffect(() => {
@@ -45,6 +45,7 @@ function AppWrapper() {
         <Route path="/officer_sidebar" element={<Officer_Sidebar />} />
         <Route path="/sub" element={<Subsidy_Provider_Sidebar />} />
         <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/subsidy-list" element={<Subsidy_List />} />
       </>
     )
   );
