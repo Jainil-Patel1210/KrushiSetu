@@ -8,6 +8,11 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: "./tests/setup.js",
+  },
   // Dev server proxy: forward API calls to Django backend so cookies are same-origin
   server: {
     proxy: {
