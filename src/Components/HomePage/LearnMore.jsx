@@ -5,6 +5,7 @@ import 'aos/dist/aos.css';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import Settings from './Settings';
+import Subsidy_List from '../User_Profile/Subsidy_List';
 
 function LearnMore() {
   const navigate = useNavigate();
@@ -221,7 +222,6 @@ function LearnMore() {
           </div>
         </div>
       </div>
-
       <Footer />
     </>
   );

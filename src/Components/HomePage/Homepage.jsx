@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from './Navbar'
 import './Homepage.css'
 import Subsidy from './Subsidy'
-import Guidlines from './Guidlines'
 import Footer from './Footer'
 import FAQ from './FAQ'
 import News from './News'
@@ -28,7 +27,6 @@ function Homepage() {
                 </div>
             </div>
             <Subsidy />
-            {/* <Guidlines /> */}
             <News />
             <Settings />
             <FAQ />
