@@ -52,3 +52,77 @@ class SubsidyApplicationSerializer(serializers.ModelSerializer):
             app.documents.set(docs)
 
         return app
+
+from rest_framework import serializers
+from .models import SubsidyApplication
+from app.models import Subsidy
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+# ---------------------------------------
+# OFFICER VIEW SERIALIZER
+# ---------------------------------------
+class OfficerSubsidyApplicationSerializer(serializers.ModelSerializer):
+    subsidy_name = serializers.CharField(source='subsidy.title', read_only=True)
+    subsidy_amount = serializers.CharField(source='subsidy.amount', read_only=True)
+    officer = serializers.CharField(source='assigned_officer.full_name', read_only=True)
+
+    class Meta:
+        model = SubsidyApplication
+        fields = [
+            "id",
+            "application_id",
+
+            # Farmer info
+            "full_name",
+            "mobile",
+            "email",
+            "aadhaar",
+            "address",
+            "state",
+            "district",
+            "taluka",
+            "village",
+            "land_area",
+            "land_unit",
+            "soil_type",
+            "ownership",
+
+            # Bank
+            "bank_name",
+            "account_number",
+            "ifsc",
+
+            # Subsidy details
+            "subsidy_name",
+            "subsidy_amount",
+
+            # Status + officer work
+            "status",
+            "officer_comment",
+            "reviewed_at",
+            "officer",
+
+            "submitted_at",
+        ]
+        read_only_fields = [
+            "id", "application_id", "submitted_at", "reviewed_at",
+            "subsidy_name", "subsidy_amount", "officer"
+        ]
+
+
+# ---------------------------------------
+# OFFICER REVIEW UPDATE SERIALIZER
+# ---------------------------------------
+class OfficerReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubsidyApplication
+        fields = ["status", "officer_comment"]
+
+    def validate_status(self, value):
+        allowed = ["Approved", "Rejected", "Under Review"]
+        if value not in allowed:
+            raise serializers.ValidationError("Invalid status")
+        return value
+

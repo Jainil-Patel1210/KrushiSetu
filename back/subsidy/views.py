@@ -3,8 +3,9 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import SubsidyApplicationSerializer, DocumentSerializer
+from .serializers import SubsidyApplicationSerializer, DocumentSerializer, OfficerReviewSerializer, OfficerSubsidyApplicationSerializer
 from .models import SubsidyApplication, Document
+from django.utils import timezone
 
 
 # Upload single document (multipart/form-data)
@@ -69,3 +70,67 @@ def apply_subsidy(request):
         )
 
     return Response(serializer.errors, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def assign_officer(request, app_id):
+    if request.user.role != "admin":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    officer_id = request.data.get("officer_id")
+
+    try:
+        app = SubsidyApplication.objects.get(id=app_id)
+    except SubsidyApplication.DoesNotExist:
+        return Response({"detail": "Application not found"}, status=404)
+
+    try:
+        officer = User.objects.get(id=officer_id, role="officer")
+    except User.DoesNotExist:
+        return Response({"detail": "Invalid officer"}, status=400)
+
+    app.assigned_officer = officer
+    app.status = "Under Review"
+    app.save()
+
+    return Response({"message": "Officer assigned successfully"}, status=200)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def officer_dashboard(request):
+    if request.user.role != "officer":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    apps = SubsidyApplication.objects.filter(
+        assigned_officer=request.user
+    ).select_related('subsidy')
+
+    serializer = OfficerSubsidyApplicationSerializer(apps, many=True)
+    return Response(serializer.data, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def review_application(request, app_id):
+    if request.user.role != "officer":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    try:
+        app = SubsidyApplication.objects.get(
+            id=app_id,
+            assigned_officer=request.user
+        )
+    except SubsidyApplication.DoesNotExist:
+        return Response({"detail": "Not found or not assigned to you"}, status=404)
+
+    serializer = OfficerReviewSerializer(app, data=request.data, partial=True)
+
+    if serializer.is_valid():
+        serializer.save()
+        app.reviewed_at = timezone.now()
+        app.save()
+        return Response({"message": "Application updated", "status": app.status})
+
+    return Response(serializer.errors, status=400)
+
+
