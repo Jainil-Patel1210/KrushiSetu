@@ -120,8 +120,6 @@ function Subsidy_List() {
 
   return (
     <>
-      <Header />
-      <Settings />
       <div className="w-full min-h-screen">
         <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 md:px-10">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
@@ -161,7 +159,6 @@ function Subsidy_List() {
             <p>No subsidies found.</p>
           ) : (
             <>
-              {/* ✅ Show only 10 subsidies per page */}
               <div className="max-w-6xl">
                 {currentSubsidies.map((subsidy, index) => (
                   <div
@@ -204,7 +201,6 @@ function Subsidy_List() {
                 ))}
               </div>
 
-              {/* ✅ Pagination Controls */}
               <div className="flex justify-center items-center gap-3 mt-6">
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
