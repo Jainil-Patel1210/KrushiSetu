@@ -225,9 +225,19 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             setLoginMobileOrEmail("");
             setLoginPassword("");
             setRole('');
-            onLoginSuccess(normalizedRole);
-            btn.disabled = false;
-            setIsLoading(false);
+            if(role == 'Officer'){
+                btn.disabled = false;
+                setIsLoading(false);
+                navigate('/officer_sidebar');
+            }else if(role == 'Subsidy_Provider'){
+                btn.disabled = false;
+                setIsLoading(false);
+                navigate('/sub');
+            }else{
+                onLoginSuccess();
+                btn.disabled = false;
+                setIsLoading(false);
+            }
         } catch (error) {
             console.error("Login failed: ", error.response ? error.response.data : error.message);
             toast.error(error.response?.data?.error || "Login failed");

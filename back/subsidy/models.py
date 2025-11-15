@@ -66,9 +66,21 @@ class SubsidyApplication(models.Model):
     ifsc = models.CharField(max_length=20)
 
     documents = models.ManyToManyField(Document, related_name="applications")
-
+    
     submitted_at = models.DateTimeField(auto_now_add=True)
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Under Review', 'Under Review'),
+    ]
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='Pending'
+    )
     class Meta:
         unique_together = ('user', 'subsidy')
     def __str__(self):
-        return f"{self.user.full_name} - {self.subsidy.title}"
+        return f"{getattr(self.user, 'full_name', str(self.user))} - {(self.subsidy.title if self.subsidy else 'N/A')}"
+
