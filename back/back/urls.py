@@ -25,8 +25,7 @@ urlpatterns = [
     path('profile/', include('dashboard.urls')),
     path('photo/', include('photo.urls')),
     path('support/', include('support.urls')),
-
-    # Subsidy Recommendation API
+    path("api/subsidy_provider/",include('subsidy_provider.urls')),
     path('api/subsidy-recommendations/', include('SubsidyRecommandation.urls')),
     path('subsidy/', include("subsidy.urls")),
     path('news/', include('news_post.urls')),
