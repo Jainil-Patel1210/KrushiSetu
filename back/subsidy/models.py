@@ -20,9 +20,6 @@ class Document(models.Model):
         return f"{self.owner.full_name} - {self.document_type}"
 
 
-
-
-
 class SubsidyApplication(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -44,7 +41,6 @@ class SubsidyApplication(models.Model):
     
     application_id = models.PositiveIntegerField(unique=True, editable=False)
 
-    # form fields
     full_name = models.CharField(max_length=255)
     mobile = models.CharField(max_length=20)
     email = models.CharField(max_length=255)
@@ -66,13 +62,27 @@ class SubsidyApplication(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     documents = models.ManyToManyField(Document, related_name="applications")
 
+    assigned_officer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_subsidy_applications"
+    )
+
+    officer_comment = models.TextField(blank=True, null=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
         ('Approved', 'Approved'),
         ('Under Review', 'Under Review'),
+        ('Rejected', 'Rejected'),
     ]
+
 
     status = models.CharField(
     max_length=20,

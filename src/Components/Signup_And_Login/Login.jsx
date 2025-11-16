@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import RoleDropdown from './RoleDropDown';
 import SocialLogin from './SocialLogin';
 import PasswordToggleIcon from './PasswordToggleIcon';
 import api from './api';
 import { Toaster, toast } from 'react-hot-toast';
+import { clearAuth, normalizeRole, storeTokens } from '../../utils/auth';
+import { useNavigate } from 'react-router-dom';
 
 function Login({ onForgotPasswordClick, onLoginSuccess }) {
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        clearAuth();
+    }, []);
+
     const [loginWithOtp, setLoginWithOtp] = useState(false);
     const [showLoginOtpForm, setShowLoginOtpForm] = useState(false);
     const [userId, setUserId] = useState('');
@@ -33,8 +39,9 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
         const checkAuth = async () => {
             try {
                 // Try refreshing the token silently
-                await api.post("/token/refresh/");
+                const res = await api.post("/token/refresh/");
                 toast.success(" User already logged in ");
+                console.log(res.data);
                 navigate("/sidebar"); // redirect if valid refresh token
             } catch (err) {
                 toast.error("❌ Not logged in or refresh failed");
@@ -137,9 +144,15 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             setLoginWithOtp(false);
             setLoginMobile('');
             setLoginOtp('');
+            const normalizedRole = normalizeRole(role);
+            storeTokens({
+                access: response.data.access,
+                refresh: response.data.refresh,
+                role: normalizedRole,
+            });
             setRole('');
             setIsLoading(false);
-            onLoginSuccess();
+            onLoginSuccess(normalizedRole);
         } catch (err) {
             console.error(err);
             toast.error(err.response?.data?.error || "OTP verification failed");
@@ -204,9 +217,13 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
                 remember: remember,
             });
 
-            // Save JWT tokens (for later authenticated requests)
-            localStorage.setItem("access", response.data.access);
-            localStorage.setItem("refresh", response.data.refresh);
+            const normalizedRole = normalizeRole(role);
+
+            storeTokens({
+                access: response.data.access,
+                refresh: response.data.refresh,
+                role: normalizedRole,
+            });
 
             setLoginEmailError("");
             toast.success("Logged in successfully!");
