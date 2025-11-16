@@ -8,6 +8,8 @@ import Support from './Support.jsx';
 import RecommendSubsidy from './SubsidyRecommandation.jsx'; 
 import api from './api1';
 import { Toaster, toast } from 'react-hot-toast';
+import Cookies from "js-cookie";
+import { clearAuth } from '../../utils/auth.js';
 
 
 function Sidebar() {
@@ -53,14 +55,37 @@ function Sidebar() {
 
     const handleLogout = async () => {
         try {
+            localStorage.setItem("isLoggedOut", "true");
             await api.post("/api/logout/");
-            toast.success("Logged out successfully!");
-            navigate("/login");
-        } catch (error) {
-            console.error("Logout failed:", error);
-            toast.error("Logout failed!");
+            setTimeout(()=>{
+                toast.success("Logged out successfully");
+            }, 5000);
+            
+        } 
+        catch (error) {
+            if (!error.response) {
+                console.warn("Server unreachable — local logout only.");
+                toast.error("⚠️ Server offline. Logged out locally.");
+            } else {
+                toast.error("Logout failed on server. Logged out locally.");
+            }
         }
+
+        
+        // Clear local auth (tokens + role)
+        clearAuth();
+
+        // Remove cookies (if backend set them)
+        Cookies.remove("access_token", { path: "/" });
+        Cookies.remove("refresh_token", { path: "/" });
+
+        // Redirect to login
+        setTimeout(() => {
+            window.location.href = "/login";
+        }, 2000);
     };
+
+
 
     const handleChangePassword = () => {
         setDropdownOpen(false);

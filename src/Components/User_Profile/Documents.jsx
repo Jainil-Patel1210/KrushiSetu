@@ -44,11 +44,9 @@ const Documents = () => {
     const fetchDocuments = async () => {
         try {
             const token = localStorage.getItem("access");
-            console.log(token);
             const res = await api.get(API_URL, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            console.log(res.data);
             setDocuments(res.data);
         } catch (error) {
             console.log('Failed to fetch documents. Please try again.');

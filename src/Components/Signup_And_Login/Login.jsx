@@ -4,16 +4,12 @@ import SocialLogin from './SocialLogin';
 import PasswordToggleIcon from './PasswordToggleIcon';
 import api from './api';
 import { Toaster, toast } from 'react-hot-toast';
-import { clearAuth, normalizeRole, storeTokens } from '../../utils/auth';
+import { clearAuth, normalizeRole, storeTokens, getRedirectPathForRole} from '../../utils/auth';
 import { useNavigate } from 'react-router-dom';
 
-function Login({ onForgotPasswordClick, onLoginSuccess, redirectTo }) {
+function Login({ onForgotPasswordClick, redirectTo }) {
 
     const navigate = useNavigate();
-
-    useEffect(() => {
-        clearAuth();
-    }, []);
 
     const [loginWithOtp, setLoginWithOtp] = useState(false);
     const [showLoginOtpForm, setShowLoginOtpForm] = useState(false);
@@ -36,20 +32,48 @@ function Login({ onForgotPasswordClick, onLoginSuccess, redirectTo }) {
     const [otpTimer, setOtpTimer] = useState(0);
 
     useEffect(() => {
-        const checkAuth = async () => {
+
+        if (localStorage.getItem("isLoggedOut") === "true") {
+            clearAuth();  
+            return;  
+        }
+
+        const access = localStorage.getItem("access");
+        const storedRole = localStorage.getItem("user_role");
+
+        const redirectWithDelay = (role) => {
+            const path = getRedirectPathForRole(role);
+            setTimeout(() => {
+                navigate(path);
+            }, 3000); // ⏳ 3 second delay
+        };
+
+        if (access && storedRole) {
+            redirectWithDelay(storedRole);
+            return;
+        }
+
+        const tryRefresh = async () => {
             try {
-                // Try refreshing the token silently
                 const res = await api.post("/token/refresh/");
-                toast.success(" User already logged in ");
-                console.log(res.data);
-                navigate("/sidebar"); // redirect if valid refresh token
+
+                storeTokens({
+                    access: res.data.access,
+                    refresh: res.data.refresh,
+                    role: storedRole,
+                });
+
+                redirectWithDelay(storedRole);
             } catch (err) {
-                toast.error("❌ Not logged in or refresh failed");
-                // do nothing, stay on login
+                clearAuth();
             }
         };
-        checkAuth();
+
+        tryRefresh();
     }, [navigate]);
+
+
+
 
 
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -152,7 +176,8 @@ function Login({ onForgotPasswordClick, onLoginSuccess, redirectTo }) {
             });
             setRole('');
             setIsLoading(false);
-            onLoginSuccess(normalizedRole);
+            const redirectPath = getRedirectPathForRole(normalizedRole);
+            navigate(redirectPath);
         } catch (err) {
             console.error(err);
             toast.error(err.response?.data?.error || "OTP verification failed");
@@ -238,19 +263,11 @@ function Login({ onForgotPasswordClick, onLoginSuccess, redirectTo }) {
                 return;
             }
 
-            if(role == 'Officer'){
-                btn.disabled = false;
-                setIsLoading(false);
-                navigate('/officer_sidebar');
-            }else if(role == 'Subsidy_Provider'){
-                btn.disabled = false;
-                setIsLoading(false);
-                navigate('/sub');
-            }else{
-                onLoginSuccess();
-                btn.disabled = false;
-                setIsLoading(false);
-            }
+            const redirectPath = getRedirectPathForRole(normalizedRole);
+            btn.disabled = false;
+            setIsLoading(false);
+            navigate(redirectPath);
+
         } catch (error) {
             console.error("Login failed: ", error.response ? error.response.data : error.message);
             toast.error(error.response?.data?.error || "Login failed");

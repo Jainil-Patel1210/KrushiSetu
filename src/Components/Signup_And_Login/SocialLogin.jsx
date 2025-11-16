@@ -4,11 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import api from './api';
 import { Toaster, toast } from 'react-hot-toast';
 
-// Social Login Component
+import {
+    storeTokens,
+    normalizeRole,
+    getRedirectPathForRole
+} from "../../utils/auth";
+
 function SocialLogin() {
     const navigate = useNavigate();
 
-    //Google login
+    // Google login handler
     const handleGoogleLogin = async (credentialResponse) => {
         const token = credentialResponse.credential; // Google ID token
 
@@ -18,17 +23,31 @@ function SocialLogin() {
                 token,
             });
 
+            // Extract data from backend
+            const { access, refresh, role } = res.data;
+
+            if (!access || !refresh || !role) {
+                toast.error("Invalid response from server.");
+                return;
+            }
+
+            const normalizedRole = normalizeRole(role);
+
+            // Store tokens + role
+            storeTokens({
+                access,
+                refresh,
+                role: normalizedRole,
+            });
+
             toast.success("Logged in successfully!");
 
-            // Save JWT tokens (for later authenticated requests)
-            localStorage.setItem("access", res.data.access);
-            localStorage.setItem("refresh", res.data.refresh);
-            // redirect to sidebar after successful login
-            setTimeout(() => {
-                navigate('/sidebar');
-            }, 3000);
+            // Redirect based on role
+            const redirectPath = getRedirectPathForRole(normalizedRole);
+            navigate(redirectPath);
+
         } catch (err) {
-            console.error("Login failed:", err.response?.data || err.message);
+            console.error("Google login failed:", err.response?.data || err.message);
             toast.error(err.response?.data?.error || "Google login failed");
         }
     };
@@ -36,6 +55,7 @@ function SocialLogin() {
     return (
         <>
             <Toaster position="top-center" reverseOrder={false} />
+
             <div>
                 <div className="flex items-center">
                     <hr className="border-t-2 w-15 ml-4" />
@@ -45,14 +65,11 @@ function SocialLogin() {
 
                 <div className="flex justify-center items-center pt-2">
                     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-                        <div >
-                            <GoogleLogin
-                                onSuccess={handleGoogleLogin}
-                                onError={() => console.log("Google Login Failed")}
-                            />
-                        </div>
+                        <GoogleLogin
+                            onSuccess={handleGoogleLogin}
+                            onError={() => toast.error("Google Login Failed")}
+                        />
                     </GoogleOAuthProvider>
-                    {/* <img className="w-9.5 h-9.5" src="/DigiLocker_Logo.png" alt="DigiLocker Logo" /> */}
                 </div>
             </div>
         </>

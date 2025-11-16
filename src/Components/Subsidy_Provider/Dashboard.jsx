@@ -54,7 +54,6 @@ const Dashboard = () => {
         const data = await getMySubsidies();
         // Ensure data is always an array
         setSubsidies(Array.isArray(data) ? data : []);
-        console.log(data);
       } catch (error) {
         console.error("Error fetching subsidies:", error);
         toast.error("Failed to load subsidies");

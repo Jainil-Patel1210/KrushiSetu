@@ -137,7 +137,7 @@ const Dashboard = () => {
     setDetailError(null);
     try {
       const { data } = await api.post(
-        `/subsidy/officer/applications/${selectedApplication.id}/review/`,
+        `/subsidy/officer/review/${selectedApplication.id}/`,
         {
           status: statusValue,
           officer_comment: officerNote || '',

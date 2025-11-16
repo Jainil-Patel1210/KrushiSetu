@@ -10,8 +10,6 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-
-
 # Upload single document (multipart/form-data)
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])

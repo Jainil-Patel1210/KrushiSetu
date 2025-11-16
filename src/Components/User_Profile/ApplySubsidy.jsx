@@ -548,8 +548,6 @@ export default function ApplySubsidy() {
         ifsc: form.ifsc,
       };
 
-      console.log('Submitting payload:', payload);
-
       await api.post(APPLY_URL, payload, {
         headers: {
           'Content-Type': 'application/json',

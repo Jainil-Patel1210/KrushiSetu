@@ -3,12 +3,9 @@ import axios from "axios";
 const BASE_URL = import.meta.env.VITE_BASE_URL || "http://127.0.0.1:8000";
 
 const api = axios.create({
-  baseURL: import.meta.env.MODE === 'development' 
-    ? 'http://127.0.0.1:8000/api' 
-    : `${import.meta.env.VITE_BASE_URL}/api`,
+  baseURL: `${import.meta.env.VITE_BASE_URL}/api`,
   withCredentials: true,
 });
-
 
 let isRefreshing = false;
 let failedQueue = [];
@@ -21,10 +18,24 @@ const processQueue = (error) => {
   failedQueue = [];
 };
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function delayedAction() {
+  console.log("Starting action...");
+  await sleep(3000);
+  console.log("Action resumed after 2 seconds.");
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    if (localStorage.getItem("isLoggedOut") === "true") {
+      return Promise.reject(error);
+    }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
@@ -39,12 +50,14 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await api.post("/token/refresh/"); 
+        await api.post("/token/refresh/");
         processQueue(null);
-        return api(originalRequest); 
+        return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-        console.warn("Session expired. Redirecting to login...");
+
+        localStorage.setItem("isLoggedOut", "true");
+
         window.location.href = "/login";
         return Promise.reject(refreshError);
       } finally {
@@ -55,5 +68,7 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+
 
 export default api;

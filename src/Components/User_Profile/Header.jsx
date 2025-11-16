@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "./api1";
 import { Toaster, toast } from "react-hot-toast";
+import Cookies from "js-cookie";
+import { clearAuth, normalizeRole, getRedirectPathForRole } from "../../utils/auth";
 
 function Header() {
   const [photoUrl, setPhotoUrl] = useState(null);
@@ -12,8 +14,10 @@ function Header() {
   useEffect(() => {
     const fetchPhoto = async () => {
       try {
-        const res = await api.get("/profile/user/photo/");
-        console.log("PHOTO RESPONSE:", res.data);   // ← CHECK THIS
+        const token = localStorage.getItem("access"); 
+        const res = await api.get("/profile/user/photo/", {
+                headers: { Authorization: `Bearer ${token}`},
+        });
         setPhotoUrl(res.data.photo_url);
       } catch (err) {
         console.error("Failed to load photo:", err);
@@ -33,15 +37,37 @@ function Header() {
   }, []);
 
   const handleLogout = async () => {
-    try {
-      await api.post("/api/logout/");
-      toast.success("Logged out successfully!");
-      navigate("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
-      toast.error("Logout failed!");
-    }
+      try {
+          localStorage.setItem("isLoggedOut", "true");
+          await api.post("/api/logout/");
+          setTimeout(()=>{
+              toast.success("Logged out successfully");
+          }, 5000);
+          
+      } 
+      catch (error) {
+          if (!error.response) {
+              console.warn("Server unreachable — local logout only.");
+              toast.error("⚠️ Server offline. Logged out locally.");
+          } else {
+              toast.error("Logout failed on server. Logged out locally.");
+          }
+      }
+
+      
+      // Clear local auth (tokens + role)
+      clearAuth();
+
+      // Remove cookies (if backend set them)
+      Cookies.remove("access_token", { path: "/" });
+      Cookies.remove("refresh_token", { path: "/" });
+
+      // Redirect to login
+      setTimeout(() => {
+          window.location.href = "/login";
+      }, 2000);
   };
+
 
   const handleChangePassword = () => {
     setDropdownOpen(false);

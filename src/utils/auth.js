@@ -11,6 +11,7 @@ export function storeTokens({ access, refresh, role }) {
 }
 
 export function clearAuth() {
+  console.log("works");
   Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
 }
 
@@ -26,7 +27,7 @@ export function normalizeRole(role) {
 export function getRedirectPathForRole(role) {
   const normalized = normalizeRole(role);
   if (normalized === 'officer') return '/officer_sidebar';
-  if (normalized === 'subsidy_provider') return '/Subsidy_Provider_Sidebar';
+  if (normalized === 'subsidy_provider') return '/sub';
   if (normalized === 'admin') return '/sidebar';
   return '/sidebar';
 }

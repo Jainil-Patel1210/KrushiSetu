@@ -33,8 +33,6 @@ const Grievance = () => {
                     headers: { Authorization: `Bearer ${token}` },
                   });
 
-      console.log(response.data);
-
       const formatted = response.data.map((g) => ({
         id: g.id,
         grievance_id: g.grievance_id,

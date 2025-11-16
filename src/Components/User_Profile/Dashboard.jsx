@@ -39,7 +39,7 @@ const Dashboard = () => {
 
  async function fetchAppliedSubsidies() {
   try {
-    const BACKEND = "http://127.0.0.1:8000"; // or use proxy and leave as ""
+    const BACKEND = `${import.meta.env.VITE_BASE_URL}`; // or use proxy and leave as ""
     const url = BACKEND ? `${BACKEND}/subsidy/apply/` : "/subsidy/apply/";
 
     const res = await fetch(url, {
@@ -52,7 +52,6 @@ const Dashboard = () => {
     });
 
     const text = await res.text();           // read raw text
-    console.log('RAW RESPONSE:', text.slice(0, 1000)); // log first 1k chars
     // Try parse if looks like JSON
     let data = null;
     try {
