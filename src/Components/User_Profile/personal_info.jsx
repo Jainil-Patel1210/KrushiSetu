@@ -258,8 +258,8 @@ function Personal_info() {
             <Header />
             <Settings />
 
-            <div className="w-full lg:max-w-5xl md:max-w-4xl mx-auto px-8 mt-8">
-                <h1 className="font-extrabold text-3xl text-gray-900">Profile & Personal Details</h1>
+            <div className="w-full lg:max-w-5xl md:max-w-4xl p-6 bg-gray-100">
+                <h1 className="font-bold text-3xl text-gray-900">Profile & Personal Details</h1>
                 <p className="text-gray-600 mt-2 lg:max-w-2xl md:max-w-xl">
                     Manage your personal information, land details, and bank accounts. Keep your documents secure by uploading verified identity proofs.
                 </p>

@@ -5,8 +5,10 @@ from typing import TypedDict, List, Dict, Any
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, START, END
+import logging
 
-# load_dotenv()
+# Set up logging
+logger = logging.getLogger(__name__)
 
 class RecommendationState(TypedDict) :
     farmer_profile : Dict[str, Any]
@@ -21,12 +23,24 @@ class SubsidyRecommander:
     
     def __init__(self):
         self.groq_api_key = os.getenv("GROQ_API_KEY")
-        self.model = ChatGroq(
-            model = "llama-3.3-70b-versatile", 
-            temperature=0.3,
-            max_tokens=1500,  
-            timeout=30
-        )
+        
+        # Validate API key
+        if not self.groq_api_key:
+            raise ValueError("GROQ_API_KEY environment variable is not set. Please configure it in your deployment environment.")
+        
+        # Initialize model with API key and increased timeout for cloud deployments
+        try:
+            self.model = ChatGroq(
+                groq_api_key=self.groq_api_key,
+                model="llama-3.1-70b-versatile",  # Updated to a valid Groq model
+                temperature=0.3,
+                max_tokens=1500,  
+                timeout=60  # Increased timeout for cloud deployments
+            )
+        except Exception as e:
+            logger.error(f"Failed to initialize ChatGroq model: {e}")
+            raise ValueError(f"Failed to initialize AI model: {str(e)}")
+        
         self.graph = self.build_graph()
     
     def build_graph(self) -> StateGraph:
@@ -72,26 +86,62 @@ class SubsidyRecommander:
                                 Answer with JSON:
                                 {{"eligible": true/false, "reason": "brief explanation"}}"""
 
-                try:
-                    messages = [
-                        SystemMessage(content = "You are an eligibility checker. Respond only with valid JSON."),
-                        HumanMessage(content = user_prompt)
-                    ]
-                    
-                    response = self.model.invoke(messages)
-                    result = json.loads(response.content)
-                    
-                    if result.get('eligible', False):
-                        eligible_subsidies.append(subsidy)
+                # Retry logic for network errors
+                max_retries = 3
+                retry_count = 0
+                eligibility_checked = False
                 
-                except:
-                    eligible_subsidies.append(subsidy)
+                while retry_count < max_retries and not eligibility_checked:
+                    try:
+                        messages = [
+                            SystemMessage(content = "You are an eligibility checker. Respond only with valid JSON."),
+                            HumanMessage(content = user_prompt)
+                        ]
+                        
+                        response = self.model.invoke(messages)
+                        
+                        # Handle JSON parsing with better error handling
+                        try:
+                            # Try to extract JSON from response
+                            content = response.content.strip()
+                            # Remove markdown code blocks if present
+                            if content.startswith("```"):
+                                content = content.split("```")[1]
+                                if content.startswith("json"):
+                                    content = content[4:]
+                            content = content.strip()
+                            
+                            result = json.loads(content)
+                            
+                            if result.get('eligible', False):
+                                eligible_subsidies.append(subsidy)
+                            eligibility_checked = True
+                            
+                        except json.JSONDecodeError as json_err:
+                            logger.warning(f"JSON decode error for subsidy {subsidy.get('title')}: {json_err}. Response: {response.content[:200]}")
+                            # If JSON parsing fails, default to eligible (fail-safe)
+                            eligible_subsidies.append(subsidy)
+                            eligibility_checked = True
+                    
+                    except Exception as e:
+                        retry_count += 1
+                        error_msg = str(e)
+                        logger.warning(f"Error checking eligibility for {subsidy.get('title')} (attempt {retry_count}/{max_retries}): {error_msg}")
+                        
+                        if retry_count >= max_retries:
+                            # After max retries, default to eligible (fail-safe approach)
+                            logger.error(f"Max retries reached for {subsidy.get('title')}. Defaulting to eligible.")
+                            eligible_subsidies.append(subsidy)
+                            eligibility_checked = True
+                        else:
+                            # Wait before retry (exponential backoff)
+                            time.sleep(0.5 * retry_count)
                     
             else :
                 eligible_subsidies.append(subsidy)
         
         state['eligible_subsidies'] = eligible_subsidies
-        print(f"Filter: {time.time()-start:.1f}s → {len(eligible_subsidies)} eligible")
+        logger.info(f"Filter: {time.time()-start:.1f}s → {len(eligible_subsidies)} eligible")
         return state
 
     # ---------------------- score_subsidies Node ---------------------- #
@@ -109,21 +159,68 @@ class SubsidyRecommander:
                             Return ONLY this JSON format, no markdown, no explanation:
                             {{"score": 85, "reasoning": "Brief reason for score", "key_benefits": ["benefit1", "benefit2"]}}"""
         
-            messages = [
-                SystemMessage(content="You are a subsidy scorer. Return ONLY valid JSON, no markdown formatting."),
-                HumanMessage(content=user_prompt)
-            ]
+            # Retry logic for network errors
+            max_retries = 3
+            retry_count = 0
+            scoring_complete = False
             
-            response = self.model.invoke(messages)
-            result = json.loads(response.content)
-            subsidy['score'] = result.get('score', 0)
-            subsidy['scoring_reasoning'] = result.get('reasoning', '')
-            subsidy['key_benefits'] = result.get('key_benefits', [])
-            scored_subsidies.append(subsidy)
+            while retry_count < max_retries and not scoring_complete:
+                try:
+                    messages = [
+                        SystemMessage(content="You are a subsidy scorer. Return ONLY valid JSON, no markdown formatting."),
+                        HumanMessage(content=user_prompt)
+                    ]
+                    
+                    response = self.model.invoke(messages)
+                    
+                    # Handle JSON parsing with better error handling
+                    try:
+                        # Try to extract JSON from response
+                        content = response.content.strip()
+                        # Remove markdown code blocks if present
+                        if content.startswith("```"):
+                            content = content.split("```")[1]
+                            if content.startswith("json"):
+                                content = content[4:]
+                        content = content.strip()
+                        
+                        result = json.loads(content)
+                        
+                        subsidy['score'] = result.get('score', 50)  # Default to 50 if missing
+                        subsidy['scoring_reasoning'] = result.get('reasoning', 'Relevant subsidy for this farmer profile.')
+                        subsidy['key_benefits'] = result.get('key_benefits', [])
+                        scored_subsidies.append(subsidy)
+                        scoring_complete = True
+                        
+                    except json.JSONDecodeError as json_err:
+                        logger.warning(f"JSON decode error for scoring {subsidy.get('title')}: {json_err}. Response: {response.content[:200]}")
+                        # If JSON parsing fails, assign default scores
+                        subsidy['score'] = 50
+                        subsidy['scoring_reasoning'] = 'Unable to generate detailed scoring, but subsidy is eligible.'
+                        subsidy['key_benefits'] = []
+                        scored_subsidies.append(subsidy)
+                        scoring_complete = True
+                
+                except Exception as e:
+                    retry_count += 1
+                    error_msg = str(e)
+                    logger.warning(f"Error scoring {subsidy.get('title')} (attempt {retry_count}/{max_retries}): {error_msg}")
+                    
+                    if retry_count >= max_retries:
+                        # After max retries, assign default scores
+                        logger.error(f"Max retries reached for scoring {subsidy.get('title')}. Using default scores.")
+                        subsidy['score'] = 50
+                        subsidy['scoring_reasoning'] = 'Scoring unavailable due to service error, but subsidy is eligible.'
+                        subsidy['key_benefits'] = []
+                        scored_subsidies.append(subsidy)
+                        scoring_complete = True
+                    else:
+                        # Wait before retry (exponential backoff)
+                        time.sleep(0.5 * retry_count)
         
         scored_subsidies.sort(key=lambda x: x.get('score', 0), reverse=True)
         state['scored_subsidies'] = scored_subsidies
-        print(f"Score: {time.time()-start:.1f}s → {len(scored_subsidies)} scored")
+        logger.info(f"Score: {time.time()-start:.1f}s → {len(scored_subsidies)} scored")
         return state
 
     # ---------------------- generate_recommendations Node ---------------------- #
@@ -170,11 +267,11 @@ class SubsidyRecommander:
         
         result = self.graph.invoke(initial_state)
         
-        # Print total time taken
+        # Log total time taken
         total_time = time.time() - overall_start
-        print(f"{'='*60}")
-        print(f"🎯 TOTAL TIME: {total_time:.1f}s")
-        print(f"{'='*60}\n")
+        logger.info(f"{'='*60}")
+        logger.info(f" TOTAL TIME: {total_time:.1f}s")
+        logger.info(f"{'='*60}")
         
         return result['final_recommendations']
 
