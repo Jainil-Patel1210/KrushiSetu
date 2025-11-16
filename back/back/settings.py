@@ -30,7 +30,8 @@ load_dotenv(dotenv_path=BASE_DIR / '.env')
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-default-key-for-dev")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+# Allow both localhost and production domains
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,kru-backend.onrender.com").split(",")
 
 
 # Application definition
@@ -107,17 +108,21 @@ TEMPLATES = [
 # Session and Cookie, CSRF, CORS settings
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False  # True in production
-SESSION_COOKIE_DOMAIN = None  # Allow localhost
+SESSION_COOKIE_SECURE = not DEBUG  # True in production (HTTPS)
+SESSION_COOKIE_DOMAIN = None  # Allow all domains
 
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = not DEBUG  # True in production (HTTPS)
 CSRF_COOKIE_DOMAIN = None
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:5174").split(",")
+# Get CORS origins from environment or use defaults (local + production)
+default_cors_origins = "http://localhost:5173,http://localhost:5174,https://krushi-setu.vercel.app"
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", default_cors_origins).split(",")
+# Strip whitespace from each origin
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS]
+
 CORS_ALLOW_HEADERS = [
     "content-type",
     "authorization",
@@ -137,8 +142,11 @@ CORS_ALLOW_METHODS = [
     "OPTIONS",
 ]
 
-CSRF_TRUSTED_ORIGINS = os.environ.get(
-    "CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://localhost:5174").split(",")
+# CSRF trusted origins (same as CORS for consistency)
+default_csrf_origins = "http://localhost:5173,http://localhost:5174,https://krushi-setu.vercel.app"
+CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", default_csrf_origins).split(",")
+# Strip whitespace from each origin
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS]
 
 WSGI_APPLICATION = 'back.wsgi.application'
 

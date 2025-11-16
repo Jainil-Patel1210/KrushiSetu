@@ -159,21 +159,68 @@ class SubsidyRecommander:
                             Return ONLY this JSON format, no markdown, no explanation:
                             {{"score": 85, "reasoning": "Brief reason for score", "key_benefits": ["benefit1", "benefit2"]}}"""
         
-            messages = [
-                SystemMessage(content="You are a subsidy scorer. Return ONLY valid JSON, no markdown formatting."),
-                HumanMessage(content=user_prompt)
-            ]
+            # Retry logic for network errors
+            max_retries = 3
+            retry_count = 0
+            scoring_complete = False
             
-            response = self.model.invoke(messages)
-            result = json.loads(response.content)
-            subsidy['score'] = result.get('score', 0)
-            subsidy['scoring_reasoning'] = result.get('reasoning', '')
-            subsidy['key_benefits'] = result.get('key_benefits', [])
-            scored_subsidies.append(subsidy)
+            while retry_count < max_retries and not scoring_complete:
+                try:
+                    messages = [
+                        SystemMessage(content="You are a subsidy scorer. Return ONLY valid JSON, no markdown formatting."),
+                        HumanMessage(content=user_prompt)
+                    ]
+                    
+                    response = self.model.invoke(messages)
+                    
+                    # Handle JSON parsing with better error handling
+                    try:
+                        # Try to extract JSON from response
+                        content = response.content.strip()
+                        # Remove markdown code blocks if present
+                        if content.startswith("```"):
+                            content = content.split("```")[1]
+                            if content.startswith("json"):
+                                content = content[4:]
+                        content = content.strip()
+                        
+                        result = json.loads(content)
+                        
+                        subsidy['score'] = result.get('score', 50)  # Default to 50 if missing
+                        subsidy['scoring_reasoning'] = result.get('reasoning', 'Relevant subsidy for this farmer profile.')
+                        subsidy['key_benefits'] = result.get('key_benefits', [])
+                        scored_subsidies.append(subsidy)
+                        scoring_complete = True
+                        
+                    except json.JSONDecodeError as json_err:
+                        logger.warning(f"JSON decode error for scoring {subsidy.get('title')}: {json_err}. Response: {response.content[:200]}")
+                        # If JSON parsing fails, assign default scores
+                        subsidy['score'] = 50
+                        subsidy['scoring_reasoning'] = 'Unable to generate detailed scoring, but subsidy is eligible.'
+                        subsidy['key_benefits'] = []
+                        scored_subsidies.append(subsidy)
+                        scoring_complete = True
+                
+                except Exception as e:
+                    retry_count += 1
+                    error_msg = str(e)
+                    logger.warning(f"Error scoring {subsidy.get('title')} (attempt {retry_count}/{max_retries}): {error_msg}")
+                    
+                    if retry_count >= max_retries:
+                        # After max retries, assign default scores
+                        logger.error(f"Max retries reached for scoring {subsidy.get('title')}. Using default scores.")
+                        subsidy['score'] = 50
+                        subsidy['scoring_reasoning'] = 'Scoring unavailable due to service error, but subsidy is eligible.'
+                        subsidy['key_benefits'] = []
+                        scored_subsidies.append(subsidy)
+                        scoring_complete = True
+                    else:
+                        # Wait before retry (exponential backoff)
+                        time.sleep(0.5 * retry_count)
         
         scored_subsidies.sort(key=lambda x: x.get('score', 0), reverse=True)
         state['scored_subsidies'] = scored_subsidies
-        print(f"Score: {time.time()-start:.1f}s → {len(scored_subsidies)} scored")
+        logger.info(f"Score: {time.time()-start:.1f}s → {len(scored_subsidies)} scored")
         return state
 
     # ---------------------- generate_recommendations Node ---------------------- #
@@ -220,11 +267,11 @@ class SubsidyRecommander:
         
         result = self.graph.invoke(initial_state)
         
-        # Print total time taken
+        # Log total time taken
         total_time = time.time() - overall_start
-        print(f"{'='*60}")
-        print(f" TOTAL TIME: {total_time:.1f}s")
-        print(f"{'='*60}\n")
+        logger.info(f"{'='*60}")
+        logger.info(f" TOTAL TIME: {total_time:.1f}s")
+        logger.info(f"{'='*60}")
         
         return result['final_recommendations']
 
