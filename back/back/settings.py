@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     'SubsidyRecommandation',
     'subsidy',
     "anymail",
-    "news_post",
+    'news_post',
 ]
 
 
