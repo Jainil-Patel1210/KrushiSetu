@@ -460,7 +460,10 @@ function Personal_info() {
                             <div className="flex flex-col">
                                 <label className="text-md font-semibold">Land Size <span className="text-red-500">*</span></label>
                                 <input type="text" value={formData.land_size}
-                                    onChange={(e) => handleInputChange(e.target.value, "land_size")} placeholder="Enter Land Size" className="h-12 border border-gray-300 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none" />
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/[^0-9.]/g, '');
+                                        handleInputChange(digits, "land_size");
+                                    }} placeholder="Enter Land Size" className="h-12 border border-gray-300 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none" />
                             </div>
                             <div className="flex flex-col">
                                 <label className="text-md font-semibold">Unit <span className="text-red-500">*</span></label>

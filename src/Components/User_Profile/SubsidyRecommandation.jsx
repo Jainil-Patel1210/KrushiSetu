@@ -431,7 +431,7 @@ function RecommendSubsidy() {
                 <button
                     type="button"
                     onClick={prevStep}
-                    className="md:px-8 md:py-3 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
+                    className="md:px-8 md:py-3 px-1 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
                 >
                     ← Previous
                 </button>
@@ -439,7 +439,7 @@ function RecommendSubsidy() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="md:px-8 md:-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:bg-gray-400"
+                    className="md:px-8 md:py-3 px-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:bg-gray-400"
                 >
                     {loading ? 'Analyzing...' : 'Get Recommendations'}
                 </button>

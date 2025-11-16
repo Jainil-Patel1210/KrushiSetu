@@ -7,7 +7,7 @@ import { Toaster, toast } from 'react-hot-toast';
 import { clearAuth, normalizeRole, storeTokens } from '../../utils/auth';
 import { useNavigate } from 'react-router-dom';
 
-function Login({ onForgotPasswordClick, onLoginSuccess }) {
+function Login({ onForgotPasswordClick, onLoginSuccess, redirectTo }) {
 
     const navigate = useNavigate();
 
@@ -230,6 +230,14 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             setLoginMobileOrEmail("");
             setLoginPassword("");
             setRole('');
+            // If a redirect target was provided (e.g. /apply/:id), prefer it
+            if (redirectTo) {
+                btn.disabled = false;
+                setIsLoading(false);
+                navigate(redirectTo);
+                return;
+            }
+
             if(role == 'Officer'){
                 btn.disabled = false;
                 setIsLoading(false);
