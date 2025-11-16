@@ -23,18 +23,12 @@ function Authentication() {
     };
 
     // Callback for LoginPage to trigger navigation after successful login
-<<<<<<< HEAD
     const handleLoginSuccess = () => {
         if (redirectTo) {
             navigate(redirectTo);
             return;
         }
         navigate('/sidebar');
-=======
-    const handleLoginSuccess = (role) => {
-        const target = getRedirectPathForRole(role);
-        navigate(target);
->>>>>>> 56a37f359126479914bf78ff4e867f39c1191114
     };
 
     // Callback for SignupPage to trigger switch to login page after successful signup
