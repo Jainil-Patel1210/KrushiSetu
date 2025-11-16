@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Dashboard from './Dashboard.jsx';
 import Grievance from './Grievance.jsx'; // Add this import
 import { isOfficer } from '../../utils/auth';
+import Settings from '../HomePage/Settings.jsx';
 
 function Officer_Sidebar() {
     const navigate = useNavigate();
@@ -32,6 +33,7 @@ function Officer_Sidebar() {
     return (
         <>
             {/* ----------------------------Mobile Header---------------------------- */}
+            <Settings />
             <div className="lg:hidden sticky top-0 z-50 bg-white shadow-md">
                 <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-2 ">

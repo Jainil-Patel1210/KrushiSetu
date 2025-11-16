@@ -22,7 +22,7 @@ class SubsidyRecommander:
     def __init__(self):
         self.groq_api_key = os.getenv("GROQ_API_KEY")
         self.model = ChatGroq(
-            model = "llama-3.3-70b-versatile", 
+            model = "openai/gpt-oss-120b", 
             temperature=0.3,
             max_tokens=1500,  
             timeout=30
@@ -173,7 +173,7 @@ class SubsidyRecommander:
         # Print total time taken
         total_time = time.time() - overall_start
         print(f"{'='*60}")
-        print(f"🎯 TOTAL TIME: {total_time:.1f}s")
+        print(f" TOTAL TIME: {total_time:.1f}s")
         print(f"{'='*60}\n")
         
         return result['final_recommendations']

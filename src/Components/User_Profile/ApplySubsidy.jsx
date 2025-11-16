@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Header from './Header';
 import Data from './assets/data.json';
 import api from './api1';
 import Cookies from 'js-cookie';
@@ -684,28 +683,30 @@ export default function ApplySubsidy() {
             </div>
 
             {/* Step 1: Land details */}
-            <div className={`${step === 1 ? '' : 'hidden'} w-full flex flex-wrap gap-6`}>
-              <h1 className='w-full text-green-600 font-extrabold text-2xl mb-2'>Land Information</h1>
+            <div className={`${step === 1 ? '' : 'hidden'} w-full`}>
+              <div className="bg-white rounded-2xl p-6 shadow-lg ring-1 ring-gray-100">
+                <h2 className="text-green-700 font-semibold mb-6 text-xl">Land Information</h2>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="landArea">Land Area (in acres)</label>
-                <input className="border border-gray-300 rounded-lg p-2 w-52" type="number" id="landArea" name="landArea" value={form.landArea} onChange={(e) => { update('landArea', e.target.value); if (errors.landArea) validateField('landArea', e.target.value); }} onBlur={(e) => validateField('landArea', e.target.value)} />
+                <label className="text-md font-semibold mb-2" htmlFor="landArea">Land Size <span className="text-red-500">*</span></label>
+                <input className="h-12 border border-gray-300 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none" type="text" id="landArea" name="landArea" placeholder="Enter Land Size" value={form.landArea} onChange={(e) => { const digits = e.target.value.replace(/[^0-9.]/g, ''); update('landArea', digits); if (errors.landArea) validateField('landArea', digits); }} onBlur={(e) => validateField('landArea', e.target.value)} />
                 {errors.landArea ? <div className="text-red-500 text-sm mt-1">{errors.landArea}</div> : null}
               </div>
 
               <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="landAreaUnit">Land Area Unit</label>
-                <select className="border border-gray-300 rounded-lg p-2 w-52" id="landAreaUnit" name="landAreaUnit" value={unitValue} onChange={(e) => { setUnitValue(e.target.value); update('unit', e.target.value); validateField('unit', e.target.value); }}>
+                <label className="text-md font-semibold mb-2" htmlFor="landAreaUnit">Unit <span className="text-red-500">*</span></label>
+                <select className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white" id="landAreaUnit" name="landAreaUnit" value={unitValue} onChange={(e) => { setUnitValue(e.target.value); update('unit', e.target.value); validateField('unit', e.target.value); }}>
                   <option value="">Select Unit</option>
-                  <option value="acres">Acres</option>
                   <option value="hectares">Hectares</option>
+                  <option value="acres">Acres</option>
                 </select>
                 {errors.unit ? <div className="text-red-500 text-sm mt-1">{errors.unit}</div> : null}
               </div>
 
               <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="soilType">Soil Type</label>
-                <select className="border border-gray-300 rounded-lg p-2 w-52" id="soilType" name="soilType" value={soilTypeValue} onChange={(e) => { setSoilTypeValue(e.target.value); update('soilType', e.target.value); validateField('soilType', e.target.value); }}>
+                <label className="text-md font-semibold mb-2" htmlFor="soilType">Soil Type <span className="text-red-500">*</span></label>
+                <select className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white" id="soilType" name="soilType" value={soilTypeValue} onChange={(e) => { setSoilTypeValue(e.target.value); update('soilType', e.target.value); validateField('soilType', e.target.value); }}>
                   <option value="">Select Soil Type</option>
                   <option value="Alluvial">Alluvial</option>
                   <option value="Black">Black</option>
@@ -719,43 +720,48 @@ export default function ApplySubsidy() {
                 </select>
                 {errors.soilType ? <div className="text-red-500 text-sm mt-1">{errors.soilType}</div> : null}
               </div>
-
-              <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="ownership">Ownership Type</label>
-                <select className="border border-gray-300 rounded-lg p-2 w-52" id="ownership" name="ownership" value={form.ownership} onChange={(e) => { update('ownership', e.target.value); validateField('ownership', e.target.value); }}>
+              </div>
+              <div className="mt-4">
+                <label className="text-sm font-semibold mb-2">Ownership <span className="text-red-500">*</span></label>
+                <select className="h-12 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white w-full" id="ownership" name="ownership" value={form.ownership} onChange={(e) => { update('ownership', e.target.value); validateField('ownership', e.target.value); }}>
                   <option value="">Select Ownership</option>
                   <option value="owned">Owned</option>
                   <option value="leased">Leased</option>
                 </select>
                 {errors.ownership ? <div className="text-red-500 text-sm mt-1">{errors.ownership}</div> : null}
               </div>
+              </div>
             </div>
 
             {/* Step 2: Bank details */}
-            <div className={`${step === 2 ? '' : 'hidden'} w-full flex flex-col gap-4`}>
-              <h1 className='w-full text-green-600 font-extrabold text-2xl mb-2'>Bank Details</h1>
-              <div className="flex flex-col w-full mr-8">
-                <label className="text-black font-semibold mb-2" htmlFor="bankName">Bank Name</label>
-                <input className="border border-gray-300 rounded-lg p-2 w-full" type="text" id="bankName" name="bankName" value={form.bankName} onChange={(e) => { update('bankName', e.target.value); if (errors.bankName) validateField('bankName', e.target.value); }} onBlur={(e) => validateField('bankName', e.target.value)} />
-                {errors.bankName ? <div className="text-red-500 text-sm mt-1">{errors.bankName}</div> : null}
+            <div className={`${step === 2 ? '' : 'hidden'} w-full`}>
+              <div className="bg-white rounded-2xl p-6 shadow-lg ring-1 ring-gray-100">
+                <h2 className="text-green-700 font-semibold mb-4 text-xl">Bank & Identification</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-md font-semibold mb-2">Bank Account Number <span className="text-red-500">*</span></label>
+                <input className="w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none" type="text" placeholder="Enter Account Number" value={form.bankAccount} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); update('bankAccount', digits); if (errors.bankAccount) validateField('bankAccount', digits); }} onBlur={(e) => validateField('bankAccount', e.target.value)} />
+                {errors.bankAccount ? <div className="text-red-500 text-sm mt-1">{errors.bankAccount}</div> : null}
               </div>
-
-              <div className="flex flex-col w-full mr-8">
-                <label className="text-black font-semibold mb-2" htmlFor="ifscCode">IFSC Code</label>
-                <input className="border border-gray-300 rounded-lg p-2 w-full" type="text" id="ifscCode" name="ifscCode" value={form.ifsc} onChange={(e) => { update('ifsc', e.target.value); if (errors.ifsc) validateField('ifsc', e.target.value); }} onBlur={(e) => validateField('ifsc', e.target.value)} />
+              <div>
+                <label className="text-md font-semibold mb-2">IFSC Code <span className="text-red-500">*</span></label>
+                <input className="w-full h-12 rounded-md px-4 text-sm mt-1 border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none" type="text" placeholder="Enter IFSC Code" value={form.ifsc} onChange={(e) => { const digits = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 11); update('ifsc', digits); if (errors.ifsc) validateField('ifsc', digits); }} onBlur={(e) => validateField('ifsc', e.target.value)} />
                 {errors.ifsc ? <div className="text-red-500 text-sm mt-1">{errors.ifsc}</div> : null}
               </div>
-
-              <div className="flex flex-col w-full mr-8">
-                <label className="text-black font-semibold mb-2" htmlFor="accountNumber">Account Number</label>
-                <input className="border border-gray-300 rounded-lg p-2 w-full" type="text" id="accountNumber" name="accountNumber" value={form.bankAccount} onChange={(e) => { update('bankAccount', e.target.value); if (errors.bankAccount) validateField('bankAccount', e.target.value); }} onBlur={(e) => validateField('bankAccount', e.target.value)} />
-                {errors.bankAccount ? <div className="text-red-500 text-sm mt-1">{errors.bankAccount}</div> : null}
+              </div>
+              <div className="flex flex-col mt-4">
+                <label className="text-sm font-semibold mb-2">Bank Name <span className="text-red-500">*</span></label>
+                <input className="w-full h-12 border border-gray-200 rounded-md px-3 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none" type="text" placeholder="Enter Bank Name" value={form.bankName} onChange={(e) => { update('bankName', e.target.value); if (errors.bankName) validateField('bankName', e.target.value); }} onBlur={(e) => validateField('bankName', e.target.value)} />
+                {errors.bankName ? <div className="text-red-500 text-sm mt-1">{errors.bankName}</div> : null}
+              </div>
               </div>
             </div>
 
             {/* Step 3: Documents (SIMPLIFIED) */}
-            <div className={`${step === 3 ? '' : 'hidden'} w-full flex flex-col gap-4`}>
-              <h1 className='w-full text-green-600 font-extrabold text-2xl mb-2'>Upload Documents</h1>
+            <div className={`${step === 3 ? '' : 'hidden'} w-full`}>
+              <div className="bg-white rounded-2xl p-6 shadow-lg ring-1 ring-gray-100">
+                <h2 className="text-green-700 font-semibold mb-6 text-xl">Upload Documents</h2>
 
               {/* Missing documents banner */}
               {missingDocs.length > 0 && (
@@ -811,88 +817,98 @@ export default function ApplySubsidy() {
                   </div>
                 </div>
               </div>
-
-              {/* Add Document Modal (staging only) */}
-              {showAddDocModal && (
-                <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
-                  <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                    <h3 className="text-2xl font-bold mb-4 text-green-700">Add New Document</h3>
-                    <div>
-                      <div className="mb-4">
-                        <label className="block text-gray-700 font-semibold mb-2">Select Document Type</label>
-                        <select
-                          name="document_type"
-                          value={docForm.document_type}
-                          onChange={e => setDocForm(f => ({ ...f, document_type: e.target.value }))}
-                          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${docErrors.document_type ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'}`}
-                        >
-                          <option value="">-- Select Document --</option>
-                          {addModalTypes.map(t => (<option key={t.value} value={t.value}>{t.label}</option>))}
-                        </select>
-                        {docErrors.document_type && <p className="text-red-500 text-sm mt-1">{docErrors.document_type}</p>}
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="block text-gray-700 font-semibold mb-2">Document Number</label>
-                        <input type="text" value={docForm.number} onChange={e => { setDocForm(f => ({ ...f, number: e.target.value })); setDocErrors(prev => ({ ...prev, number: '' })); }} className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="e.g., ABC1234567" />
-                        {docErrors.number && <p className="text-red-500 text-sm mt-1">{docErrors.number}</p>}
-                      </div>
-
-                      <div className="mb-6">
-                        <label className="block text-gray-700 font-semibold mb-2">Upload Document (Max 5MB)</label>
-                        <input type="file" ref={fileInputRef} onChange={handleDocFileChange} className="w-full" accept=".pdf,.jpg,.jpeg,.png" />
-                        {docForm.file && !docErrors.file && (<p className="text-sm text-green-600 mt-2">Selected: {docForm.file.name} ({(docForm.file.size / 1024 / 1024).toFixed(2)} MB)</p>)}
-                        {docErrors.file && <p className="text-red-500 text-sm mt-1">{docErrors.file}</p>}
-                      </div>
-
-                      <div className="flex gap-3">
-                        <button type="button" onClick={handleAddDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Stage Document</button>
-                        <button type="button" onClick={() => { resetDocForm(); setShowAddDocModal(false); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Edit Document Modal */}
-              {showEditModal && (
-                <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
-                  <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                    <h3 className="text-2xl font-bold mb-4 text-green-700">Edit Document</h3>
-                    <div>
-                      <div className="mb-4">
-                        <label className="block text-gray-700 font-semibold mb-2">Document Name</label>
-                        <input type="text" value={docForm.name || ''} readOnly disabled className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed" />
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="block text-gray-700 font-semibold mb-2">Document Number</label>
-                        <input type="text" value={docForm.number} onChange={(e) => setDocForm(f => ({ ...f, number: e.target.value }))} className={inputClass(docErrors.number)} placeholder="e.g., ABC1234567" />
-                        {docErrors.number && <p className="text-red-500 text-sm mt-1">{docErrors.number}</p>}
-                      </div>
-
-                      <div className="mb-6">
-                        <label className="block text-gray-700 font-semibold mb-2">Upload New Document (Optional, Max 5MB)</label>
-                        <input type="file" ref={fileInputRef} onChange={handleDocFileChange} className={inputClass(docErrors.file)} accept=".pdf,.jpg,.jpeg,.png" />
-                        {docForm.file && !docErrors.file && (<p className="text-sm text-green-600 mt-2">Selected: {docForm.file.name} ({(docForm.file.size / 1024 / 1024).toFixed(2)} MB)</p>)}
-                        {docErrors.file && <p className="text-red-500 text-sm mt-1">{docErrors.file}</p>}
-                      </div>
-
-                      <div className="flex gap-3">
-                        <button type="button" onClick={handleUpdateDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Save</button>
-                        <button type="button" onClick={() => { resetDocForm(); setShowEditModal(false); setCurrentDoc(null); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
 
-            <div className="w-full"></div>
-            <div className="flex justify-between mt-4 w-full">
-              {step > 0 ? (<button type="button" className="border px-4 py-2 rounded" onClick={prevStep}>Back</button>) : <span />}
-              {step < 3 ? (<button type="button" className="bg-green-600 text-white rounded-lg px-4 py-2" onClick={nextStep}>Next</button>) : (
-                <button type="button" disabled={isSubmitting} className="bg-green-600 text-white rounded-lg px-4 py-2" onClick={handleSubmitApplication}>{isSubmitting ? 'Submitting...' : 'Submit'}</button>
+            {/* Add Document Modal (staging only) */}
+            {showAddDocModal && (
+              <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-[60] p-4">
+                <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                  <h3 className="text-2xl font-bold mb-4 text-green-700">Add New Document</h3>
+                  <div>
+                    <div className="mb-4">
+                      <label className="block text-gray-700 font-semibold mb-2">Select Document Type</label>
+                      <select
+                        name="document_type"
+                        value={docForm.document_type}
+                        onChange={e => setDocForm(f => ({ ...f, document_type: e.target.value }))}
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${docErrors.document_type ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'}`}
+                      >
+                        <option value="">-- Select Document --</option>
+                        {addModalTypes.map(t => (<option key={t.value} value={t.value}>{t.label}</option>))}
+                      </select>
+                      {docErrors.document_type && <p className="text-red-500 text-sm mt-1">{docErrors.document_type}</p>}
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-gray-700 font-semibold mb-2">Document Number</label>
+                      <input type="text" value={docForm.number} onChange={e => { setDocForm(f => ({ ...f, number: e.target.value })); setDocErrors(prev => ({ ...prev, number: '' })); }} className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="e.g., ABC1234567" />
+                      {docErrors.number && <p className="text-red-500 text-sm mt-1">{docErrors.number}</p>}
+                    </div>
+
+                    <div className="mb-6">
+                      <label className="block text-gray-700 font-semibold mb-2">Upload Document (Max 5MB)</label>
+                      <input type="file" ref={fileInputRef} onChange={handleDocFileChange} className="w-full" accept=".pdf,.jpg,.jpeg,.png" />
+                      {docForm.file && !docErrors.file && (<p className="text-sm text-green-600 mt-2">Selected: {docForm.file.name} ({(docForm.file.size / 1024 / 1024).toFixed(2)} MB)</p>)}
+                      {docErrors.file && <p className="text-red-500 text-sm mt-1">{docErrors.file}</p>}
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button type="button" onClick={handleAddDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Stage Document</button>
+                      <button type="button" onClick={() => { resetDocForm(); setShowAddDocModal(false); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Edit Document Modal */}
+            {showEditModal && (
+              <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-[60] p-4">
+                <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                  <h3 className="text-2xl font-bold mb-4 text-green-700">Edit Document</h3>
+                  <div>
+                    <div className="mb-4">
+                      <label className="block text-gray-700 font-semibold mb-2">Document Name</label>
+                      <input type="text" value={docForm.name || ''} readOnly disabled className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed" />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-gray-700 font-semibold mb-2">Document Number</label>
+                      <input type="text" value={docForm.number} onChange={(e) => setDocForm(f => ({ ...f, number: e.target.value }))} className={inputClass(docErrors.number)} placeholder="e.g., ABC1234567" />
+                      {docErrors.number && <p className="text-red-500 text-sm mt-1">{docErrors.number}</p>}
+                    </div>
+
+                    <div className="mb-6">
+                      <label className="block text-gray-700 font-semibold mb-2">Upload New Document (Optional, Max 5MB)</label>
+                      <input type="file" ref={fileInputRef} onChange={handleDocFileChange} className={inputClass(docErrors.file)} accept=".pdf,.jpg,.jpeg,.png" />
+                      {docForm.file && !docErrors.file && (<p className="text-sm text-green-600 mt-2">Selected: {docForm.file.name} ({(docForm.file.size / 1024 / 1024).toFixed(2)} MB)</p>)}
+                      {docErrors.file && <p className="text-red-500 text-sm mt-1">{docErrors.file}</p>}
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button type="button" onClick={handleUpdateDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Save</button>
+                      <button type="button" onClick={() => { resetDocForm(); setShowEditModal(false); setCurrentDoc(null); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center pt-6 border-t border-gray-200 mt-8">
+              {step > 0 ? (
+                <button type="button" className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all duration-200" onClick={prevStep}>
+                  ← Back
+                </button>
+              ) : <span />}
+              {step < 3 ? (
+                <button type="button" className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg" onClick={nextStep}>
+                  Next →
+                </button>
+              ) : (
+                <button type="button" disabled={isSubmitting} className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleSubmitApplication}>
+                  {isSubmitting ? 'Submitting...' : '✓ Submit Application'}
+                </button>
               )}
             </div>
 

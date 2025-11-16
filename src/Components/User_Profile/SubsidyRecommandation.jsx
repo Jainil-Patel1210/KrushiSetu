@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaSeedling, FaRupeeSign, FaLightbulb } from 'react-icons/fa';
 import Header from './Header';
 import stateDistrictData from './assets/data.json';
+import Settings from '../HomePage/Settings.jsx';
 
 function RecommendSubsidy() {
+    const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [recommendations, setRecommendations] = useState(null);
@@ -511,7 +514,22 @@ function RecommendSubsidy() {
                             </div>
                         )}
 
-                        <button className="mt-4 w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                        <button 
+                            onClick={() => {
+                                // Format subsidy data for ApplySubsidy component
+                                const subsidyData = {
+                                    id: rec.subsidy_id,
+                                    title: rec.title,
+                                    description: rec.description,
+                                    amount: rec.amount,
+                                    documents_required: rec.documents_required || [],
+                                    application_start_date: rec.application_dates?.start,
+                                    application_end_date: rec.application_dates?.end
+                                };
+                                navigate(`/apply/${rec.subsidy_id}`, { state: { subsidy: subsidyData } });
+                            }}
+                            className="mt-4 w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                        >
                             Apply Now
                         </button>
                     </div>
@@ -532,7 +550,8 @@ function RecommendSubsidy() {
     return (
         <>
         <Header />
-        <div className="min-h-screen py-12 px-4">
+        <Settings />
+        <div className="min-h-screen py-12 px-4 bg-gray-100">
             <div className=" mx-auto">
                 {/* Header */}
                 <div className="text-center mb-12">
