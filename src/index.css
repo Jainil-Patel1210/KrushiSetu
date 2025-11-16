@@ -11,17 +11,20 @@
 
 html {
   top: 0 !important;
+  font-family: 'Poppins', sans-serif;
 }
 
 body {
   top: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
+  font-family: 'Poppins', sans-serif;
 }
 
 [style*="top: 40px"],
 [style*="top: 48px"] {
   top: 0 !important;
+  font-family: 'Poppins', sans-serif;
 }
 
 

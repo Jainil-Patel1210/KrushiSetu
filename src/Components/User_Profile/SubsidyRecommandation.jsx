@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import api from './api1';
 import { FaSeedling, FaRupeeSign, FaLightbulb } from 'react-icons/fa';
 import Header from './Header';
 import stateDistrictData from './assets/data.json';
+import Settings from '../HomePage/Settings.jsx';
 
 function RecommendSubsidy() {
+    const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [recommendations, setRecommendations] = useState(null);
@@ -44,6 +48,50 @@ function RecommendSubsidy() {
             setAvailableDistricts([]);
         }
     }, [formData.state]);
+
+    // Prefill form from user profile if available (best-effort)
+    useEffect(() => {
+        const fetchProfileAndPrefill = async () => {
+            try {
+                const tries = ['profile/profile/', '/profile/', 'profile/'];
+                let profile = null;
+                for (const endpoint of tries) {
+                    try {
+                        const res = await api.get(endpoint, { withCredentials: true });
+                        if (res && res.data) {
+                            profile = res.data;
+                            break;
+                        }
+                    } catch (e) {
+                        
+                    }
+                }
+
+                if (!profile) return;
+
+               
+                setFormData(prev => ({
+                    ...prev,
+                    income: prev.income || (profile.income != null ? String(profile.income) : prev.income),
+                    farmer_type: prev.farmer_type || profile.farmer_type || profile.ownership_type || prev.farmer_type,
+                    land_size: prev.land_size || (profile.land_size != null ? String(profile.land_size) : prev.land_size),
+                    crop_type: prev.crop_type || profile.crop_type || prev.crop || prev.crop_type,
+                    season: prev.season || profile.season || prev.season,
+                    soil_type: prev.soil_type || profile.soil_type || prev.soil_type,
+                    water_sources: prev.water_sources || (Array.isArray(profile.water_sources) ? profile.water_sources[0] : profile.water_sources) || prev.water_sources,
+                    state: prev.state || profile.state || prev.state,
+                    district: prev.district || profile.district || prev.district,
+                    rainfall_region: prev.rainfall_region || profile.rainfall_region || prev.rainfall_region,
+                    temperature_zone: prev.temperature_zone || profile.temperature_zone || prev.temperature_zone,
+                    past_subsidies: prev.past_subsidies || (Array.isArray(profile.past_subsidies) ? profile.past_subsidies.join(', ') : profile.past_subsidies || prev.past_subsidies)
+                }));
+            } catch (err) {
+                console.warn('Could not prefill subsidy form from profile:', err);
+            }
+        };
+
+        fetchProfileAndPrefill();
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -511,7 +559,22 @@ function RecommendSubsidy() {
                             </div>
                         )}
 
-                        <button className="mt-4 w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                        <button 
+                            onClick={() => {
+                                // Format subsidy data for ApplySubsidy component
+                                const subsidyData = {
+                                    id: rec.subsidy_id,
+                                    title: rec.title,
+                                    description: rec.description,
+                                    amount: rec.amount,
+                                    documents_required: rec.documents_required || [],
+                                    application_start_date: rec.application_dates?.start,
+                                    application_end_date: rec.application_dates?.end
+                                };
+                                navigate(`/apply/${rec.subsidy_id}`, { state: { subsidy: subsidyData } });
+                            }}
+                            className="mt-4 w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                        >
                             Apply Now
                         </button>
                     </div>
@@ -532,7 +595,8 @@ function RecommendSubsidy() {
     return (
         <>
         <Header />
-        <div className="min-h-screen py-12 px-4">
+        <Settings />
+        <div className="min-h-screen py-12 px-4 bg-gray-100">
             <div className=" mx-auto">
                 {/* Header */}
                 <div className="text-center mb-12">

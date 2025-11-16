@@ -30,24 +30,33 @@ function Settings() {
         }
         
         return () => {
-            // Cleanup if needed
         };
     }, []);
 
     return (
         <>
-            {/* Hidden Google Translate Element */}
             <div id="google_translate_element" style={{ display: 'none' }}></div>
-
             <button 
-                className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-green-500 to-green-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 group" 
+                className="fixed bottom-6 right-6 z-70 bg-green-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 group" 
+                onMouseDown={(e) => e.stopPropagation()}
                 onClick={() => setSettingIsOpen(!settingIsOpen)} 
                 aria-label="Settings"
             >
                 <FaCog className="text-2xl transition-transform duration-500 group-hover:rotate-90" />
             </button>
 
-            {settingIsOpen && <MultiLanguage onClose={() => setSettingIsOpen(false)} />}
+            {settingIsOpen && (
+                <>
+                    {/* Overlay to block clicks to underlying UI (including the settings button) */}
+                    <div
+                        className="fixed inset-0 z-40 lg:hidden"
+                        onClick={() => setSettingIsOpen(false)}
+                        aria-hidden="true"
+                    />
+
+                    <MultiLanguage onClose={() => setSettingIsOpen(false)} />
+                </>
+            )}
         </>
     )
 }

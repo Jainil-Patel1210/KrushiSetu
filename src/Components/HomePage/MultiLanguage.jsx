@@ -36,19 +36,15 @@ function MultiLanguage({ onClose }) {
         
         // Clear all existing Google Translate cookies
         document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        // document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname;
         
-        // Set new cookie
         document.cookie = `googtrans=${cookieValue}; path=/`;
-        // document.cookie = `googtrans=${cookieValue}; path=/; domain=${window.location.hostname}`;
         
-        // Close modal and reload
         onClose();
         window.location.reload();
     };
 
     return (
-        <div ref={dropdownRef} className="fixed bottom-20 right-6 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 w-80 animate-slideUp">
+        <div ref={dropdownRef} className="fixed bottom-20 right-6 z-60 bg-white rounded-xl shadow-2xl border border-gray-200 w-80 animate-slideUp" onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}
         <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
