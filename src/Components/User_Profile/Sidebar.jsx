@@ -162,18 +162,26 @@ function Sidebar() {
 
                 {/* ----------------------------Mobile Sidebar---------------------------- */}
                 {isOpen && (
-                    <div className="absolute top-full w-60 right-0 bg-white shadow-lg border-t border-gray-200 z-40">
-                        <div className='flex flex-col'>
-                            {sidebar_options.map((item) => (
-                                <button key={item.id}
-                                        className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition ${page === item.id ? "bg-green-100 border-l-4 border-green-600" : ""}`}
-                                        onClick={() => handlePageChange(item.id)}>
-                                    <img src={item.icon} className='h-5 w-5' alt={item.label} />
-                                    <span className="text-sm font-medium">{item.label}</span>
-                                </button>
-                            ))}
+                    <>
+                        <div
+                            className="fixed inset-0 z-30 lg:hidden"
+                            onClick={() => setIsOpen(false)}
+                            aria-hidden="true"
+                        />
+
+                        <div className="absolute top-full w-60 right-0 bg-white shadow-lg border-t border-gray-200 z-40">
+                            <div className='flex flex-col'>
+                                {sidebar_options.map((item) => (
+                                    <button key={item.id}
+                                            className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition ${page === item.id ? "bg-green-100 border-l-4 border-green-600" : ""}`}
+                                            onClick={() => handlePageChange(item.id)}>
+                                        <img src={item.icon} className='h-5 w-5' alt={item.label} />
+                                        <span className="text-sm font-medium">{item.label}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    </>
                 )}
             </div>
 
@@ -186,7 +194,7 @@ function Sidebar() {
                         {sidebar_options.map((option) => (
                             <button
                                 key={option.id}
-                                className={`flex flex-wrap gap-2 pl-4 ${page === option.id ? "bg-green-600 p-3 rounded-md" : ""}`}
+                                className={`flex flex-wrap gap-2 pl-4 ${page === option.id ? "bg-green-700 p-3 rounded-md" : ""}`}
                                 onClick={() => handlePageChange(option.id)}
                             >
                                 <img src={option.icon} className='h-5 w-5' alt={option.label} />
