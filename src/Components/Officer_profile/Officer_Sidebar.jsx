@@ -1,10 +1,19 @@
-import React,{useState} from 'react'
+import React,{useEffect, useState} from 'react'
+import { useNavigate } from 'react-router-dom'
 import Dashboard from './Dashboard.jsx';
 import Grievance from './Grievance.jsx'; // Add this import
+import { isOfficer } from '../../utils/auth';
 
 function Officer_Sidebar() {
+    const navigate = useNavigate();
     const [page,setPage]=useState('Dashboard');
     const [isOpen, setIsOpen] = useState(false);
+
+    useEffect(() => {
+        if (!isOfficer()) {
+            navigate('/login', { replace: true });
+        }
+    }, [navigate]);
 
     function handlePageChange(newPage){
         setPage(newPage);

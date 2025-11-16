@@ -1,15 +1,5 @@
 import React, { useRef, useState } from 'react';
 
-/**
- * FileDropzone
- * Props:
- * - file: { name, preview, size } optional preview object
- * - onFileSelected: function(file) => void
- * - labelTitle: string
- * - hint: string
- * - accept: string
- * - maxSize: number (bytes)
- */
 export default function FileDropzone({ file, onFileSelected, labelTitle = 'Click to upload or drag & drop', hint = 'PDF or Image (Max 5MB)', accept = '.pdf,image/*', maxSize = 5 * 1024 * 1024 }) {
     const inputRef = useRef(null);
     const [error, setError] = useState('');
