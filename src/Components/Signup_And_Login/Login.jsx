@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 function Login({ onForgotPasswordClick, redirectTo }) {
 
+
     const navigate = useNavigate();
 
     const [loginWithOtp, setLoginWithOtp] = useState(false);
@@ -32,45 +33,48 @@ function Login({ onForgotPasswordClick, redirectTo }) {
     const [otpTimer, setOtpTimer] = useState(0);
 
     useEffect(() => {
-
-        if (localStorage.getItem("isLoggedOut") === "true") {
-            clearAuth();  
-            return;  
-        }
-
         const access = localStorage.getItem("access");
-        const storedRole = localStorage.getItem("user_role");
+        const role = localStorage.getItem("user_role");
+        const isLoggedOut = localStorage.getItem("isLoggedOut") === "true";
 
-        const redirectWithDelay = (role) => {
-            const path = getRedirectPathForRole(role);
-            setTimeout(() => {
-                navigate(path);
-            }, 3000); // ⏳ 3 second delay
-        };
-
-        if (access && storedRole) {
-            redirectWithDelay(storedRole);
+        // ⛔ If user just logged out → DO NOT auto-login
+        if (isLoggedOut) {
+            clearAuth();
             return;
         }
 
-        const tryRefresh = async () => {
+        // Function to redirect based on role
+        const redirectUser = () => {
+            const path = getRedirectPathForRole(role);
+            setTimeout(() => navigate(path), 1500);
+        };
+
+        // Case 1 → Access token already exists
+        if (access && role) {
+            redirectUser();
+            return;
+        }
+
+        // Case 2 → Try to refresh using cookies
+        const tryCookieRefresh = async () => {
             try {
                 const res = await api.post("/token/refresh/");
 
-                storeTokens({
-                    access: res.data.access,
-                    refresh: res.data.refresh,
-                    role: storedRole,
-                });
+                // Store tokens returned only if backend includes them
+                if (res.data.access) localStorage.setItem("access", res.data.access);
+                if (res.data.refresh) localStorage.setItem("refresh", res.data.refresh);
 
-                redirectWithDelay(storedRole);
+                redirectUser();
             } catch (err) {
+                // Refresh failed → ensure user stays logged out
                 clearAuth();
             }
         };
 
-        tryRefresh();
+        tryCookieRefresh();
     }, [navigate]);
+
+
 
 
 
@@ -174,6 +178,7 @@ function Login({ onForgotPasswordClick, redirectTo }) {
                 refresh: response.data.refresh,
                 role: normalizedRole,
             });
+            localStorage.setItem("isLoggedOut", "false");
             setRole('');
             setIsLoading(false);
             const redirectPath = getRedirectPathForRole(normalizedRole);
@@ -252,6 +257,7 @@ function Login({ onForgotPasswordClick, redirectTo }) {
 
             setLoginEmailError("");
             toast.success("Logged in successfully!");
+            localStorage.setItem("isLoggedOut", "false");
             setLoginMobileOrEmail("");
             setLoginPassword("");
             setRole('');
