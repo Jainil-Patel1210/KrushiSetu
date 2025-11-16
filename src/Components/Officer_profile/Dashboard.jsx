@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Header from '../User_Profile/Header';
 import Settings from '../HomePage/Settings';
 import { AiOutlineEye, AiOutlineClose } from 'react-icons/ai';
-import api from '../Signup_And_Login/api';
+import api from '../User_Profile/api1';
 
 const STATUS_LABELS = {
   approved: 'Approved',
@@ -57,7 +57,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/subsidy-applications/');
+      const response = await api.get('/subsidy/officer/dashboard/');
       setApplications(response.data);
     } catch (err) {
       console.error('Failed to fetch subsidy applications', err);
@@ -71,6 +71,22 @@ const Dashboard = () => {
       setLoading(false);
     }
   }, []);
+
+  const handleVerifyDocuments = async (verified) => {
+    try {
+      setProcessingAction(true);
+      await api.post(
+        `/subsidy/officer/applications/${selectedApplication.id}/documents/verify/`,
+        { verified }
+      );
+      await loadApplicationDetail(selectedApplication.id);
+    } catch (err) {
+      setDetailError("Failed to update document status.");
+    } finally {
+      setProcessingAction(false);
+    }
+  };
+
 
   useEffect(() => {
     fetchApplications();
@@ -88,9 +104,10 @@ const Dashboard = () => {
       setDetailLoading(true);
       setDetailError(null);
       const [detailResponse, documentsResponse] = await Promise.all([
-        api.get(`/subsidy-applications/${applicationId}/`),
-        api.get(`/subsidy-applications/${applicationId}/documents/`),
+        api.get(`/subsidy/officer/applications/${applicationId}/`),
+        api.get(`/subsidy/officer/applications/${applicationId}/documents/`),
       ]);
+
       setSelectedApplication({
         ...detailResponse.data,
         documents: documentsResponse.data,
@@ -114,15 +131,21 @@ const Dashboard = () => {
     loadApplicationDetail(row.id);
   };
 
-  const handleAction = async (endpoint, payload = {}) => {
+  const handleAction = async (statusValue, extra = {}) => { 
     if (!selectedApplication) return;
     setProcessingAction(true);
     setDetailError(null);
     try {
-      const { data } = await api.post(`/subsidy-applications/${selectedApplication.id}/${endpoint}/`, {
-        officer_note: officerNote || '',
-        ...payload,
-      });
+      const { data } = await api.post(
+        `/subsidy/officer/applications/${selectedApplication.id}/review/`,
+        {
+          status: statusValue,
+          officer_comment: officerNote || '',
+          ...extra,
+        }
+      );
+
+
       await fetchApplications();
       await loadApplicationDetail(selectedApplication.id);
       if (data?.status) {
@@ -142,11 +165,15 @@ const Dashboard = () => {
     }
   };
 
-  const handleMarkUnderReview = () => handleAction('mark-under-review');
-  const handleVerifyDocuments = (verified) =>
-    handleAction('verify-documents', { verified });
-  const handleApprove = () => handleAction('approve');
-  const handleReject = () => handleAction('reject');
+    const handleApprove = () =>
+      handleAction("Approved");
+
+    const handleReject = () =>
+      handleAction("Rejected");
+
+    const handleMarkUnderReview = () =>
+      handleAction("Under Review");
+
 
   const normalizedApplications = useMemo(() => {
     return applications.map((app, index) => {
@@ -155,8 +182,9 @@ const Dashboard = () => {
         srNo: index + 1,
         id: app.id,
         applicationId: `APP-${app.id}`,
-        farmerName: app.applicant_name || 'N/A',
-        schemeName: app.subsidy_title || 'N/A',
+        farmerName: app.full_name || app.user_name || 'N/A',
+        schemeName: app.subsidy_name || app.subsidy_title || 'N/A',
+
         statusKey,
         statusLabel: deriveStatusLabel(statusKey),
         submittedAt: app.submitted_at,
@@ -453,11 +481,16 @@ const Dashboard = () => {
                           <div className="flex gap-3 items-center">
                             <span
                               className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                doc.verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                                selectedApplication.document_status === "Verified"
+                                  ? "bg-green-100 text-green-700"
+                                  : selectedApplication.document_status === "Rejected"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-yellow-100 text-yellow-700"
                               }`}
                             >
-                              {doc.verified ? 'Verified' : 'Pending'}
+                              {selectedApplication.document_status || "Pending"}
                             </span>
+
                             {doc.file_url && (
                               <a
                                 href={doc.file_url}

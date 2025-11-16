@@ -133,4 +133,113 @@ def review_application(request, app_id):
 
     return Response(serializer.errors, status=400)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def officer_application_detail(request, app_id):
+    if request.user.role != "officer":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    try:
+        app = SubsidyApplication.objects.select_related(
+            "subsidy", "assigned_officer"
+        ).prefetch_related("documents").get(
+            id=app_id,
+            assigned_officer=request.user
+        )
+    except SubsidyApplication.DoesNotExist:
+        return Response({"detail": "Application not found"}, status=404)
+
+    data = {
+        "id": app.id,
+        "application_id": app.application_id,
+
+        # Farmer information
+        "applicant_name": app.full_name,
+        "applicant_email": app.email,
+        "mobile": app.mobile,
+        "aadhaar": app.aadhaar,
+        "address": app.address,
+        "state": app.state,
+        "district": app.district,
+        "taluka": app.taluka,
+        "village": app.village,
+
+        # Land details
+        "land_area": app.land_area,
+        "land_unit": app.land_unit,
+        "soil_type": app.soil_type,
+        "ownership": app.ownership,
+
+        # Bank details
+        "bank_name": app.bank_name,
+        "account_number": app.account_number,
+        "ifsc": app.ifsc,
+
+        # Subsidy details
+        "subsidy_title": app.subsidy.title,
+        "subsidy_amount": app.subsidy.amount,
+
+        # Officer review
+        "status": app.status,
+        "document_status": app.document_status,
+        "officer_comment": app.officer_comment,
+        "assigned_officer_name": app.assigned_officer.full_name if app.assigned_officer else None,
+
+        "submitted_at": app.submitted_at,
+        "reviewed_at": app.reviewed_at,
+    }
+
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def officer_application_documents(request, app_id):
+    if request.user.role != "officer":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    try:
+        app = SubsidyApplication.objects.get(
+            id=app_id,
+            assigned_officer=request.user
+        )
+    except SubsidyApplication.DoesNotExist:
+        return Response({"detail": "Application not found"}, status=404)
+
+    docs = app.documents.all()
+
+    data = [{
+        "id": d.id,
+        "document_type": d.document_type,
+        "document_number": d.document_number,
+        "uploaded_at": d.uploaded_at,
+        "file_url": d.file.url if d.file else None
+    } for d in docs]
+
+    return Response(data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def officer_verify_documents(request, app_id):
+    if request.user.role != "officer":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    try:
+        app = SubsidyApplication.objects.get(
+            id=app_id,
+            assigned_officer=request.user
+        )
+    except SubsidyApplication.DoesNotExist:
+        return Response({"detail": "Application not found"}, status=404)
+
+    verified = request.data.get("verified")
+    if verified is True:
+        app.document_status = "Verified"
+    else:
+        app.document_status = "Rejected"   # FLAG DOCUMENTS
+    app.save()
+
+    return Response({
+        "message": "Document status updated",
+        "document_status": app.document_status
+    })
 

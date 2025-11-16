@@ -1,7 +1,6 @@
-# subsidy/serializers.py
 from rest_framework import serializers
 from .models import SubsidyApplication, Document
-from app.models import Subsidy as AppSubsidy  # IMPORTANT: import the real Subsidy model
+from app.models import Subsidy as AppSubsidy 
 
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,7 +10,6 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 
 class SubsidyApplicationSerializer(serializers.ModelSerializer):
-    # Force DRF to validate subsidy against the AppSubsidy (from app.models)
     subsidy = serializers.PrimaryKeyRelatedField(queryset=AppSubsidy.objects.all())
     document_ids = serializers.ListField(
         child=serializers.IntegerField(), write_only=True, required=False
@@ -28,7 +26,6 @@ class SubsidyApplicationSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        # Prevent duplicate applications
         user = self.context['request'].user
         subsidy = attrs.get('subsidy')
         if SubsidyApplication.objects.filter(user=user, subsidy=subsidy).exists():
@@ -37,16 +34,13 @@ class SubsidyApplicationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         doc_ids = validated_data.pop('document_ids', [])
-        # Ensure the request user is used as owner
         request = self.context.get('request')
         user = getattr(request, 'user', None)
         validated_data['user'] = user
 
-        # Use instance creation + save() so model.save() runs (auto application_id)
         app = SubsidyApplication(**validated_data)
         app.save()
 
-        # Attach documents (only those belonging to the user)
         if doc_ids:
             docs = Document.objects.filter(id__in=doc_ids, owner=user)
             app.documents.set(docs)
@@ -60,9 +54,6 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-# ---------------------------------------
-# OFFICER VIEW SERIALIZER
-# ---------------------------------------
 class OfficerSubsidyApplicationSerializer(serializers.ModelSerializer):
     subsidy_name = serializers.CharField(source='subsidy.title', read_only=True)
     subsidy_amount = serializers.CharField(source='subsidy.amount', read_only=True)
@@ -74,7 +65,6 @@ class OfficerSubsidyApplicationSerializer(serializers.ModelSerializer):
             "id",
             "application_id",
 
-            # Farmer info
             "full_name",
             "mobile",
             "email",
@@ -89,16 +79,13 @@ class OfficerSubsidyApplicationSerializer(serializers.ModelSerializer):
             "soil_type",
             "ownership",
 
-            # Bank
             "bank_name",
             "account_number",
             "ifsc",
 
-            # Subsidy details
             "subsidy_name",
             "subsidy_amount",
 
-            # Status + officer work
             "status",
             "officer_comment",
             "reviewed_at",
@@ -112,9 +99,6 @@ class OfficerSubsidyApplicationSerializer(serializers.ModelSerializer):
         ]
 
 
-# ---------------------------------------
-# OFFICER REVIEW UPDATE SERIALIZER
-# ---------------------------------------
 class OfficerReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubsidyApplication
