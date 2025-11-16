@@ -1,9 +1,12 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_BASE_URL}/api`,
+  baseURL: import.meta.env.MODE === 'development' 
+    ? 'http://127.0.0.1:8000/api' 
+    : `${import.meta.env.VITE_BASE_URL}/api`,
   withCredentials: true,
 });
+
 
 let isRefreshing = false;
 let failedQueue = [];

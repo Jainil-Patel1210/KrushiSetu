@@ -37,11 +37,14 @@ const Subsidy = () => {
   const handleApplyClick = (subsidy) => {
     const token = localStorage.getItem('access');
     if (token) {
-      // user logged in -> go to apply page
       navigate(`/apply/${subsidy.id}`, { state: { subsidy } });
     } else {
-      // not logged in -> send to login and preserve target
       navigate('/login', { state: { redirectTo: `/apply/${subsidy.id}` } });
+      const token2 = localStorage.getItem('access');
+      if(token2){
+        navigate(`/apply/${subsidy.id}`, { state: { subsidy } });
+      }
+
     }
   };
   
