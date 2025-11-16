@@ -3,6 +3,7 @@ import Header from "./Header";
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from "react-icons/ai";
 import api from "./api1";
 import axios from "axios";
+import Settings from '../HomePage/Settings.jsx';
 
 // Regex to validate document number format
 const NUMBER_REGEX = /^[A-Za-z0-9_-]{1,20}$/;
@@ -213,6 +214,7 @@ const Documents = () => {
             {/* Blur background when modal is open */}
             <div className={isBlurred ? 'blur-sm' : ''}>
                 <Header />
+                <Settings />
             </div>
 
             <div className={`w-full bg-gray-100 min-h-screen ${isBlurred ? 'blur-sm' : ''}`}>

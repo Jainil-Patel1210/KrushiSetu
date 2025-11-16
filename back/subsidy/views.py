@@ -6,6 +6,10 @@ from rest_framework import status
 from .serializers import SubsidyApplicationSerializer, DocumentSerializer, OfficerReviewSerializer, OfficerSubsidyApplicationSerializer
 from .models import SubsidyApplication, Document
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 
 
 # Upload single document (multipart/form-data)

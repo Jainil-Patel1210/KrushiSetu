@@ -179,7 +179,7 @@ function Support() {
             <Toaster position="top-center" reverseOrder={false} />
             <Header />
             <Settings />
-            <div className="w-full mx-auto">
+            <div className="w-full bg-gray-100 mx-auto">
                 <div className="max-w-6xl mx-auto py-4 sm:py-6 md:py-8 px-4 sm:px-6 md:px-8">
                     <h1 className="font-extrabold text-2xl sm:text-3xl text-gray-900 mt-1 ml-2">Support & Help</h1>
                     <p className="text-gray-600 mt-2 max-w-2xl text-sm sm:text-base ml-2">Get help, raise grievances, and access helpful resources</p>

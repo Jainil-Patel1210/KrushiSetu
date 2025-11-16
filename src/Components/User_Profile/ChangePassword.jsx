@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import api from "./api1";
 import { Toaster, toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import Settings from "../HomePage/Settings";
 import PasswordToggleIcon from "../Signup_And_Login/PasswordToggleIcon";
 
 function ChangePassword() {
@@ -51,6 +52,7 @@ function ChangePassword() {
 
   return (
     <>
+      <Settings />
       <Toaster position="top-center" reverseOrder={false} />
       <div className="fixed inset-0 flex justify-center items-center bg-gray-50 p-6 md:p-0">
         <div className="bg-white shadow-lg rounded-xl p-6 w-full max-w-md relative">
