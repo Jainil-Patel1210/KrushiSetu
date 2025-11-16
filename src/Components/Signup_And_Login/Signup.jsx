@@ -1,214 +1,59 @@
 import React, { useState } from 'react';
-import './Signup.css';
+import { useNavigate } from 'react-router-dom';
+import SocialLogin from './SocialLogin';
+import PasswordToggleIcon from './PasswordToggleIcon';
+import api from './api'; // For the signup API call
+import { Toaster, toast } from 'react-hot-toast';
 
-// Role Dropdown Component
-function RoleDropdown({ role, isOpen, onClick, onSelect }) {
-    return (
-        <div className="relative w-full">
-            <input
-                className="w-full p-2 pr-12 mb-3 rounded-md bg-white border"
-                type="text"
-                placeholder="Role"
-                value={role}
-                onClick={onClick}
-                readOnly
-                required
-            />
-            <img
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 pb-2"
-                src="/Dropdown_Logo.svg"
-                alt="Dropdown"
-                onClick={onClick}
-            />
-            {isOpen && (
-                <div className="absolute left-0 right-0 bg-white border rounded shadow z-10">
-                    <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Farmer')}>Farmer</p>
-                    <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Officer')}>Officer</p>
-                    <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Admin')}>Admin</p>
-                    <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Subsidy Provider')}>Subsidy Provider</p>
-                </div>
-            )}
-        </div>
-    );
-}
+function Signup({ onSignupSuccess = null }) {
+    const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
 
-// Social Login Component
-function SocialLogin() {
-    return (
-        <div>
-            <div className="flex items-center">
-                <hr className="border-t-2 w-15 ml-4" />
-                <p className="ml-4 mr-2">Or continue with</p>
-                <hr className="border-t-2 w-17 ml-2" />
-            </div>
-            <div className="flex justify-around pt-2 pl-25 pr-25">
-                <img className="w-7.5 h-7.5 pt-2" src="/Google_Logo.svg" alt="Google Logo" />
-                <img className="w-9.5 h-9.5" src="/DigiLocker_Logo.png" alt="DigiLocker Logo" />
-            </div>
-        </div>
-    );
-}
-
-function Signup() {
-    const [page, setPage] = useState('login');
-    const [role, setRole] = useState('');
-    const [isOpen, setIsOpen] = useState(false);
+    // Signup form states
     const [signupMethod, setSignupMethod] = useState('email');
-    const [showOtpForm, setShowOtpForm] = useState(false);
-
-    // Signup states
     const [signupFullName, setSignupFullName] = useState('');
-    const [signupAadhaar, setSignupAadhaar] = useState('');
+    const [signupFullNameError, setSignupFullNameError] = useState('');
+    const [signupAadhaar, setSignupAadhaar] = useState(''); 
+    const [signupAadhaarError, setSignupAadhaarError] = useState('');
     const [signupPassword, setSignupPassword] = useState('');
     const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
-    const [signupMobile, setSignupMobile] = useState('');
-    const [signupOtp, setSignupOtp] = useState('');
     const [signupEmail, setSignupEmail] = useState('');
     const [signupEmailError, setSignupEmailError] = useState('');
     const [signupPasswordError, setSignupPasswordError] = useState('');
+    const [showSignupPassword, setShowSignupPassword] = useState(false);
+    const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
 
-    // Login with OTP states
-    const [loginWithOtp, setLoginWithOtp] = useState(false);
-    const [showLoginOtpForm, setShowLoginOtpForm] = useState(false);
 
-    // Login form states
-    const [loginMobileOrEmail, setLoginMobileOrEmail] = useState('');
-    const [loginPassword, setLoginPassword] = useState('');
-    const [loginMobile, setLoginMobile] = useState('');
-    const [loginOtp, setLoginOtp] = useState('');
-    const [loginEmailError, setLoginEmailError] = useState('');
-
-    // Forgot password multi-step states
-    const [forgotPassword, setForgotPassword] = useState(false);
-    const [forgotStep, setForgotStep] = useState(1); // 1: email, 2: otp, 3: new password
-    const [forgotEmail, setForgotEmail] = useState('');
-    const [forgotOtp, setForgotOtp] = useState('');
-    const [otpSent, setOtpSent] = useState(false);
-    const [otpVerified, setOtpVerified] = useState(false);
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmNewPassword, setConfirmNewPassword] = useState('');
-    const [forgotPasswordError, setForgotPasswordError] = useState('');
-
-    // Reset all form states
-    const handlePageSwitch = (page) => {
-        setPage(page);
-        setSignupMethod('email');
-        setShowOtpForm(false);
-        setSignupFullName('');
-        setSignupAadhaar('');
-        setSignupPassword('');
-        setSignupConfirmPassword('');
-        setSignupMobile('');
-        setSignupOtp('');
-        setSignupEmail('');
-        setSignupEmailError('');
-        setSignupPasswordError('');
-        setLoginWithOtp(false);
-        setShowLoginOtpForm(false);
-        setLoginMobileOrEmail('');
-        setLoginPassword('');
-        setLoginMobile('');
-        setLoginOtp('');
-        setLoginEmailError('');
-        setRole('');
-        setForgotPassword(false);
-        setNewPassword('');
-        setConfirmNewPassword('');
-        setForgotPasswordError('');
-        setIsOpen(false);
-    };
-
-    // Role dropdown handlers
-    const handleRoleSelect = (selectedRole) => {
-        setRole(selectedRole);
-        setIsOpen(false);
-    };
-    const handleClick = () => setIsOpen(!isOpen);
-
-    // Signup method switch
-    const handleSignupMethodSwitch = () => {
-        setSignupMethod(signupMethod === 'email' ? 'otp' : 'email');
-        setShowOtpForm(false);
-        setSignupFullName('');
-        setSignupAadhaar('');
-        setSignupPassword('');
-        setSignupConfirmPassword('');
-        setSignupMobile('');
-        setSignupOtp('');
-        setSignupEmail('');
-        setSignupEmailError('');
-        setSignupPasswordError('');
-    };
+    // Validation regex patterns
+    const passwordRestriction = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    const nameRestriction = /^[A-Za-z\s]+$/;
 
     // Email validation
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    // Signup OTP handlers
-    const handleMobileSubmit = (e) => {
-        e.preventDefault();
-        if (signupMobile.length !== 10) {
-            alert('Please enter a valid 10-digit mobile number.');
-            return;
-        }
-        setShowOtpForm(true);
-        setSignupMobile('');
-    };
-    const handleOtpSubmit = (e) => {
-        e.preventDefault();
-        alert("Account created successfully!");
-        handlePageSwitch('login');
-    };
-
-    // Login with OTP handlers
-    const handleLoginOtpSwitch = () => {
-        setLoginWithOtp(!loginWithOtp);
-        setShowLoginOtpForm(false);
-        setLoginMobile('');
-        setLoginOtp('');
-        setLoginMobileOrEmail('');
-        setLoginPassword('');
-        setLoginEmailError('');
-    };
-    const handleLoginMobileSubmit = (e) => {
-        e.preventDefault();
-        if (loginMobile.length !== 10) {
-            alert('Please enter a valid 10-digit mobile number.');
-            return;
-        }
-        setShowLoginOtpForm(true);
-        setLoginMobile('');
-    };
-    const handleLoginOtpSubmit = (e) => {
-        e.preventDefault();
-        alert("Logged in successfully!");
-        setShowLoginOtpForm(false);
-        setLoginWithOtp(false);
-        setLoginMobile('');
-        setLoginOtp('');
-    };
-
-    // Login form submit
-    const handleLoginSubmit = (e) => {
-        e.preventDefault();
-        if (!role) {
-            alert('Please select a role.');
-            return;
-        }
-        if (/^\d{10}$/.test(loginMobileOrEmail)) {
-            // Valid mobile
-        } else if (validateEmail(loginMobileOrEmail)) {
-            // Valid email
+    // Name validation
+    const handleSignupFullNameChange = (e) => {
+        const value = e.target.value;
+        if (!nameRestriction.test(value) && value !== "") {
+            setSignupFullNameError("Name can only contain alphabets and spaces.");
         } else {
-            setLoginEmailError('Enter a valid 10-digit mobile number or email.');
-            return;
+            setSignupFullNameError("");
         }
-        setLoginEmailError('');
-        alert('Logged in successfully!');
-        setLoginMobileOrEmail('');
-        setLoginPassword('');
+        setSignupFullName(value.replace(/[^A-Za-z\s]/g, ""));
     };
 
-    // Signup email validation
+    // Mobile validation (Aadhaar was used as a placeholder name in original, but it's mobile number)
+    const handleSignupAadhaarChange = (e) => {
+        const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+        setSignupAadhaar(value);
+        if (value.length !== 10 && value.length > 0) {
+            setSignupAadhaarError("Mobile number must be exactly 10 digits.");
+        } else {
+            setSignupAadhaarError("");
+        }
+    };
+
+    // Email validation
     const handleSignupEmailChange = (e) => {
         setSignupEmail(e.target.value);
         if (e.target.value && !validateEmail(e.target.value)) {
@@ -220,403 +65,173 @@ function Signup() {
 
     // Signup password match validation
     const handleSignupPasswordChange = (e) => {
-        setSignupPassword(e.target.value);
-        if (signupConfirmPassword && e.target.value !== signupConfirmPassword) {
+        const value = e.target.value;
+        setSignupPassword(value);
+        if (!passwordRestriction.test(value)) {
+            setSignupPasswordError('Password must be at least 8 characters, include 1 letter, 1 digit, and 1 special character.');
+        } else if (signupConfirmPassword && value !== signupConfirmPassword) {
             setSignupPasswordError('Passwords do not match.');
         } else {
             setSignupPasswordError('');
         }
     };
+
+    // Confirm password match validation
     const handleSignupConfirmPasswordChange = (e) => {
-        setSignupConfirmPassword(e.target.value);
-        if (signupPassword && e.target.value !== signupPassword) {
+        const value = e.target.value;
+        setSignupConfirmPassword(value);
+        if (signupPassword && value !== signupPassword) {
             setSignupPasswordError('Passwords do not match.');
+        } else if (!passwordRestriction.test(signupPassword)) {
+            setSignupPasswordError('Password must be at least 8 characters, include 1 letter, 1 digit, and 1 special character.');
         } else {
             setSignupPasswordError('');
         }
     };
 
     // Signup email form submit
-    const handleSignupEmailSubmit = (e) => {
+    const handleSignupEmailSubmit = async (e) => {
         e.preventDefault();
-        if (signupPassword !== signupConfirmPassword) {
-            setSignupPasswordError('Passwords do not match.');
-            return;
-        }
-        setSignupPasswordError('');
-        alert("Account created successfully!");
-        handlePageSwitch('login');
-    };
+        const btn = document.getElementById("btn5");
+        btn.disabled = true;
+        setIsLoading(true);
+        try {
+            if (signupPassword !== signupConfirmPassword) {
+                setSignupPasswordError('Passwords do not match.');
+                btn.disabled = false;
+                setIsLoading(false);
+                return;
+            }
+            if (signupFullNameError || signupAadhaarError || signupEmailError || signupPasswordError) {
+                toast.error("Please correct the errors in the form.");
+                btn.disabled = false;
+                setIsLoading(false);
+                return;
+            }
 
-    // Forgot password handlers
-    const handleForgotPasswordClick = () => {
-        setForgotPassword(true);
-        setForgotStep(1);
-        setForgotEmail('');
-        setForgotOtp('');
-        setOtpSent(false);
-        setOtpVerified(false);
-        setNewPassword('');
-        setConfirmNewPassword('');
-        setForgotPasswordError('');
-    };
-
-    const handleForgotSendOtp = (e) => {
-        e.preventDefault();
-        if (!forgotEmail || !validateEmail(forgotEmail)) {
-            setForgotPasswordError('Enter a valid email address.');
-            return;
+            const response = await api.post("/signup/", {
+                full_name: signupFullName,
+                email_address: signupEmail,
+                mobile_number: signupAadhaar,
+                password: signupPassword,
+            }, {
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+            if (response.status === 201 || response.status === 200) {
+                setSignupPasswordError('');
+                toast.success("Account created successfully!");
+                setTimeout(() => {
+                    handlePageSwitch('login');
+                }, 1200);
+                btn.disabled = false;
+                setSignupFullName('');
+                setSignupAadhaar('');
+                setSignupEmail('');
+                setSignupPassword('');
+                setSignupConfirmPassword('');
+                onSignupSuccess();
+                setIsLoading(false);
+            } else {
+                toast.error("Register failed! " + (response.data?.detail || 'Unknown error.'));
+                btn.disabled = false;
+                setIsLoading(false);
+            }
+        } catch (error) {
+            console.error("Register failed: ", error.response ? error.response.data : error.message);
+            toast.error("Register failed! " + (error.response?.data?.detail || error.message));
+            btn.disabled = false;
+            setIsLoading(false);
         }
-        setForgotPasswordError('');
-        setOtpSent(true);
-        setForgotStep(2);
-    };
-
-    // Step 2: Verify OTP
-    const handleForgotVerifyOtp = (e) => {
-        e.preventDefault();
-        if (!forgotOtp) {
-            setForgotPasswordError('Enter the OTP sent to your email.');
-            return;
-        }
-        setForgotPasswordError('');
-        // TODO: Call backend to verify OTP
-        // For now, accept any OTP
-        setOtpVerified(true);
-        setForgotStep(3);
-    };
-
-    // Step 3: Set new password
-    const handleForgotPasswordSubmit = (e) => {
-        e.preventDefault();
-        if (!newPassword || !confirmNewPassword) {
-            setForgotPasswordError('Please fill both fields.');
-            return;
-        }
-        if (newPassword !== confirmNewPassword) {
-            setForgotPasswordError('Passwords do not match.');
-            return;
-        }
-        setForgotPasswordError('');
-        // TODO: Call backend to reset password
-        alert('Password reset successfully!');
-        handlePageSwitch('login');
     };
 
     return (
-        <div className="signup-bg bg-green-300 h-screen flex items-center justify-center">
-            <div className="bg-gray-50 w-full max-w-sm p-8 pb-4 rounded-lg">
-                <div className="bg-gray-500 p-1 rounded-md mb-4 flex justify-between items-center">
-                    <button
-                        className={`text-black font-bold w-[50%] ${((page === 'login') || forgotPassword) ? 'bg-[#07843A] text-white rounded-md' : ''}`}
-                        onClick={() => handlePageSwitch('login')}
-                    >Login</button>
-                    <button
-                        className={`text-black font-bold w-[50%] ${page === 'signup' ? 'bg-[#07843A] text-white rounded-md' : ''}`}
-                        onClick={() => handlePageSwitch('signup')}
-                    >Sign Up</button>
-                </div>
-
-                {/* Forgot Password Page - Multi-step */}
-                {forgotPassword && (
-                    <div>
-                        <p className="text-black text-center text-xl font-bold mb-4">Forgot Password</p>
-                        {forgotStep === 1 && (
-                            <form onSubmit={handleForgotSendOtp}>
+        <>
+            <Toaster position="top-center" reverseOrder={false} />
+            <div>
+                <p className="text-black text-center text-xl font-bold mb-0.5">Create Your Account</p>
+                {/* -----------------------------------Signup Form----------------------------------- */}
+                {signupMethod === 'email' && (
+                    <form onSubmit={handleSignupEmailSubmit}>
+                        <div className="p-2">
+                            <input
+                                className="w-full p-1.5 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+                                type="text"
+                                placeholder="Full Name"
+                                value={signupFullName}
+                                onChange={handleSignupFullNameChange}
+                                required
+                            />
+                            {signupFullNameError && <p className="text-red-600 text-xs mb-2">{signupFullNameError}</p>}
+                            <input
+                                className="w-full p-1.5 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+                                type="text"
+                                placeholder="Mobile Number"
+                                value={signupAadhaar}
+                                onChange={handleSignupAadhaarChange}
+                                maxLength={10}
+                                required
+                            />
+                            {signupAadhaarError && <p className="text-red-600 text-xs mb-2">{signupAadhaarError}</p>}
+                            <input
+                                className="w-full p-1.5 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 "
+                                type="email"
+                                placeholder="Email"
+                                value={signupEmail}
+                                onChange={handleSignupEmailChange}
+                                required
+                            />
+                            {signupEmailError && <p className="text-red-600 text-xs mb-2">{signupEmailError}</p>}
+                            <div className="relative">
                                 <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="email"
-                                    placeholder="Enter your email"
-                                    value={forgotEmail}
-                                    onChange={e => setForgotEmail(e.target.value)}
-                                    required
-                                />
-                                {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
-                                        type="submit"
-                                    >
-                                        Send OTP
-                                    </button>
-                                </div>
-                                <div className="text-center">
-                                    <span
-                                        className="text-green-700 cursor-pointer hover:underline"
-                                        onClick={() => setForgotPassword(false)}
-                                    >
-                                        Back to Login
-                                    </span>
-                                </div>
-                            </form>
-                        )}
-                        {forgotStep === 2 && (
-                            <form onSubmit={handleForgotVerifyOtp}>
-                                <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="text"
-                                    placeholder="Enter OTP sent to your email"
-                                    value={forgotOtp}
-                                    onChange={e => setForgotOtp(e.target.value)}
-                                    required
-                                />
-                                {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
-                                        type="submit"
-                                    >
-                                        Verify OTP
-                                    </button>
-                                </div>
-                                <div className="text-center">
-                                    <span
-                                        className="text-green-700 cursor-pointer hover:underline"
-                                        onClick={() => { setForgotStep(1); setForgotOtp(''); setForgotPasswordError(''); }}
-                                    >
-                                        Back to Email
-                                    </span>
-                                </div>
-                            </form>
-                        )}
-                        {forgotStep === 3 && (
-                            <form onSubmit={handleForgotPasswordSubmit}>
-                                <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="password"
-                                    placeholder="New Password"
-                                    value={newPassword}
-                                    onChange={e => setNewPassword(e.target.value)}
-                                    required
-                                />
-                                <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="password"
-                                    placeholder="Confirm New Password"
-                                    value={confirmNewPassword}
-                                    onChange={e => setConfirmNewPassword(e.target.value)}
-                                    required
-                                />
-                                {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
-                                        type="submit"
-                                    >
-                                        Reset Password
-                                    </button>
-                                </div>
-                                <div className="text-center">
-                                    <span
-                                        className="text-green-700 cursor-pointer hover:underline"
-                                        onClick={() => { setForgotStep(1); setForgotEmail(''); setForgotOtp(''); setNewPassword(''); setConfirmNewPassword(''); setForgotPasswordError(''); }}
-                                    >
-                                        Back to Email
-                                    </span>
-                                </div>
-                            </form>
-                        )}
-                    </div>
-                )}
-
-                {/* Login Page */}
-                {page === 'login' && !forgotPassword && (
-                    <div>
-                        <p className="text-black text-center text-xl font-bold mb-2">Welcome back!</p>
-                        {!loginWithOtp ? (
-                            <form onSubmit={handleLoginSubmit}>
-                                <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="text"
-                                    placeholder="Email"
-                                    value={loginMobileOrEmail}
-                                    onChange={e => setLoginMobileOrEmail(e.target.value.replace(/[^0-9a-zA-Z@._-]/g, ''))}
-                                    required
-                                />
-                                {loginEmailError && <p className="text-red-600 text-xs mb-1">{loginEmailError}</p>}
-                                <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border"
-                                    type="password"
+                                    className="w-full p-1.5 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 "
+                                    type={showSignupPassword ? "text" : "password"}
                                     placeholder="Password"
-                                    value={loginPassword}
-                                    onChange={e => setLoginPassword(e.target.value)}
+                                    value={signupPassword}
+                                    onChange={handleSignupPasswordChange}
                                     required
                                 />
-                                <RoleDropdown
-                                    role={role}
-                                    isOpen={isOpen}
-                                    onClick={handleClick}
-                                    onSelect={handleRoleSelect}
+                                <PasswordToggleIcon visible={showSignupPassword} onClick={() => setShowSignupPassword((prev) => !prev)} />
+                            </div>
+                            <div className="relative">
+                                <input
+                                    className="w-full p-1.5 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 "
+                                    type={showSignupConfirmPassword ? "text" : "password"}
+                                    placeholder="Confirm Password"
+                                    value={signupConfirmPassword}
+                                    onChange={handleSignupConfirmPasswordChange}
+                                    required
                                 />
-                                <div className='flex justify-between text-green-700 font-semibold mb-2'>
-                                    <span
-                                        className="cursor-pointer hover:underline"
-                                        onClick={handleForgotPasswordClick}
-                                    >
-                                        Forgot Password?
-                                    </span>
-                                    <span className="cursor-pointer hover:underline" onClick={handleLoginOtpSwitch}>
-                                        {loginWithOtp ? 'Login with Password' : 'Login with OTP'}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-center pt-2">
-                                    <input
-                                        className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${role ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
-                                        type="submit"
-                                        value="Log In"
-                                        disabled={!role}
-                                    />
-                                </div>
-                                <SocialLogin />
-                            </form>
-                        ) : (
-                            <form onSubmit={showLoginOtpForm ? handleLoginOtpSubmit : handleLoginMobileSubmit}>
-                                {!showLoginOtpForm ? (
-                                    <input
-                                        className="w-full p-2 mb-3 rounded-md bg-white border"
-                                        type="tel"
-                                        placeholder="Mobile Number"
-                                        value={loginMobile}
-                                        onChange={e => {
-                                            const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                            setLoginMobile(val);
-                                        }}
-                                        maxLength={10}
-                                        required
-                                    />
+                                <PasswordToggleIcon visible={showSignupConfirmPassword} onClick={() => setShowSignupConfirmPassword((prev) => !prev)} />
+                            </div>
+                            {signupPasswordError && <p className="text-red-600 text-xs mb-2">{signupPasswordError}</p>}
+                        </div>
+                        <div className="flex items-center space-x-2 pl-4 mb-2">
+                            <input type="checkbox" id="agree" className="h-4 w-4 text-green-700 border-gray-300 rounded focus:ring-green-500" required />
+                            <label htmlFor="agree" className="text-black">I agree to the <span className='text-green-700'>Terms & Conditions</span></label>
+                        </div>
+                        <div className="flex items-center justify-center pt-2">
+                            <button
+                                className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError) ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
+                                type="submit"
+                                id="btn5"
+                                disabled={!(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError)}
+                            >
+                                {isLoading ? (
+                                    <div className="flex items-center justify-center space-x-2">
+                                        <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <span>In Progress...</span>
+                                    </div>
                                 ) : (
-                                    <input
-                                        className="w-full p-2 mb-3 rounded-md bg-white border"
-                                        type="text"
-                                        placeholder="Enter OTP"
-                                        value={loginOtp}
-                                        onChange={e => setLoginOtp(e.target.value)}
-                                        required
-                                    />
+                                    'Create Account'
                                 )}
-                                <RoleDropdown
-                                    role={role}
-                                    isOpen={isOpen}
-                                    onClick={handleClick}
-                                    onSelect={handleRoleSelect}
-                                />
-                                <div className='flex justify-between text-green-700 font-semibold mb-2'>
-                                    <span
-                                        className="cursor-pointer hover:underline "
-                                        onClick={handleForgotPasswordClick}
-                                    >
-                                        Forgot Password?
-                                    </span>
-                                    <span className="cursor-pointer hover:underline" onClick={handleLoginOtpSwitch}>
-                                        {loginWithOtp ? 'Login with Password' : 'Login with OTP'}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${role ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
-                                        type="submit"
-                                        disabled={!role}
-                                    >
-                                        {showLoginOtpForm ? 'Verify OTP & Login' : 'Send OTP'}
-                                    </button>
-                                </div>
-                                <SocialLogin />
-                            </form>
-                        )}
-                    </div>
-                )}
-
-                {/* Signup Page */}
-                {page === 'signup' && (
-                    <div>
-                        <p className="text-black text-center text-xl font-bold mb-0.5">Create Your Account</p>
-                        {signupMethod === 'email' ? (
-                            <form onSubmit={handleSignupEmailSubmit}>
-                                <div className="p-2">
-                                    <input className="w-full p-1.5 mb-3 rounded-md bg-white border" type="text" placeholder="Full Name" value={signupFullName} onChange={e => setSignupFullName(e.target.value)} required />
-                                    <input className="w-full p-1.5 mb-3 rounded-md bg-white border" type="text" placeholder="Mobile Number" value={signupAadhaar} onChange={e => setSignupAadhaar(e.target.value)} />
-                                    <input
-                                        className="w-full p-1.5 mb-3 rounded-md bg-white border"
-                                        type="email"
-                                        placeholder="Email"
-                                        value={signupEmail}
-                                        onChange={handleSignupEmailChange}
-                                        required
-                                    />
-                                    {signupEmailError && <p className="text-red-600 text-xs mb-2">{signupEmailError}</p>}
-                                    <input className="w-full p-1.5 mb-3 rounded-md bg-white border" type="password" placeholder="Password" value={signupPassword} onChange={handleSignupPasswordChange} required />
-                                    <input className="w-full p-1.5 rounded-md bg-white border" type="password" placeholder="Confirm Password" value={signupConfirmPassword} onChange={handleSignupConfirmPasswordChange} required />
-                                    {signupPasswordError && <p className="text-red-600 text-xs mb-2">{signupPasswordError}</p>}
-                                </div>
-                                <p onClick={handleSignupMethodSwitch} className="cursor-pointer hover:underline text-green-700 font-semibold mb-2 text-right mr-3">
-                                    {signupMethod === 'email' ? 'Login with OTP' : 'Login with Email'}
-                                </p>
-                                <div className="flex items-center space-x-2 pl-4 mb-2">
-                                    <input type="checkbox" id="agree" className="h-4 w-4 text-green-700 border-gray-300 rounded focus:ring-green-500" required />
-                                    <label htmlFor="agree" className="text-black">I agree to the <span className='text-green-700'>Terms & Conditions</span></label>
-                                </div>
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError) ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200`}
-                                        type="submit"
-                                        disabled={!(signupEmail && !signupEmailError && signupPassword && signupConfirmPassword && !signupPasswordError)}
-                                    >
-                                        Create Account
-                                    </button>
-                                </div>
-                                <SocialLogin />
-                            </form>
-                        ) : (
-                            <form onSubmit={showOtpForm ? handleOtpSubmit : handleMobileSubmit}>
-                                <div className="p-2">
-                                    <input className="w-full p-1.5 mb-3 rounded-md bg-white border" type="text" placeholder="Full Name" value={signupFullName} onChange={e => setSignupFullName(e.target.value)} required />
-                                    {!showOtpForm ? (
-                                        <input
-                                            className="w-full p-1.5 mb-3 rounded-md bg-white border"
-                                            type="tel"
-                                            placeholder="Mobile Number"
-                                            value={signupMobile}
-                                            onChange={e => {
-                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                                setSignupMobile(val);
-                                            }}
-                                            maxLength={10}
-                                            required
-                                        />
-                                    ) : (
-                                        <input
-                                            className="w-full p-1.5 mb-3 rounded-md bg-white border"
-                                            type="text"
-                                            placeholder="Enter OTP"
-                                            value={signupOtp}
-                                            onChange={e => setSignupOtp(e.target.value)}
-                                            required
-                                        />
-                                    )}
-                                </div>
-                                <div className="flex items-center space-x-2 pl-4 mb-2">
-                                    <input type="checkbox" id="agree" className="h-4 w-4 text-green-700 border-gray-300 rounded focus:ring-green-500" required />
-                                    <label htmlFor="agree" className="text-black">I agree to the <span className='text-green-700'>Terms & Conditions</span></label>
-                                </div>
-                                <p onClick={handleSignupMethodSwitch} className="cursor-pointer hover:underline text-green-700 font-semibold mb-2 text-right mr-3">
-                                    {signupMethod === 'email' ? 'Login with OTP' : 'Login with Email'}
-                                </p>
-                                <div className="flex items-center justify-center pt-2">
-                                    <button
-                                        className={`text-black font-bold p-2 mb-3 w-50 rounded-md ${!showOtpForm ? (signupMobile.length === 10 ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed') : 'bg-green-700 hover:bg-green-800'} transition duration-200`}
-                                        type="submit"
-                                        disabled={!showOtpForm && signupMobile.length !== 10}
-                                    >
-                                        {showOtpForm ? 'Verify OTP & Create Account' : 'Create Account'}
-                                    </button>
-                                </div>
-                                <SocialLogin />
-                            </form>
-                        )}
-                    </div>
+                            </button>
+                        </div>
+                    </form>
                 )}
             </div>
-        </div>
+        </>
     );
 }
 

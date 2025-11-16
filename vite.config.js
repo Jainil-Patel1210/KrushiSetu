@@ -8,4 +8,25 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  // Dev server proxy: forward API calls to Django backend so cookies are same-origin
+  server: {
+    proxy: {
+      // Proxy any requests starting with /photo or /api to the Django dev server
+      '/photo': 'http://localhost:8000',
+      '/api': 'http://localhost:8000',
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          oauth: ['@react-oauth/google'],
+          icons: ['react-icons'],
+        },
+      },
+    },
+  },
 })
