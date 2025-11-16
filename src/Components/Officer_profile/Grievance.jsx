@@ -216,10 +216,10 @@ const Grievance = () => {
             <div className="mb-6 bg-gray-50 rounded-lg p-4 flex flex-wrap gap-3">
               <span className="font-semibold text-gray-700">Filter by Status :</span>
 
-              {["all", "approved", "under review", "rejected"].map((s) => (
+              {["all", "approved", "under Review", "rejected"].map((s) => (
                 <button
                   key={s}
-                  onClick={() => setStatusFilter(s)}
+                  onClick={() => setStatusFilter(s)}D
                   className={`px-4 py-2 rounded-full text-sm ${
                     statusFilter === s
                       ? "bg-green-600 text-white"
@@ -236,14 +236,15 @@ const Grievance = () => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-100 text-gray-700">
-                    <th className="px-4 py-3">Sr. No.</th>
-                    <th className="px-4 py-3">Farmer Name</th>
-                    <th className="px-4 py-3">Grievance ID</th>
-                    <th className="px-4 py-3">Subject</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">View</th>
+                    <th className="px-4 py-3 text-left">Sr. No.</th>
+                    <th className="px-4 py-3 text-left">Farmer Name</th>
+                    <th className="px-4 py-3 text-left">Grievance ID</th>
+                    <th className="px-4 py-3 text-left">Subject</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-center">View</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {error ? (
                     <tr>
@@ -270,13 +271,16 @@ const Grievance = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <button
-                            onClick={() => handleViewDetails(g)}
-                            className="border px-4 py-1 rounded-full text-green-600"
-                          >
-                            <FaEye />
-                          </button>
+                          <div className="flex justify-center items-center">
+                            <button
+                              onClick={() => handleViewDetails(g)}
+                              className="border border-green-500 px-3 py-1 rounded-full text-green-600 flex items-center justify-center hover:bg-green-50 transition"
+                            >
+                              <FaEye size={16} />
+                            </button>
+                          </div>
                         </td>
+
                       </tr>
                     ))
                   )}

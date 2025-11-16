@@ -1,15 +1,11 @@
-# back/subsidy/views.py
-from django.db import IntegrityError
-from django.utils import timezone
-
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-
-from .serializers import DocumentSerializer, SubsidyApplicationSerializer
-from .models import Document, SubsidyApplication
+from .serializers import SubsidyApplicationSerializer, DocumentSerializer, OfficerReviewSerializer, OfficerSubsidyApplicationSerializer
+from .models import SubsidyApplication, Document
+from django.utils import timezone
 
 
 # Upload single document (multipart/form-data)
@@ -18,6 +14,7 @@ from .models import Document, SubsidyApplication
 @parser_classes([MultiPartParser, FormParser])  # OK to keep; parsers ignored for GET
 def upload_document(request):
     if request.method == 'GET':
+        # return documents for the current user (or change to all() if you want)
         qs = Document.objects.filter(owner=request.user).order_by('-uploaded_at')
         serializer = DocumentSerializer(qs, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -30,92 +27,219 @@ def upload_document(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Submit application (GET lists user's applications, POST creates one)
+
+
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def apply_subsidy(request):
-    """
-    GET:
-        Returns list of subsidy applications for the logged-in user in frontend-friendly shape.
 
-    POST:
-        Accepts JSON payload for creating an application. The server enforces `user=request.user`.
-        Example expected JSON (your serializer may accept additional fields):
-        {
-          "subsidy": 1,
-          "full_name": "...",
-          "mobile": "...",
-          "email": "...",
-          "aadhaar": "...",
-          "address": "...",
-          "state": "...",
-          "district": "...",
-          "taluka": "...",
-          "village": "...",
-          "land_area": 1.5,
-          "land_unit": "acre",
-          "soil_type": "loamy",
-          "ownership": "owned",
-          "bank_name": "...",
-          "account_number": "...",
-          "ifsc": "...",
-          "documents": [1,2]   # optional, M2M document ids depending on serializer
-        }
-    """
-    # -----------------------
-    # GET -> list applications
-    # -----------------------
     if request.method == 'GET':
-        qs = SubsidyApplication.objects.filter(user=request.user).select_related('subsidy').order_by('-submitted_at', '-id')
+        apps = SubsidyApplication.objects.filter(
+            user=request.user
+        ).select_related('subsidy').prefetch_related('documents')
+
         out = []
-        for app in qs:
-            subsidy = getattr(app, 'subsidy', None)
+        for app in apps:
             out.append({
                 "id": app.id,
-                "application_id": getattr(app, 'application_id', None) or f"APP{app.id:06}",
-                "subsidy_id": getattr(subsidy, 'id', None),
-                "subsidy_name": getattr(subsidy, 'title', None) or getattr(subsidy, 'name', None) or "Untitled Subsidy",
-                # prefer application amount (if you store approved/expected amount on application),
-                # otherwise fall back to subsidy.amount if it exists on Subsidy model
-                "amount": getattr(app, 'amount', None) if hasattr(app, 'amount') and app.amount is not None else getattr(subsidy, 'amount', None),
-                "status": getattr(app, 'status', "Pending"),
-                "applied_on": app.submitted_at.isoformat() if getattr(app, 'submitted_at', None) else None,
+                "application_id": app.application_id,
+                "subsidy_id": app.subsidy.id,
+                "subsidy_name": app.subsidy.title,
+                "amount":app.subsidy.amount,
+                "status": app.status,
+                "applied_on": app.submitted_at.isoformat(),
             })
-        return Response(out, status=status.HTTP_200_OK)
 
-    # ------------------------
-    # POST -> create an application
-    # ------------------------
-    if request.method == 'POST':
-        # Prevent client from setting user field
-        data = request.data.copy() if hasattr(request, 'data') else {}
-        data.pop('user', None)
-        # If your serializer expects "subsidy_id" instead of "subsidy", adapt accordingly.
-        # Here we assume serializer expects "subsidy" FK field.
-        serializer = SubsidyApplicationSerializer(data=data, context={'request': request})
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(out, status=200)
 
-        try:
-            # enforce server-side user association
-            app = serializer.save(user=request.user)
-        except IntegrityError as e:
-            # likely unique_together ('user','subsidy') violation or other DB constraint
-            return Response({"detail": "You have already applied for this subsidy or integrity error occurred."},
-                            status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({"detail": f"Failed to create application: {str(e)}"},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    # POST
+    data = request.data.copy()
+    data.pop("user", None)  # Prevent frontend overwriting
 
-        # Build response in the same frontend-friendly shape as GET
-        subsidy = getattr(app, 'subsidy', None)
-        result = {
-            "id": app.id,
-            "application_id": getattr(app, 'application_id', None) or f"APP{app.id:06}",
-            "subsidy_id": getattr(subsidy, 'id', None),
-            "subsidy_name": getattr(subsidy, 'title', None) or getattr(subsidy, 'name', None) or "Untitled Subsidy",
-            "amount": getattr(app, 'amount', None) if hasattr(app, 'amount') and app.amount is not None else getattr(subsidy, 'amount', None),
-            "status": getattr(app, 'status', "Pending"),
-            "applied_on": app.submitted_at.isoformat() if getattr(app, 'submitted_at', None) else timezone.now().isoformat(),
-        }
-        return Response(result, status=status.HTTP_201_CREATED)
+    serializer = SubsidyApplicationSerializer(
+        data=data,
+        context={"request": request}
+    )
+
+    if serializer.is_valid():
+        app = serializer.save()
+        return Response(
+            {"message": "Application submitted", "application_id": app.application_id},
+            status=201
+        )
+
+    return Response(serializer.errors, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def assign_officer(request, app_id):
+    if request.user.role != "admin":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    officer_id = request.data.get("officer_id")
+
+    try:
+        app = SubsidyApplication.objects.get(id=app_id)
+    except SubsidyApplication.DoesNotExist:
+        return Response({"detail": "Application not found"}, status=404)
+
+    try:
+        officer = User.objects.get(id=officer_id, role="officer")
+    except User.DoesNotExist:
+        return Response({"detail": "Invalid officer"}, status=400)
+
+    app.assigned_officer = officer
+    app.status = "Under Review"
+    app.save()
+
+    return Response({"message": "Officer assigned successfully"}, status=200)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def officer_dashboard(request):
+    if request.user.role != "officer":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    apps = SubsidyApplication.objects.filter(
+        assigned_officer=request.user
+    ).select_related('subsidy')
+
+    serializer = OfficerSubsidyApplicationSerializer(apps, many=True)
+    return Response(serializer.data, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def review_application(request, app_id):
+    if request.user.role != "officer":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    try:
+        app = SubsidyApplication.objects.get(
+            id=app_id,
+            assigned_officer=request.user
+        )
+    except SubsidyApplication.DoesNotExist:
+        return Response({"detail": "Not found or not assigned to you"}, status=404)
+
+    serializer = OfficerReviewSerializer(app, data=request.data, partial=True)
+
+    if serializer.is_valid():
+        serializer.save()
+        app.reviewed_at = timezone.now()
+        app.save()
+        return Response({"message": "Application updated", "status": app.status})
+
+    return Response(serializer.errors, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def officer_application_detail(request, app_id):
+    if request.user.role != "officer":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    try:
+        app = SubsidyApplication.objects.select_related(
+            "subsidy", "assigned_officer"
+        ).prefetch_related("documents").get(
+            id=app_id,
+            assigned_officer=request.user
+        )
+    except SubsidyApplication.DoesNotExist:
+        return Response({"detail": "Application not found"}, status=404)
+
+    data = {
+        "id": app.id,
+        "application_id": app.application_id,
+
+        # Farmer information
+        "applicant_name": app.full_name,
+        "applicant_email": app.email,
+        "mobile": app.mobile,
+        "aadhaar": app.aadhaar,
+        "address": app.address,
+        "state": app.state,
+        "district": app.district,
+        "taluka": app.taluka,
+        "village": app.village,
+
+        # Land details
+        "land_area": app.land_area,
+        "land_unit": app.land_unit,
+        "soil_type": app.soil_type,
+        "ownership": app.ownership,
+
+        # Bank details
+        "bank_name": app.bank_name,
+        "account_number": app.account_number,
+        "ifsc": app.ifsc,
+
+        # Subsidy details
+        "subsidy_title": app.subsidy.title,
+        "subsidy_amount": app.subsidy.amount,
+
+        # Officer review
+        "status": app.status,
+        "document_status": app.document_status,
+        "officer_comment": app.officer_comment,
+        "assigned_officer_name": app.assigned_officer.full_name if app.assigned_officer else None,
+
+        "submitted_at": app.submitted_at,
+        "reviewed_at": app.reviewed_at,
+    }
+
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def officer_application_documents(request, app_id):
+    if request.user.role != "officer":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    try:
+        app = SubsidyApplication.objects.get(
+            id=app_id,
+            assigned_officer=request.user
+        )
+    except SubsidyApplication.DoesNotExist:
+        return Response({"detail": "Application not found"}, status=404)
+
+    docs = app.documents.all()
+
+    data = [{
+        "id": d.id,
+        "document_type": d.document_type,
+        "document_number": d.document_number,
+        "uploaded_at": d.uploaded_at,
+        "file_url": d.file.url if d.file else None
+    } for d in docs]
+
+    return Response(data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def officer_verify_documents(request, app_id):
+    if request.user.role != "officer":
+        return Response({"detail": "Not allowed"}, status=403)
+
+    try:
+        app = SubsidyApplication.objects.get(
+            id=app_id,
+            assigned_officer=request.user
+        )
+    except SubsidyApplication.DoesNotExist:
+        return Response({"detail": "Application not found"}, status=404)
+
+    verified = request.data.get("verified")
+    if verified is True:
+        app.document_status = "Verified"
+    else:
+        app.document_status = "Rejected"   # FLAG DOCUMENTS
+    app.save()
+
+    return Response({
+        "message": "Document status updated",
+        "document_status": app.document_status
+    })
+
