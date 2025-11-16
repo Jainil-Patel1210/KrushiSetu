@@ -6,7 +6,7 @@ import PasswordToggleIcon from './PasswordToggleIcon';
 import api from './api';
 import { Toaster, toast } from 'react-hot-toast';
 
-function Login({ onForgotPasswordClick, onLoginSuccess }) {
+function Login({ onForgotPasswordClick, onLoginSuccess, redirectTo }) {
 
     const navigate = useNavigate();
     const [loginWithOtp, setLoginWithOtp] = useState(false);
@@ -213,6 +213,14 @@ function Login({ onForgotPasswordClick, onLoginSuccess }) {
             setLoginMobileOrEmail("");
             setLoginPassword("");
             setRole('');
+            // If a redirect target was provided (e.g. /apply/:id), prefer it
+            if (redirectTo) {
+                btn.disabled = false;
+                setIsLoading(false);
+                navigate(redirectTo);
+                return;
+            }
+
             if(role == 'Officer'){
                 btn.disabled = false;
                 setIsLoading(false);

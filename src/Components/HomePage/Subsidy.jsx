@@ -40,11 +40,6 @@ const Subsidy = () => {
       navigate(`/apply/${subsidy.id}`, { state: { subsidy } });
     } else {
       navigate('/login', { state: { redirectTo: `/apply/${subsidy.id}` } });
-      const token2 = localStorage.getItem('access');
-      if(token2){
-        navigate(`/apply/${subsidy.id}`, { state: { subsidy } });
-      }
-
     }
   };
   

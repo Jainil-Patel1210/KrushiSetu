@@ -36,7 +36,7 @@ function Header() {
     try {
       await api.post("/api/logout/");
       toast.success("Logged out successfully!");
-      navigate("/login");
+      navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Logout failed!");

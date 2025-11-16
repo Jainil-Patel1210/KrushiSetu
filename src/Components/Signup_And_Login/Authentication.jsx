@@ -75,6 +75,7 @@ function Authentication() {
                         <Login
                             onForgotPasswordClick={handleForgotPasswordClick}
                             onLoginSuccess={handleLoginSuccess}
+                            redirectTo={redirectTo}
                         />
                     ) : ( // page === 'signup'
                         <Signup
