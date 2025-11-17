@@ -165,7 +165,7 @@ function Navbar() {
               <button onClick={() => scrollToSection('news')} className={`Navbar ${activeSection === 'news' ? 'active' : ''}`}>News</button>
               <button onClick={() => scrollToSection('faq')} className={`Navbar ${activeSection === 'faq' ? 'active' : ''}`}>FAQ</button>
               <button onClick={() => scrollToSection('contact')} className={`Navbar ${activeSection === 'contact' ? 'active' : ''}`}>Contact Us</button>
-              <button onClick={handleLoginClick} className="bg-green-600 hover:scale-105 text-white font-semibold text-xl text-center px-8 p-0.5 pb-1.5 rounded-full">Login</button>
+              <button onClick={handleLoginClick} className="bg-green-600 hover:scale-105 text-white font-semibold text-xl flex items-center justify-center px-8 py-2 rounded-full">Login</button>
             </div>
 
             {isOpen && (
