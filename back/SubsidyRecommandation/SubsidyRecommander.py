@@ -36,16 +36,17 @@ class SubsidyRecommander:
             raise ValueError(error_msg)
         
         # Initialize model with API key and increased timeout for cloud deployments
+        # Using mixtral-8x7b: faster, cheaper on tokens, still effective for subsidy matching
         try:
             self.model = ChatGroq(
                 groq_api_key=self.groq_api_key,
-                model="llama-3.1-70b-versatile",  # Updated to a valid Groq model
+                model="mixtral-8x7b-32768",  # Smaller model - faster and uses fewer tokens
                 temperature=0.3,
                 max_tokens=1500,  
                 timeout=120,  # Increased timeout for cloud deployments (2 minutes)
-                max_retries=3  # Add retries for network issues
+                max_retries=2  # Reduced retries for faster failure
             )
-            logger.info("ChatGroq model initialized successfully")
+            logger.info("ChatGroq model initialized successfully with mixtral-8x7b")
         except Exception as e:
             logger.error(f"Failed to initialize ChatGroq model: {e}")
             raise ValueError(f"Failed to initialize AI model. Please check GROQ_API_KEY is valid: {str(e)}")
@@ -141,7 +142,14 @@ class SubsidyRecommander:
                         error_msg = str(e).lower()
                         logger.warning(f"Error checking eligibility for {subsidy.get('title')} (attempt {retry_count}/{max_retries}): {error_msg}")
                         
-                        # Check if it's a rate limit error - shorter wait
+                        # Check for daily token limit (different from per-minute rate limit)
+                        if "tokens per day" in error_msg or "tpd" in error_msg:
+                            logger.error(f"Daily token limit reached. Cannot continue processing.")
+                            # Mark remaining as eligible to avoid complete failure
+                            eligible_subsidies.extend(state['all_subsidies'][subsidies_list.index(subsidy):])
+                            return {**state, 'eligible_subsidies': eligible_subsidies}
+                        
+                        # Check if it's a per-minute rate limit error - shorter wait
                         if "429" in error_msg or "rate limit" in error_msg or "too many requests" in error_msg:
                             logger.warning(f"Rate limit hit for {subsidy.get('title')}. Brief wait...")
                             time.sleep(0.5)  # Reduced from 2s to 0.5s
