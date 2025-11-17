@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Header from './Header';
 import Data from './assets/data.json';
 import api from './api1';
 import Cookies from 'js-cookie';
@@ -12,7 +11,7 @@ export default function ApplySubsidy() {
   const subsidyTitle = subsidyFromNav?.title || null;
 
   // Wizard step and shared form state
-  const [step, setStep] = useState(0); // 0: Personal, 1: Land, 2: Bank, 3: Documents
+  const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     fullName: '', mobile: '', email: '', aadhar: '',
     state: '', district: '', taluka: '', village: '', address: '',
@@ -30,8 +29,8 @@ export default function ApplySubsidy() {
   const [soilTypeValue, setSoilTypeValue] = useState('');
 
   // Documents
-  const [documents, setDocuments] = useState([]); // server-side uploaded documents
-  const [pendingUploads, setPendingUploads] = useState([]); // staged locally
+  const [documents, setDocuments] = useState([]);
+  const [pendingUploads, setPendingUploads] = useState([]);
   const fileInputRef = useRef(null);
 
   const [showAddDocModal, setShowAddDocModal] = useState(false);
@@ -42,13 +41,11 @@ export default function ApplySubsidy() {
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-  // API endpoints (ensure trailing slash to avoid 301)
   const DOCUMENTS_URL = '/subsidy/documents/';
   const APPLY_URL = '/subsidy/apply/';
 
-  // Master doc types — used for fallback/labels
   const DOC_TYPES = [
     { value: 'aadhar_card', label: 'Aadhaar' },
     { value: 'bank_passbook', label: 'Bank Passbook / Cancelled Cheque' },
@@ -58,7 +55,6 @@ export default function ApplySubsidy() {
     { value: 'shg_membership', label: 'SHG membership' },
   ];
 
-  // derive allowed values from subsidy
   const subsidyRequiredValues = React.useMemo(() => {
     const arr = subsidyFromNav?.documents_required || [];
     if (!Array.isArray(arr)) return [];
@@ -105,7 +101,6 @@ export default function ApplySubsidy() {
 
   const update = (name, value) => setForm(prev => ({ ...prev, [name]: value }));
 
-  // ---------- Validation functions ----------
   const validateField = (name, value) => {
     let msg = '';
     switch (name) {
@@ -189,7 +184,6 @@ export default function ApplySubsidy() {
     return Object.keys(e).length === 0;
   }
 
-  // Document helpers
   const validateDocNumber = (num) => {
     if (!num) return 'Document number is required.';
     if (num.length > 40) return 'Too long';
@@ -211,7 +205,6 @@ export default function ApplySubsidy() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Fetch documents (server) but filter by subsidy required types
   const fetchDocuments = async () => {
     try {
       const resp = await api.get(DOCUMENTS_URL, { withCredentials: true });
@@ -226,7 +219,6 @@ export default function ApplySubsidy() {
     }
   };
 
-  // Fetch profile and documents
   const fetchProfile = async () => {
     try {
       const tries = ['profile/profile/', '/profile/', 'profile/'];
@@ -265,7 +257,6 @@ export default function ApplySubsidy() {
         if (populatedForm.unit) setUnitValue(populatedForm.unit);
         if (populatedForm.soilType) setSoilTypeValue(populatedForm.soilType);
 
-        // profile.documents -> normalize & filter
         if (Array.isArray(profile.documents) && profile.documents.length > 0) {
           let normalized = profile.documents.map(d => ({
             id: d.id,
@@ -297,17 +288,13 @@ export default function ApplySubsidy() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subsidyFromNav]);
 
-  // merged docs for UI = pendingUploads first then server documents
   const mergedDocs = [...pendingUploads, ...documents];
 
-  // missing required docs (by type) — used for banner
   const presentTypes = new Set(mergedDocs.map(d => d.document_type));
   const missingDocs = (subsidyFromNav?.documents_required || []).filter(r => !presentTypes.has((typeof r === 'string' ? r : (r.value || '')))).map(x => (typeof x === 'string' ? x : (x.label || x.value)));
 
-  // ---------- Document actions ----------
   const handleView = (doc) => {
     if (doc.file) {
-      // staged local file -> create blob URL
       if (!doc.file_url) {
         const url = URL.createObjectURL(doc.file);
         window.open(url, '_blank');
@@ -323,7 +310,6 @@ export default function ApplySubsidy() {
     setDocForm({ name: doc.title || '', number: doc.document_number || '', file: null, document_type: doc.document_type || '' });
     setDocErrors({ document_type: '', number: '', file: '' });
 
-    // If doc is pending (staged), remove it from pendingUploads temporarily — will be re-added on save
     if (doc.tempId) {
       setPendingUploads(prev => prev.filter(p => p.tempId !== doc.tempId));
       setCurrentDoc({ ...doc, isPending: true });
@@ -333,7 +319,6 @@ export default function ApplySubsidy() {
   };
 
   const handleDelete = async (idOrTemp) => {
-    // if tempId (starts with 'temp_') -> delete locally
     if (typeof idOrTemp === 'string' && idOrTemp.startsWith('temp_')) {
       setPendingUploads(prev => prev.filter(p => p.tempId !== idOrTemp));
       return;
@@ -352,7 +337,6 @@ export default function ApplySubsidy() {
     }
   };
 
-  // Stage document locally instead of POSTing immediately
   const openAddModalForRequired = () => {
     const typesToShow = remainingRequiredDocs.map(req => {
       const match = DOC_TYPES.find(t => t.value === req);
@@ -382,7 +366,6 @@ export default function ApplySubsidy() {
     setDocErrors(errs);
     if (errs.document_type || errs.number || errs.file) return;
 
-    // Check allowed by subsidy
     if (subsidyRequiredValues.length > 0 && !subsidyRequiredValues.includes(docForm.document_type)) {
       alert('This document type is not required for this subsidy.');
       return;
@@ -401,14 +384,12 @@ export default function ApplySubsidy() {
     setShowAddDocModal(false);
   };
 
-  // Update a staged doc or server doc
   const handleUpdateDocument = async (e) => {
     e.preventDefault();
     const validation = { number: validateDocNumber(docForm.number), file: docForm.file ? validateDocFile(docForm.file) : '' };
     setDocErrors(validation);
     if (validation.number || validation.file) return;
 
-    // If editing a staged doc (currentDoc.isPending)
     if (currentDoc?.isPending && currentDoc?.tempId) {
       const updated = {
         tempId: currentDoc.tempId,
@@ -424,7 +405,6 @@ export default function ApplySubsidy() {
       return;
     }
 
-    // Else update server document
     const uploadFormData = new FormData();
     uploadFormData.append('document_type', docForm.document_type || currentDoc.document_type);
     uploadFormData.append('document_number', docForm.number.trim());
@@ -433,7 +413,7 @@ export default function ApplySubsidy() {
     setLoadingDocs(true);
     try {
       const response = await api.put(`${DOCUMENTS_URL}${currentDoc.id}/`, uploadFormData, {
-        headers: { 'X-CSRFToken': Cookies.get('csrftoken') }, // do NOT set Content-Type
+        headers: { 'X-CSRFToken': Cookies.get('csrftoken') },
         withCredentials: true,
       });
       const respDoc = response.data;
@@ -454,8 +434,6 @@ export default function ApplySubsidy() {
     }
   };
 
-  // ---------- Improved uploadPendingDocuments ----------
-  // Upload all pending files in parallel using FormData and return created docs.
   async function uploadPendingDocuments() {
     if (!pendingUploads.length) return [];
 
@@ -468,7 +446,6 @@ export default function ApplySubsidy() {
       try {
         const res = await api.post(DOCUMENTS_URL, fd, {
           headers: {
-            // DO NOT set Content-Type — browser will set it including boundary
             'X-CSRFToken': Cookies.get('csrftoken'),
           },
           withCredentials: true,
@@ -482,11 +459,8 @@ export default function ApplySubsidy() {
       }
     };
 
-    // Option A: parallel upload (fail-fast)
     const created = await Promise.all(pendingUploads.map(p => uploadOne(p)));
-    // append created to server documents
     setDocuments(prev => [...created, ...prev]);
-    // clear pending uploads
     setPendingUploads([]);
     return created;
   }
@@ -572,258 +546,267 @@ export default function ApplySubsidy() {
   function nextStep() { if (validateCurrentStep()) setStep(s => s + 1); }
   function prevStep() { setStep(s => Math.max(0, s - 1)); }
 
-    return (
-    <>
-      <Header />
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-200 p-6">
-        <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-3xl">
-          <h2 className="text-2xl font-bold mb-2 text-center">{subsidyTitle ? `${subsidyTitle} Application Form` : 'Subsidy Application Form'}</h2>
-          <p className="text-center text-sm text-gray-600 mb-4">Step {step + 1} of 4</p>
-          <form className="flex items-start gap-x-20 gap-y-auto flex-wrap space-y-6 mx-auto" onSubmit={e => e.preventDefault()}>
+  const handleClose = () => {
+    if (window.confirm('Are you sure you want to close? All unsaved changes will be lost.')) {
+      navigate(-1);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl my-8 relative">
+        {/* Header with Close Button */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 rounded-t-lg px-8 py-4 flex justify-between items-center z-10">
+          <div>
+            <h2 className="text-2xl font-bold text-green-600">
+              {subsidyTitle ? `${subsidyTitle} Application` : 'Subsidy Application'}
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">Step {step + 1} of 4</p>
+          </div>
+          <button
+            onClick={handleClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="px-8 py-6 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <form onSubmit={e => e.preventDefault()}>
             {/* Step 0: Personal */}
-            <div className={`${step === 0 ? '' : 'hidden'} w-full flex flex-wrap gap-x-20 gap-y-4`}>
-              <h1 className='w-full text-green-600 font-extrabold text-2xl mb-2'>Personal Information</h1>
-              {/* Full Name */}
-              <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="fullName">Full Name</label>
-                <input className="bg-gray-100 border border-gray-300 rounded-lg p-2 w-52 focus:ring-2 focus:ring-green-600 focus:outline-none"
-                  type="text" placeholder='Enter Full Name' id="fullName" name="fullName"
-                  value={form.fullName}
-                  onChange={(e) => { update('fullName', e.target.value); if (errors.fullName) validateField('fullName', e.target.value); }}
-                  onBlur={(e) => validateField('fullName', e.target.value)} />
-                {errors.fullName ? <div className="text-red-500 text-sm mt-1">{errors.fullName}</div> : null}
-              </div>
+            <div className={`${step === 0 ? '' : 'hidden'} w-full`}>
+              <h1 className='text-green-600 font-bold text-xl mb-6'>Personal Information</h1>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2" htmlFor="fullName">Full Name</label>
+                  <input className={inputClass(errors.fullName)}
+                    type="text" placeholder='Enter Full Name' id="fullName" name="fullName"
+                    value={form.fullName}
+                    onChange={(e) => { update('fullName', e.target.value); if (errors.fullName) validateField('fullName', e.target.value); }}
+                    onBlur={(e) => validateField('fullName', e.target.value)} />
+                  {errors.fullName ? <div className="text-red-500 text-sm mt-1">{errors.fullName}</div> : null}
+                </div>
 
-              {/* Mobile */}
-              <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="mobile">Mobile Number</label>
-                <input className="bg-gray-100 border border-gray-300 rounded-lg p-2 w-52 focus:ring-2 focus:ring-green-600 focus:outline-none"
-                  type="text" placeholder='Enter Mobile Number' id="mobile" name="mobile"
-                  value={form.mobile}
-                  onChange={(e) => { update('mobile', e.target.value); if (errors.mobile) validateField('mobile', e.target.value); }}
-                  onBlur={(e) => validateField('mobile', e.target.value)} />
-                {errors.mobile ? <div className="text-red-500 text-sm mt-1">{errors.mobile}</div> : null}
-              </div>
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2" htmlFor="mobile">Mobile Number</label>
+                  <input className={inputClass(errors.mobile)}
+                    type="text" placeholder='Enter Mobile Number' id="mobile" name="mobile"
+                    value={form.mobile}
+                    onChange={(e) => { update('mobile', e.target.value); if (errors.mobile) validateField('mobile', e.target.value); }}
+                    onBlur={(e) => validateField('mobile', e.target.value)} />
+                  {errors.mobile ? <div className="text-red-500 text-sm mt-1">{errors.mobile}</div> : null}
+                </div>
 
-              {/* Email */}
-              <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="email">Email</label>
-                <input className="bg-gray-100 border border-gray-300 rounded-lg p-2 w-52 focus:ring-2 focus:ring-green-600 focus:outline-none"
-                  type="email" placeholder='Enter Email' id="email" name="email"
-                  value={form.email}
-                  onChange={(e) => { update('email', e.target.value); if (errors.email) validateField('email', e.target.value); }}
-                  onBlur={(e) => validateField('email', e.target.value)} />
-                {errors.email ? <div className="text-red-500 text-sm mt-1">{errors.email}</div> : null}
-              </div>
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2" htmlFor="email">Email</label>
+                  <input className={inputClass(errors.email)}
+                    type="email" placeholder='Enter Email' id="email" name="email"
+                    value={form.email}
+                    onChange={(e) => { update('email', e.target.value); if (errors.email) validateField('email', e.target.value); }}
+                    onBlur={(e) => validateField('email', e.target.value)} />
+                  {errors.email ? <div className="text-red-500 text-sm mt-1">{errors.email}</div> : null}
+                </div>
 
-              {/* Aadhaar */}
-              <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="aadhar">Aadhar Number</label>
-                <input className="bg-gray-100 border border-gray-300 rounded-lg p-2 w-52 focus:ring-2 focus:ring-green-600 focus:outline-none"
-                  type="text" placeholder='Enter Aadhar Number' id="aadhar" name="aadhar"
-                  value={form.aadhar}
-                  onChange={(e) => { update('aadhar', e.target.value); if (errors.aadhar) validateField('aadhar', e.target.value); }}
-                  onBlur={(e) => validateField('aadhar', e.target.value)} />
-                {errors.aadhar ? <div className="text-red-500 text-sm mt-1">{errors.aadhar}</div> : null}
-              </div>
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2" htmlFor="aadhar">Aadhar Number</label>
+                  <input className={inputClass(errors.aadhar)}
+                    type="text" placeholder='Enter Aadhar Number' id="aadhar" name="aadhar"
+                    value={form.aadhar}
+                    onChange={(e) => { update('aadhar', e.target.value); if (errors.aadhar) validateField('aadhar', e.target.value); }}
+                    onBlur={(e) => validateField('aadhar', e.target.value)} />
+                  {errors.aadhar ? <div className="text-red-500 text-sm mt-1">{errors.aadhar}</div> : null}
+                </div>
 
-              {/* State/District/Taluka/Village */}
-              <div className="flex flex-wrap justify-between gap-6 mt-3 lg:mt-8">
-                <div className="flex flex-col flex-1 min-w-[180px]">
-                  <label className="text-md font-semibold">State</label>
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2">State</label>
                   <select value={stateValue} onChange={(e) => { setStateValue(e.target.value); setDistrictValue(''); setTalukaValue(''); setVillageValue(''); update('state', e.target.value); validateField('state', e.target.value); }}
-                    className="h-12 w-35 border border-gray-300 rounded-lg px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white">
+                    className={inputClass(errors.state)}>
                     <option value="">Select State</option>
                     {Array.isArray(Data) && Data.map((stateData, index) => (<option key={index} value={stateData.state}>{stateData.state}</option>))}
                   </select>
                   {errors.state ? <div className="text-red-500 text-sm mt-1">{errors.state}</div> : null}
                 </div>
 
-                <div className="flex flex-col basis-full sm:basis-[calc(50%-12px)] grow-0 min-w-[180px]">
-                  <label className="text-md font-semibold">District</label>
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2">District</label>
                   <select value={districtValue} onChange={(e) => { setDistrictValue(e.target.value); setTalukaValue(''); setVillageValue(''); update('district', e.target.value); validateField('district', e.target.value); }}
-                    className="h-12 w-35 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white">
+                    className={inputClass(errors.district)}>
                     <option value="">Select District</option>
                     {stateValue && Array.isArray(Data) && Data.find(s => s.state === stateValue)?.districts.map((districtData, index) => (<option key={index} value={districtData.district}>{districtData.district}</option>))}
                   </select>
                   {errors.district ? <div className="text-red-500 text-sm mt-1">{errors.district}</div> : null}
                 </div>
 
-                <div className="flex flex-col flex-1 min-w-[180px]">
-                  <label className="text-md font-semibold">Taluka</label>
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2">Taluka</label>
                   <select value={talukaValue} onChange={(e) => { setTalukaValue(e.target.value); setVillageValue(''); update('taluka', e.target.value); validateField('taluka', e.target.value); }}
-                    className="h-12 w-35 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white">
+                    className={inputClass(errors.taluka)}>
                     <option value="">Select Taluka</option>
                     {districtValue && stateValue && Data && Array.isArray(Data) && Data.find(s => s.state === stateValue)?.districts.find(d => d.district === districtValue)?.subDistricts.map((subDistrictData, index) => (<option key={index} value={subDistrictData.subDistrict}>{subDistrictData.subDistrict}</option>))}
                   </select>
                   {errors.taluka ? <div className="text-red-500 text-sm mt-1">{errors.taluka}</div> : null}
                 </div>
 
-                <div className="flex flex-col flex-1 min-w-[180px]">
-                  <label className="text-md font-semibold">Village</label>
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2">Village</label>
                   <select value={villageValue} onChange={(e) => { setVillageValue(e.target.value); update('village', e.target.value); validateField('village', e.target.value); }}
-                    className="h-12 w-35 border border-gray-300 rounded-md px-4 text-sm mt-1 focus:ring-2 focus:ring-green-600 focus:outline-none bg-white">
+                    className={inputClass(errors.village)}>
                     <option value="">Select Village</option>
                     {talukaValue && districtValue && stateValue && Data && Array.isArray(Data) && Data.find(s => s.state === stateValue)?.districts.find(d => d.district === districtValue)?.subDistricts.find(sd => sd.subDistrict === talukaValue)?.villages.map((village, index) => (<option key={index} value={village}>{village}</option>))}
                   </select>
                   {errors.village ? <div className="text-red-500 text-sm mt-1">{errors.village}</div> : null}
                 </div>
-              </div>
 
-              <div className="flex flex-col w-full mr-8">
-                <label className="text-black font-semibold mb-2" htmlFor="address">Address</label>
-                <input className="bg-gray-100 border border-gray-300 rounded-lg p-2 w-full focus:ring-2 focus:ring-green-600 focus:outline-none"
-                  type="text" placeholder='Enter Address' id="address" name="address"
-                  value={form.address}
-                  onChange={(e) => { update('address', e.target.value); if (errors.address) validateField('address', e.target.value); }}
-                  onBlur={(e) => validateField('address', e.target.value)} />
-                {errors.address ? <div className="text-red-500 text-sm mt-1">{errors.address}</div> : null}
+                <div className="flex flex-col md:col-span-2">
+                  <label className="text-black font-semibold mb-2" htmlFor="address">Address</label>
+                  <input className={inputClass(errors.address)}
+                    type="text" placeholder='Enter Address' id="address" name="address"
+                    value={form.address}
+                    onChange={(e) => { update('address', e.target.value); if (errors.address) validateField('address', e.target.value); }}
+                    onBlur={(e) => validateField('address', e.target.value)} />
+                  {errors.address ? <div className="text-red-500 text-sm mt-1">{errors.address}</div> : null}
+                </div>
               </div>
             </div>
 
             {/* Step 1: Land details */}
-            <div className={`${step === 1 ? '' : 'hidden'} w-full flex flex-wrap gap-6`}>
-              <h1 className='w-full text-green-600 font-extrabold text-2xl mb-2'>Land Information</h1>
+            <div className={`${step === 1 ? '' : 'hidden'} w-full`}>
+              <h1 className='text-green-600 font-bold text-xl mb-6'>Land Information</h1>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2" htmlFor="landArea">Land Area</label>
+                  <input className={inputClass(errors.landArea)} type="number" id="landArea" name="landArea" placeholder="Enter land area" value={form.landArea} onChange={(e) => { update('landArea', e.target.value); if (errors.landArea) validateField('landArea', e.target.value); }} onBlur={(e) => validateField('landArea', e.target.value)} />
+                  {errors.landArea ? <div className="text-red-500 text-sm mt-1">{errors.landArea}</div> : null}
+                </div>
 
-              <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="landArea">Land Area (in acres)</label>
-                <input className="border border-gray-300 rounded-lg p-2 w-52" type="number" id="landArea" name="landArea" value={form.landArea} onChange={(e) => { update('landArea', e.target.value); if (errors.landArea) validateField('landArea', e.target.value); }} onBlur={(e) => validateField('landArea', e.target.value)} />
-                {errors.landArea ? <div className="text-red-500 text-sm mt-1">{errors.landArea}</div> : null}
-              </div>
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2" htmlFor="landAreaUnit">Land Area Unit</label>
+                  <select className={inputClass(errors.unit)} id="landAreaUnit" name="landAreaUnit" value={unitValue} onChange={(e) => { setUnitValue(e.target.value); update('unit', e.target.value); validateField('unit', e.target.value); }}>
+                    <option value="">Select Unit</option>
+                    <option value="acres">Acres</option>
+                    <option value="hectares">Hectares</option>
+                  </select>
+                  {errors.unit ? <div className="text-red-500 text-sm mt-1">{errors.unit}</div> : null}
+                </div>
 
-              <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="landAreaUnit">Land Area Unit</label>
-                <select className="border border-gray-300 rounded-lg p-2 w-52" id="landAreaUnit" name="landAreaUnit" value={unitValue} onChange={(e) => { setUnitValue(e.target.value); update('unit', e.target.value); validateField('unit', e.target.value); }}>
-                  <option value="">Select Unit</option>
-                  <option value="acres">Acres</option>
-                  <option value="hectares">Hectares</option>
-                </select>
-                {errors.unit ? <div className="text-red-500 text-sm mt-1">{errors.unit}</div> : null}
-              </div>
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2" htmlFor="soilType">Soil Type</label>
+                  <select className={inputClass(errors.soilType)} id="soilType" name="soilType" value={soilTypeValue} onChange={(e) => { setSoilTypeValue(e.target.value); update('soilType', e.target.value); validateField('soilType', e.target.value); }}>
+                    <option value="">Select Soil Type</option>
+                    <option value="Alluvial">Alluvial</option>
+                    <option value="Black">Black</option>
+                    <option value="Red & Yellow">Red & Yellow</option>
+                    <option value="Laterite">Laterite</option>
+                    <option value="Arid">Arid</option>
+                    <option value="Forest & Mountain">Forest & Mountain</option>
+                    <option value="Saline & Alkaline">Saline & Alkaline</option>
+                    <option value="Peaty">Peaty</option>
+                    <option value="Marshy">Marshy</option>
+                  </select>
+                  {errors.soilType ? <div className="text-red-500 text-sm mt-1">{errors.soilType}</div> : null}
+                </div>
 
-              <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="soilType">Soil Type</label>
-                <select className="border border-gray-300 rounded-lg p-2 w-52" id="soilType" name="soilType" value={soilTypeValue} onChange={(e) => { setSoilTypeValue(e.target.value); update('soilType', e.target.value); validateField('soilType', e.target.value); }}>
-                  <option value="">Select Soil Type</option>
-                  <option value="Alluvial">Alluvial</option>
-                  <option value="Black">Black</option>
-                  <option value="Red & Yellow">Red & Yellow</option>
-                  <option value="Laterite">Laterite</option>
-                  <option value="Arid">Arid</option>
-                  <option value="Forest & Mountain">Forest & Mountain</option>
-                  <option value="Saline & Alkaline">Saline & Alkaline</option>
-                  <option value="Peaty">Peaty</option>
-                  <option value="Marshy">Marshy</option>
-                </select>
-                {errors.soilType ? <div className="text-red-500 text-sm mt-1">{errors.soilType}</div> : null}
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-black font-semibold mb-2" htmlFor="ownership">Ownership Type</label>
-                <select className="border border-gray-300 rounded-lg p-2 w-52" id="ownership" name="ownership" value={form.ownership} onChange={(e) => { update('ownership', e.target.value); validateField('ownership', e.target.value); }}>
-                  <option value="">Select Ownership</option>
-                  <option value="owned">Owned</option>
-                  <option value="leased">Leased</option>
-                </select>
-                {errors.ownership ? <div className="text-red-500 text-sm mt-1">{errors.ownership}</div> : null}
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2" htmlFor="ownership">Ownership Type</label>
+                  <select className={inputClass(errors.ownership)} id="ownership" name="ownership" value={form.ownership} onChange={(e) => { update('ownership', e.target.value); validateField('ownership', e.target.value); }}>
+                    <option value="">Select Ownership</option>
+                    <option value="owned">Owned</option>
+                    <option value="leased">Leased</option>
+                  </select>
+                  {errors.ownership ? <div className="text-red-500 text-sm mt-1">{errors.ownership}</div> : null}
+                </div>
               </div>
             </div>
 
             {/* Step 2: Bank details */}
-            <div className={`${step === 2 ? '' : 'hidden'} w-full flex flex-col gap-4`}>
-              <h1 className='w-full text-green-600 font-extrabold text-2xl mb-2'>Bank Details</h1>
-              <div className="flex flex-col w-full mr-8">
-                <label className="text-black font-semibold mb-2" htmlFor="bankName">Bank Name</label>
-                <input className="border border-gray-300 rounded-lg p-2 w-full" type="text" id="bankName" name="bankName" value={form.bankName} onChange={(e) => { update('bankName', e.target.value); if (errors.bankName) validateField('bankName', e.target.value); }} onBlur={(e) => validateField('bankName', e.target.value)} />
-                {errors.bankName ? <div className="text-red-500 text-sm mt-1">{errors.bankName}</div> : null}
-              </div>
+            <div className={`${step === 2 ? '' : 'hidden'} w-full`}>
+              <h1 className='text-green-600 font-bold text-xl mb-6'>Bank Details</h1>
+              <div className="grid grid-cols-1 gap-6">
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2" htmlFor="bankName">Bank Name</label>
+                  <input className={inputClass(errors.bankName)} type="text" id="bankName" name="bankName" placeholder="Enter bank name" value={form.bankName} onChange={(e) => { update('bankName', e.target.value); if (errors.bankName) validateField('bankName', e.target.value); }} onBlur={(e) => validateField('bankName', e.target.value)} />
+                  {errors.bankName ? <div className="text-red-500 text-sm mt-1">{errors.bankName}</div> : null}
+                </div>
 
-              <div className="flex flex-col w-full mr-8">
-                <label className="text-black font-semibold mb-2" htmlFor="ifscCode">IFSC Code</label>
-                <input className="border border-gray-300 rounded-lg p-2 w-full" type="text" id="ifscCode" name="ifscCode" value={form.ifsc} onChange={(e) => { update('ifsc', e.target.value); if (errors.ifsc) validateField('ifsc', e.target.value); }} onBlur={(e) => validateField('ifsc', e.target.value)} />
-                {errors.ifsc ? <div className="text-red-500 text-sm mt-1">{errors.ifsc}</div> : null}
-              </div>
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2" htmlFor="ifscCode">IFSC Code</label>
+                  <input className={inputClass(errors.ifsc)} type="text" id="ifscCode" name="ifscCode" placeholder="Enter IFSC code" value={form.ifsc} onChange={(e) => { update('ifsc', e.target.value); if (errors.ifsc) validateField('ifsc', e.target.value); }} onBlur={(e) => validateField('ifsc', e.target.value)} />
+                  {errors.ifsc ? <div className="text-red-500 text-sm mt-1">{errors.ifsc}</div> : null}
+                </div>
 
-              <div className="flex flex-col w-full mr-8">
-                <label className="text-black font-semibold mb-2" htmlFor="accountNumber">Account Number</label>
-                <input className="border border-gray-300 rounded-lg p-2 w-full" type="text" id="accountNumber" name="accountNumber" value={form.bankAccount} onChange={(e) => { update('bankAccount', e.target.value); if (errors.bankAccount) validateField('bankAccount', e.target.value); }} onBlur={(e) => validateField('bankAccount', e.target.value)} />
-                {errors.bankAccount ? <div className="text-red-500 text-sm mt-1">{errors.bankAccount}</div> : null}
+                <div className="flex flex-col">
+                  <label className="text-black font-semibold mb-2" htmlFor="accountNumber">Account Number</label>
+                  <input className={inputClass(errors.bankAccount)} type="text" id="accountNumber" name="accountNumber" placeholder="Enter account number" value={form.bankAccount} onChange={(e) => { update('bankAccount', e.target.value); if (errors.bankAccount) validateField('bankAccount', e.target.value); }} onBlur={(e) => validateField('bankAccount', e.target.value)} />
+                  {errors.bankAccount ? <div className="text-red-500 text-sm mt-1">{errors.bankAccount}</div> : null}
+                </div>
               </div>
             </div>
 
-            {/* Step 3: Documents (SIMPLIFIED) */}
-            <div className={`${step === 3 ? '' : 'hidden'} w-full flex flex-col gap-4`}>
-              <h1 className='w-full text-green-600 font-extrabold text-2xl mb-2'>Upload Documents</h1>
+            {/* Step 3: Documents */}
+            <div className={`${step === 3 ? '' : 'hidden'} w-full`}>
+              <h1 className='text-green-600 font-bold text-xl mb-6'>Upload Documents</h1>
 
-              {/* Missing documents banner */}
               {missingDocs.length > 0 && (
                 <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
                   <strong>Missing required documents:</strong> {missingDocs.map(prettifyLabel).join(', ')}
                 </div>
               )}
 
-              <div className="max-w-3xl w-full mt-2">
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <div className="min-h-[120px]">
-                    {mergedDocs.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-gray-500 text-lg">No documents uploaded yet.</p>
-                        <p className="text-gray-400 text-sm mt-2">Use the button below to upload documents required by this subsidy.</p>
-                      </div>
-                    ) : (
-                      <div className="w-full">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b bg-gray-100">
-                              <th className="py-2 text-left">Sr.</th>
-                              <th className="py-2 text-left">Name</th>
-                              <th className="py-2 text-left">Number</th>
-                              <th className="py-2 text-left">Date</th>
-                              <th className="py-2 text-left">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {mergedDocs.map((doc, i) => (
-                              <tr key={doc.id ?? doc.tempId} className="border-b hover:bg-gray-50">
-                                <td className="py-2">{i + 1}.</td>
-                                <td className="py-2">{doc.title || DOC_TYPES.find(d => d.value === doc.document_type)?.label || prettifyLabel(doc.document_type)}</td>
-                                <td className="py-2">{doc.document_number || ''}</td>
-                                <td className="py-2">{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : ''}</td>
-                                <td className="py-2">
-                                  <div className="flex gap-2">
-                                    <button type="button" onClick={() => handleView(doc)} className="px-2 py-1 border-2 border-green-600 text-green-600 rounded-md">View</button>
-                                    <button type="button" onClick={() => handleEdit(doc)} className="px-2 py-1 border-2 border-blue-600 text-blue-600 rounded-md">Edit</button>
-                                    <button type="button" onClick={() => handleDelete(doc.id ?? doc.tempId)} className="px-2 py-1 border-2 border-red-600 text-red-600 rounded-md">Delete</button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-
-                    <div className="flex justify-center mt-4">
-                      <button type="button" onClick={() => { resetDocForm(); openAddModalForRequired(); }} className="bg-green-600 text-white px-4 py-2 rounded-md">Add Documents</button>
-                    </div>
+              <div className="bg-gray-50 rounded-lg p-6">
+                {mergedDocs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 text-lg">No documents uploaded yet.</p>
+                    <p className="text-gray-400 text-sm mt-2">Use the button below to upload required documents.</p>
                   </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-gray-100">
+                          <th className="py-2 px-4 text-left">Sr.</th>
+                          <th className="py-2 px-4 text-left">Name</th>
+                          <th className="py-2 px-4 text-left">Number</th>
+                          <th className="py-2 px-4 text-left">Date</th>
+                          <th className="py-2 px-4 text-left">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mergedDocs.map((doc, i) => (
+                          <tr key={doc.id ?? doc.tempId} className="border-b hover:bg-gray-50">
+                            <td className="py-2 px-4">{i + 1}.</td>
+                            <td className="py-2 px-4">{doc.title || DOC_TYPES.find(d => d.value === doc.document_type)?.label || prettifyLabel(doc.document_type)}</td>
+                            <td className="py-2 px-4">{doc.document_number || ''}</td>
+                            <td className="py-2 px-4">{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : ''}</td>
+                            <td className="py-2 px-4">
+                              <div className="flex gap-2">
+                                <button type="button" onClick={() => handleView(doc)} className="px-2 py-1 text-sm border border-green-600 text-green-600 rounded hover:bg-green-50">View</button>
+                                <button type="button" onClick={() => handleEdit(doc)} className="px-2 py-1 text-sm border border-blue-600 text-blue-600 rounded hover:bg-blue-50">Edit</button>
+                                <button type="button" onClick={() => handleDelete(doc.id ?? doc.tempId)} className="px-2 py-1 text-sm border border-red-600 text-red-600 rounded hover:bg-red-50">Delete</button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div className="flex justify-center mt-6">
+                  <button type="button" onClick={() => { resetDocForm(); openAddModalForRequired(); }} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Add Documents</button>
                 </div>
               </div>
 
-              {/* Add Document Modal (staging only) */}
+              {/* Add Document Modal */}
               {showAddDocModal && (
-                <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                   <div className="bg-white rounded-lg p-6 max-w-md w-full">
                     <h3 className="text-2xl font-bold mb-4 text-green-700">Add New Document</h3>
                     <div>
                       <div className="mb-4">
                         <label className="block text-gray-700 font-semibold mb-2">Select Document Type</label>
-                        <select
-                          name="document_type"
-                          value={docForm.document_type}
-                          onChange={e => setDocForm(f => ({ ...f, document_type: e.target.value }))}
-                          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${docErrors.document_type ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'}`}
-                        >
+                        <select name="document_type" value={docForm.document_type} onChange={e => setDocForm(f => ({ ...f, document_type: e.target.value }))} className={inputClass(docErrors.document_type)}>
                           <option value="">-- Select Document --</option>
                           {addModalTypes.map(t => (<option key={t.value} value={t.value}>{t.label}</option>))}
                         </select>
@@ -832,7 +815,7 @@ export default function ApplySubsidy() {
 
                       <div className="mb-4">
                         <label className="block text-gray-700 font-semibold mb-2">Document Number</label>
-                        <input type="text" value={docForm.number} onChange={e => { setDocForm(f => ({ ...f, number: e.target.value })); setDocErrors(prev => ({ ...prev, number: '' })); }} className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="e.g., ABC1234567" />
+                        <input type="text" value={docForm.number} onChange={e => { setDocForm(f => ({ ...f, number: e.target.value })); setDocErrors(prev => ({ ...prev, number: '' })); }} className={inputClass(docErrors.number)} placeholder="e.g., ABC1234567" />
                         {docErrors.number && <p className="text-red-500 text-sm mt-1">{docErrors.number}</p>}
                       </div>
 
@@ -844,8 +827,8 @@ export default function ApplySubsidy() {
                       </div>
 
                       <div className="flex gap-3">
-                        <button type="button" onClick={handleAddDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Stage Document</button>
-                        <button type="button" onClick={() => { resetDocForm(); setShowAddDocModal(false); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
+                        <button type="button" onClick={handleAddDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Stage Document</button>
+                        <button type="button" onClick={() => { resetDocForm(); setShowAddDocModal(false); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
                       </div>
                     </div>
                   </div>
@@ -854,7 +837,7 @@ export default function ApplySubsidy() {
 
               {/* Edit Document Modal */}
               {showEditModal && (
-                <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                   <div className="bg-white rounded-lg p-6 max-w-md w-full">
                     <h3 className="text-2xl font-bold mb-4 text-green-700">Edit Document</h3>
                     <div>
@@ -877,26 +860,31 @@ export default function ApplySubsidy() {
                       </div>
 
                       <div className="flex gap-3">
-                        <button type="button" onClick={handleUpdateDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Save</button>
-                        <button type="button" onClick={() => { resetDocForm(); setShowEditModal(false); setCurrentDoc(null); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
+                        <button type="button" onClick={handleUpdateDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Save</button>
+                        <button type="button" onClick={() => { resetDocForm(); setShowEditModal(false); setCurrentDoc(null); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
             </div>
-
-            <div className="w-full"></div>
-            <div className="flex justify-between mt-4 w-full">
-              {step > 0 ? (<button type="button" className="border px-4 py-2 rounded" onClick={prevStep}>Back</button>) : <span />}
-              {step < 3 ? (<button type="button" className="bg-green-600 text-white rounded-lg px-4 py-2" onClick={nextStep}>Next</button>) : (
-                <button type="button" disabled={isSubmitting} className="bg-green-600 text-white rounded-lg px-4 py-2" onClick={handleSubmitApplication}>{isSubmitting ? 'Submitting...' : 'Submit'}</button>
-              )}
-            </div>
-
           </form>
         </div>
+
+        {/* Footer with Navigation Buttons */}
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 rounded-b-lg px-8 py-4 flex justify-between items-center">
+          {step > 0 ? (
+            <button type="button" className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50" onClick={prevStep}>Back</button>
+          ) : <span />}
+          {step < 3 ? (
+            <button type="button" className="bg-green-600 text-white rounded-md px-6 py-2 hover:bg-green-700" onClick={nextStep}>Next</button>
+          ) : (
+            <button type="button" disabled={isSubmitting} className="bg-green-600 text-white rounded-md px-6 py-2 hover:bg-green-700 disabled:bg-gray-400" onClick={handleSubmitApplication}>
+              {isSubmitting ? 'Submitting...' : 'Submit Application'}
+            </button>
+          )}
+        </div>
       </div>
-    </>
+    </div>
   );
 }
