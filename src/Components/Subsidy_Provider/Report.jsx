@@ -1,37 +1,266 @@
-import React, { useState } from 'react'
-import Header from '../User_Profile/Header'
-import Settings from '../HomePage/Settings'
+// src/Subsidy_Provider/Report.jsx
+// Report component for Subsidy Provider
+// Built for: Desai Rudra
+// Features:
+// - fetch provider subsidies + applications (with token refresh)
+// - show applications table (desktop) and mobile cards
+// - show only date (YYYY-MM-DD) in Applied On column
+// - includes Account Number and IFSC Code columns
+// - download Excel export (includes Account Number & IFSC)
+// - "Mark Payment Done" action for Approved -> Payment done (calls backend endpoint)
+// - robust normalization of backend fields (tries many common keys)
 
-const Report = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+import React, { useEffect, useState } from "react";
+import Header from "../User_Profile/Header";
+import Settings from "../HomePage/Settings";
+import * as XLSX from "xlsx";
 
-  // Sample data - replace with actual data from your backend
-  const allApplications = [
-    { id: 1, farmerName: 'Rajesh Kumar', subsidyName: 'Organic Farming Subsidy', applicationId: 'APP2024001', date: '2024-01-15', status: 'Approved' },
-    { id: 2, farmerName: 'Priya Singh', subsidyName: 'Drip Irrigation Subsidy', applicationId: 'APP2024002', date: '2024-02-10', status: 'Approved' },
-    { id: 3, farmerName: 'Amit Patel', subsidyName: 'Crop Insurance Premium', applicationId: 'APP2024003', date: '2024-03-05', status: 'Under Review' },
-    { id: 4, farmerName: 'Sunita Verma', subsidyName: 'Drip Irrigation Subsidy', applicationId: 'APP2024004', date: '2024-03-12', status: 'Pending' },
-    { id: 5, farmerName: 'Vikram Sharma', subsidyName: 'Organic Farming Subsidy', applicationId: 'APP2024005', date: '2024-03-18', status: 'Approved' },
-    { id: 6, farmerName: 'Kavita Joshi', subsidyName: 'Solar Pump Subsidy', applicationId: 'APP2024006', date: '2024-03-20', status: 'Pending' }
+const SAMPLE_APPLICATIONS = [
+  { id: 1, farmerName: "Rajesh Kumar", subsidyName: "Organic Farming Subsidy", applicationId: "APP2024001", date: "2024-01-15", status: "Approved", amount: "10000", accountNumber: "1234567890", ifscCode: "SBIN0001234" },
+  { id: 2, farmerName: "Priya Singh", subsidyName: "Drip Irrigation Subsidy", applicationId: "APP2024002", date: "2024-02-10", status: "Approved", amount: "5000", accountNumber: "9876543210", ifscCode: "HDFC0005678" },
+  { id: 3, farmerName: "Amit Patel", subsidyName: "Crop Insurance Premium", applicationId: "APP2024003", date: "2024-03-05", status: "Under Review", amount: "2500", accountNumber: "—", ifscCode: "—" },
+  { id: 4, farmerName: "Sunita Verma", subsidyName: "Drip Irrigation Subsidy", applicationId: "APP2024004", date: "2024-03-12", status: "Pending", amount: "5000", accountNumber: "—", ifscCode: "—" },
+  { id: 5, farmerName: "Vikram Sharma", subsidyName: "Organic Farming Subsidy", applicationId: "APP2024005", date: "2024-03-18", status: "Approved", amount: "12000", accountNumber: "111122223333", ifscCode: "PNB0001112" },
+];
+
+const STATUS_STYLES = {
+  Approved: "bg-green-100 text-green-700",
+  "Under Review": "bg-blue-100 text-blue-700",
+  Pending: "bg-yellow-100 text-yellow-700",
+  Rejected: "bg-red-100 text-red-700",
+  "Payment done": "bg-gray-100 text-gray-700",
+};
+
+const readLocalToken = (keys = ["access", "access_token", "accessToken"]) => {
+  for (const k of keys) {
+    const v = localStorage.getItem(k);
+    if (v) return v;
+  }
+  return null;
+};
+
+export default function Report() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [busyAppIds, setBusyAppIds] = useState([]);
+
+  const API_BASE = import.meta.env.VITE_BASE_URL || "";
+
+  const SUBSIDIES_ENDPOINTS = [
+    API_BASE ? `${API_BASE}/api/subsidy_provider/subsidies/my/` : "/api/subsidy_provider/subsidies/my/",
+    API_BASE ? `${API_BASE}/api/subsidy_provider/subsidies/` : "/api/subsidy_provider/subsidies/",
+    API_BASE ? `${API_BASE}/api/subsidies/my_subsidies/` : "/api/subsidies/my_subsidies/",
+    API_BASE ? `${API_BASE}/subsidies/my_subsidies/` : "/subsidies/my_subsidies/",
   ];
 
-  // Function to sanitize search input - only allow alphanumeric, spaces, and hyphens
-  const sanitizeInput = (input) => {
-    // Remove all special characters except spaces and hyphens
-    return input.replace(/[^a-zA-Z0-9\s-]/g, '');
-  };
+  useEffect(() => {
+    fetchProviderSubsAndApps();
+    // eslint-disable-next-line
+  }, []);
 
-  // Handle search input change
-  const handleSearchChange = (e) => {
-    const sanitizedValue = sanitizeInput(e.target.value);
-    setSearchQuery(sanitizedValue);
-  };
+  async function fetchWithAutoRefresh(url, options = {}, triedRefresh = false) {
+    const accessToken = readLocalToken();
+    const headers = {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    };
+    const res = await fetch(url, { ...options, headers, credentials: "include" });
 
-  // Filter applications based on search query
-  const filteredApplications = allApplications.filter(app => {
-    const query = searchQuery.toLowerCase().trim();
-    if (!query) return true;
-    
+    if (res.status === 401 && !triedRefresh) {
+      const refreshToken = readLocalToken(["refresh", "refresh_token", "refreshToken"]);
+      if (refreshToken) {
+        try {
+          const refreshUrl = API_BASE ? `${API_BASE}/api/token/refresh/` : "/api/token/refresh/";
+          const r = await fetch(refreshUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh: refreshToken }),
+            credentials: "include",
+          });
+          if (r.ok) {
+            const jd = await r.json();
+            if (jd.access) {
+              localStorage.setItem("access", jd.access);
+              return fetchWithAutoRefresh(url, options, true);
+            }
+          } else {
+            console.warn("Refresh failed", await r.text());
+          }
+        } catch (err) {
+          console.error("Refresh error", err);
+        }
+      }
+    }
+    return res;
+  }
+
+  // normalize one application object
+  function normalizeApplication(a, idx = 0, subsidyObj = null) {
+    const farmerName =
+      a.full_name ||
+      a.farmer_name ||
+      (a.user && (a.user.full_name || a.user.username || a.user.email)) ||
+      a.user_name ||
+      a.applicant_name ||
+      a.applicant?.full_name ||
+      "—";
+
+    const subsidyName =
+      a.subsidy_name ||
+      (a.subsidy && (a.subsidy.title || a.subsidy.name)) ||
+      (subsidyObj && (subsidyObj.title || subsidyObj.name)) ||
+      a.scheme_title ||
+      "—";
+
+    const applicationId = a.application_id || a.id || a.pk || `APP${idx + 1}`;
+
+    const rawDate = a.submitted_at || a.applied_on || a.created_at || a.date || (a.raw && a.raw.created_at) || "";
+    const date = rawDate ? String(rawDate).slice(0, 10) : "—";
+
+    const status = a.status || a.application_status || "Pending";
+    const amount = a.amount ?? (a.subsidy && a.subsidy.amount) ?? (subsidyObj && subsidyObj.amount) ?? "—";
+
+    // account and ifsc — try many common keys
+    const accountNumber = a.account_number || a.bank_account || a.accountNo || a.account || a.beneficiary_account || a.bank_account_number || a.account_number_masked || a.accountNumber || "—";
+    const ifscCode = a.ifsc || a.ifsc_code || a.ifsc_code_masked || a.bank_ifsc || a.ifscode || a.ifscCode || "—";
+
+    return {
+      id: a.id ?? idx,
+      farmerName,
+      subsidyName,
+      applicationId,
+      date,
+      status,
+      amount,
+      accountNumber,
+      ifscCode,
+      raw: a
+    };
+  }
+
+  // Build candidate application endpoint templates for a subsidy id
+  function applicationsEndpointForId(id) {
+    const list = [
+      API_BASE ? `${API_BASE}/api/subsidy_provider/subsidies/${id}/applications/` : `/api/subsidy_provider/subsidies/${id}/applications/`,
+      API_BASE ? `${API_BASE}/api/subsidies/${id}/applications/` : `/api/subsidies/${id}/applications/`,
+      API_BASE ? `${API_BASE}/subsidies/${id}/applications/` : `/subsidies/${id}/applications/`,
+      API_BASE ? `${API_BASE}/api/subsidy_provider/subsidies/${id}/applications` : `/api/subsidy_provider/subsidies/${id}/applications`,
+    ];
+    return list;
+  }
+
+  async function fetchProviderSubsAndApps() {
+    setLoading(true);
+    setErrorMsg("");
+    setApplications([]);
+
+    let foundSubs = null;
+
+    for (const url of SUBSIDIES_ENDPOINTS) {
+      try {
+        const res = await fetchWithAutoRefresh(url, { method: "GET" });
+        const text = await res.text();
+        if (!res.ok) continue;
+        let data;
+        try { data = text ? JSON.parse(text) : []; } catch (e) { continue; }
+        const arr = Array.isArray(data) ? data : (Array.isArray(data.results) ? data.results : null);
+        if (!arr) continue;
+        foundSubs = arr;
+        break;
+      } catch (err) {
+        console.error("[Report] subsidies endpoint error", url, err);
+      }
+    }
+
+    // fallback endpoints that might directly return applications
+    if (!foundSubs) {
+      const fallbackAppsEndpoints = [
+        API_BASE ? `${API_BASE}/api/subsidy_provider/subsidies/my/applications/` : "/api/subsidy_provider/subsidies/my/applications/",
+        API_BASE ? `${API_BASE}/api/subsidy/apply/` : "/api/subsidy/apply/",
+        API_BASE ? `${API_BASE}/subsidy/apply/` : "/subsidy/apply/",
+        API_BASE ? `${API_BASE}/api/subsidies/my_applications/` : "/api/subsidies/my_applications/",
+      ];
+      for (const u of fallbackAppsEndpoints) {
+        try {
+          const res = await fetchWithAutoRefresh(u, { method: "GET" });
+          const text = await res.text();
+          if (!res.ok) continue;
+          let data;
+          try { data = text ? JSON.parse(text) : []; } catch (e) { continue; }
+          if (Array.isArray(data)) {
+            const normalized = data.map((a, idx) => normalizeApplication(a, idx));
+            setApplications(normalized);
+            setLoading(false);
+            return;
+          }
+          if (data && data.results && Array.isArray(data.results)) {
+            const normalized = data.results.map((a, idx) => normalizeApplication(a, idx));
+            setApplications(normalized);
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.error("[Report] fallback attempt failed", u, err);
+        }
+      }
+    }
+
+    if (Array.isArray(foundSubs) && foundSubs.length > 0) {
+      const promises = foundSubs.map(async (sub) => {
+        const subsidyId = sub.id ?? sub.pk ?? sub.subsidy_id;
+        const candidates = applicationsEndpointForId(subsidyId);
+        for (const ep of candidates) {
+          try {
+            const r = await fetchWithAutoRefresh(ep, { method: "GET" });
+            const txt = await r.text();
+            if (!r.ok) continue;
+            let d;
+            try { d = txt ? JSON.parse(txt) : []; } catch (e) { continue; }
+            const items = Array.isArray(d) ? d : (Array.isArray(d.results) ? d.results : null);
+            if (!items) continue;
+            const normalizedApps = items.map((a, idx) => normalizeApplication(a, idx, sub));
+            return normalizedApps;
+          } catch (err) {
+            continue;
+          }
+        }
+        return [];
+      });
+
+      const settled = await Promise.allSettled(promises);
+      const combined = [];
+      for (const s of settled) {
+        if (s.status === "fulfilled" && Array.isArray(s.value)) {
+          combined.push(...s.value);
+        }
+      }
+
+      if (combined.length > 0) {
+        combined.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+        setApplications(combined);
+        setLoading(false);
+        return;
+      }
+    }
+
+    setApplications(SAMPLE_APPLICATIONS);
+    setErrorMsg("Unable to fetch provider subsidies/applications from backend — showing sample data. Check console for more info.");
+    setLoading(false);
+  }
+
+  function sanitizeInput(input) {
+    return input.replace(/[^a-zA-Z0-9\s-]/g, "");
+  }
+  const handleSearchChange = (e) => setSearchQuery(sanitizeInput(e.target.value));
+  const handleSearch = (e) => { e.preventDefault(); };
+  const handleClearSearch = () => setSearchQuery("");
+
+  const filteredApplications = applications.filter((app) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
     return (
       app.subsidyName.toLowerCase().includes(query) ||
       app.farmerName.toLowerCase().includes(query) ||
@@ -42,31 +271,89 @@ const Report = () => {
 
   const applications = searchQuery ? filteredApplications : allApplications;
 
-  const totalApplications = applications.length;
-  const approved = applications.filter(app => app.status === 'Approved').length;
-  const underReview = applications.filter(app => app.status === 'Under Review').length;
-  const pending = applications.filter(app => app.status === 'Pending').length;
-  const rejected = applications.filter(app => app.status === 'Rejected').length;
+  const totalApplications = displayApps.length;
+  const approved = displayApps.filter((app) => (app.status || "").toLowerCase() === "approved").length;
+  const underReview = displayApps.filter((app) => (app.status || "").toLowerCase() === "under review").length;
+  const pending = displayApps.filter((app) => (app.status || "").toLowerCase() === "pending").length;
+  const rejected = displayApps.filter((app) => (app.status || "").toLowerCase() === "rejected").length;
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'Approved': return 'bg-green-100 text-green-700';
-      case 'Under Review': return 'bg-blue-100 text-blue-700';
-      case 'Pending': return 'bg-yellow-100 text-yellow-700';
-      case 'Rejected': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+  const getStatusColor = (status) => STATUS_STYLES[status] || "bg-gray-100 text-gray-700";
+
+  function downloadExcel() {
+    if (!applications || applications.length === 0) {
+      alert("No application data available to download.");
+      return;
     }
-  };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    // Search is already happening in real-time via filteredApplications
-    // This function can be used for additional actions if needed
-  };
+    const excelData = applications.map((app, index) => ({
+      "Sr No.": index + 1,
+      "Farmer Name": app.farmerName,
+      "Subsidy Name": app.subsidyName,
+      "Application ID": app.applicationId,
+      "Applied On": app.date,
+      "Status": app.status,
+      "Amount": app.amount,
+      "Account Number": app.accountNumber || "—",
+      "IFSC Code": app.ifscCode || "—",
+    }));
 
-  const handleClearSearch = () => {
-    setSearchQuery('');
-  };
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Applications");
+    XLSX.writeFile(workbook, "Subsidy_Applications_Report.xlsx");
+  }
+
+  async function markPaymentDoneRequest(applicationId) {
+    const url = API_BASE ? `${API_BASE}/subsidy/applications/${applicationId}/mark_payment_done/` : `/api/applications/${applicationId}/mark_payment_done/`;
+    const access = readLocalToken();
+    const headers = {
+      "Content-Type": "application/json",
+      ...(access ? { Authorization: `Bearer ${access}` } : {})
+    };
+    const res = await fetch(url, { method: "POST", headers, credentials: "include" });
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+    if (!res.ok) {
+      const msg = (data && (data.detail || data.message)) || `Failed (${res.status})`;
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  async function handleMarkPaymentDone(appId) {
+  if (!window.confirm("Mark this application as 'Payment done'? This is irreversible.")) return;
+
+  // mark busy
+  setBusyAppIds((s) => [...s, appId]);
+
+  // optimistic update: force status locally so row never disappears
+  let previousApps = [];
+  setApplications((prev) => {
+    previousApps = prev;
+    return prev.map((a) =>
+      String(a.id) === String(appId) ? { ...a, status: "Payment done" } : a
+    );
+  });
+
+  try {
+    // call backend (we don't strictly rely on its returned object)
+    await markPaymentDoneRequest(appId);
+
+    // success: keep optimistic change (optionally merge backend response if it has useful fields)
+    // let backendData = await markPaymentDoneRequest(appId);
+    // if you want to merge: setApplications(prev => prev.map(a => a.id===appId? normalizeApplication(backendData): a));
+  } catch (err) {
+    // revert to previous apps state on error
+    setApplications(previousApps);
+    console.error("Mark payment failed", err);
+    alert("Error: " + (err.message || "Failed to mark payment"));
+  } finally {
+    // unmark busy
+    setBusyAppIds((s) => s.filter((x) => x !== appId));
+  }
+}
+
 
   return (
     <>
@@ -104,14 +391,8 @@ const Report = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={handleClearSearch}
-                    className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                  <button type="button" onClick={handleClearSearch} className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    ✕
                   </button>
                 )}
               </div>
@@ -146,43 +427,34 @@ const Report = () => {
                 <p className="text-gray-600 text-xs sm:text-sm md:text-base font-semibold mb-1">Total Applications</p>
                 <p className="text-lg sm:text-xl lg:text-2xl font-bold">{totalApplications}</p>
               </div>
-              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-2 sm:p-3 lg:p-4">
-                <p className="text-gray-600 text-xs sm:text-sm md:text-base font-semibold mb-1">Approved</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-700">
-                  {approved} <span className="text-xs sm:text-sm">({totalApplications > 0 ? ((approved/totalApplications)*100).toFixed(1) : 0}%)</span>
-                </p>
+              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-2">
+                <p className="text-gray-600 text-xs font-semibold mb-1">Approved</p>
+                <p className="text-lg font-bold text-green-700">{approved} <span className="text-xs">({totalApplications>0?((approved/totalApplications)*100).toFixed(1):0}%)</span></p>
               </div>
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-2 sm:p-3 lg:p-4">
-                <p className="text-gray-600 text-xs sm:text-sm md:text-base font-semibold mb-1">Under Review</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-700">
-                  {underReview} <span className="text-xs sm:text-sm">({totalApplications > 0 ? ((underReview/totalApplications)*100).toFixed(1) : 0}%)</span>
-                </p>
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-2">
+                <p className="text-gray-600 text-xs font-semibold mb-1">Under Review</p>
+                <p className="text-lg font-bold text-blue-700">{underReview} <span className="text-xs">({totalApplications>0?((underReview/totalApplications)*100).toFixed(1):0}%)</span></p>
               </div>
-              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-2 sm:p-3 lg:p-4">
-                <p className="text-gray-600 text-xs sm:text-sm md:text-base font-semibold mb-1">Pending</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-700">
-                  {pending} <span className="text-xs sm:text-sm">({totalApplications > 0 ? ((pending/totalApplications)*100).toFixed(1) : 0}%)</span>
-                </p>
+              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-2">
+                <p className="text-gray-600 text-xs font-semibold mb-1">Pending</p>
+                <p className="text-lg font-bold text-yellow-700">{pending} <span className="text-xs">({totalApplications>0?((pending/totalApplications)*100).toFixed(1):0}%)</span></p>
               </div>
-              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-2 sm:p-3 lg:p-4 col-span-2 sm:col-span-1">
-                <p className="text-gray-600 text-xs sm:text-sm md:text-base font-semibold mb-1">Rejected</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-700">
-                  {rejected} <span className="text-xs sm:text-sm">({totalApplications > 0 ? ((rejected/totalApplications)*100).toFixed(1) : 0}%)</span>
-                </p>
+              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-2">
+                <p className="text-gray-600 text-xs font-semibold mb-1">Rejected</p>
+                <p className="text-lg font-bold text-red-700">{rejected} <span className="text-xs">({totalApplications>0?((rejected/totalApplications)*100).toFixed(1):0}%)</span></p>
               </div>
             </div>
           </div>
 
           {/* Applications Table */}
           <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 lg:p-6">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-green-700 mb-3 sm:mb-4">Subsidy Applications</h2>
-            
-            {applications.length === 0 ? (
-              <div className="text-center py-6 sm:py-8">
-                <svg className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-500">No applications found matching your search.</p>
+            <h2 className="text-lg font-bold text-green-700 mb-3">Subsidy Applications</h2>
+
+            {loading ? (
+              <div className="py-8 text-center">Loading applications...</div>
+            ) : displayApps.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="mt-3 text-sm text-gray-500">No applications found matching your search.</p>
               </div>
             ) : (
               <>
@@ -190,37 +462,47 @@ const Report = () => {
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-100">
-                      <tr className="text-left text-base md:text-lg lg:text-lg font-bold text-gray-700">
-                        <th className="px-3 lg:px-4 py-3 lg:py-4">Sr. No.</th>
-                        <th className="px-3 lg:px-4 py-3 lg:py-4">Farmer Name</th>
-                        <th className="px-3 lg:px-4 py-3 lg:py-4">Subsidy Name</th>
-                        <th className="px-3 lg:px-4 py-3 lg:py-4">Application ID</th>
-                        <th className="px-3 lg:px-4 py-3 lg:py-4">Date</th>
-                        <th className="px-3 lg:px-4 py-3 lg:py-4">Status</th>
-                        <th className="px-3 lg:px-4 py-3 lg:py-4">View</th>
+                      <tr className="text-left font-bold text-gray-700">
+                        <th className="px-3 py-3">Sr. No.</th>
+                        <th className="px-3 py-3">Farmer Name</th>
+                        <th className="px-3 py-3">Subsidy Name</th>
+                        <th className="px-3 py-3">Application ID</th>
+                        <th className="px-3 py-3">Applied On</th>
+                        <th className="px-3 py-3">Account Number</th>
+                        <th className="px-3 py-3">IFSC Code</th>
+                        <th className="px-3 py-3">Status / Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {applications.map((app, index) => (
-                        <tr key={app.id} className="hover:bg-gray-50">
-                          <td className="px-3 lg:px-4 py-2 lg:py-3 text-sm lg:text-base">{index + 1}</td>
-                          <td className="px-3 lg:px-4 py-2 lg:py-3 text-sm lg:text-base font-medium">{app.farmerName}</td>
-                          <td className="px-3 lg:px-4 py-2 lg:py-3 text-sm lg:text-base">{app.subsidyName}</td>
-                          <td className="px-3 lg:px-4 py-2 lg:py-3 text-sm lg:text-base">{app.applicationId}</td>
-                          <td className="px-3 lg:px-4 py-2 lg:py-3 text-sm lg:text-base">{app.date}</td>
-                          <td className="px-3 lg:px-4 py-2 lg:py-3">
-                            <span className={`px-2 lg:px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(app.status)}`}>
-                              {app.status}
-                            </span>
-                          </td>
-                          <td className="px-3 lg:px-4 py-2 lg:py-3">
-                            <button className="flex items-center gap-1 text-green-600 border border-green-600 px-2 lg:px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-50 transition">
-                              <svg className="h-3 w-3 lg:h-4 lg:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                              View
-                            </button>
+                      {displayApps.map((app, index) => (
+                        <tr key={app.id ?? index} className="hover:bg-gray-50">
+                          <td className="px-3 py-3 text-sm">{index + 1}</td>
+                          <td className="px-3 py-3 text-sm font-medium">{app.farmerName}</td>
+                          <td className="px-3 py-3 text-sm">{app.subsidyName}</td>
+                          <td className="px-3 py-3 text-sm">{app.applicationId}</td>
+                          <td className="px-3 py-3 text-sm">{app.date}</td>
+                          <td className="px-3 py-3 text-sm">{app.accountNumber || "—"}</td>
+                          <td className="px-3 py-3 text-sm">{app.ifscCode || "—"}</td>
+                          <td className="px-3 py-3">
+                            {String(app.status || "").toLowerCase() === "approved" ? (
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(app.status)}`}>
+                                  {app.status}
+                                </span>
+                                <button
+                                  onClick={() => handleMarkPaymentDone(app.id)}
+                                  disabled={busyAppIds.includes(app.id)}
+                                  className="ml-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs px-2 py-1 rounded"
+                                  title="Mark as Payment done"
+                                >
+                                  {busyAppIds.includes(app.id) ? "Processing..." : "Mark Payment Done"}
+                                </button>
+                              </div>
+                            ) : (
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(app.status)}`}>
+                                {app.status}
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -252,29 +534,22 @@ const Report = () => {
                           <span>{app.date}</span>
                         </div>
                       </div>
-                      <button className="w-full flex items-center justify-center gap-1 text-green-600 border border-green-600 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-green-50 transition">
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        View Details
-                      </button>
+
+                      {String(app.status || "").toLowerCase() === "approved" && (
+                        <div className="mt-2">
+                          <button
+                            onClick={() => handleMarkPaymentDone(app.id)}
+                            disabled={busyAppIds.includes(app.id)}
+                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-3 py-2 rounded"
+                          >
+                            {busyAppIds.includes(app.id) ? "Processing..." : "Mark Payment Done"}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </>
-            )}
-
-            {/* View Report Button */}
-            {applications.length > 0 && (
-              <div className="flex justify-center mt-4 sm:mt-6">
-                <button className="bg-[#009500] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-green-700 transition flex items-center gap-2">
-                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  View Report
-                </button>
-              </div>
             )}
           </div>
 
