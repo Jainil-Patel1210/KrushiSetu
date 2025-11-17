@@ -39,7 +39,7 @@ function SocialLogin() {
                 refresh,
                 role: normalizedRole,
             });
-
+            localStorage.setItem("isLoggedOut", "false");
             toast.success("Logged in successfully!");
 
             // Redirect based on role

@@ -120,7 +120,7 @@ function Subsidy_List() {
 
   return (
     <>
-      <div className="w-full bg-gray-100 min-h-screen">
+      <div className="w-full min-h-screen">
         <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 md:px-10">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
             Subsidy Schemes
@@ -201,10 +201,10 @@ function Subsidy_List() {
                 ))}
               </div>
 
-              <div className="flex justify-center items-center gap-3 mt-6 ">
+              <div className="flex justify-center items-center gap-3 mt-6">
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
-                  className={`md:px-4 md:py-2 px-2 py-2 rounded-md border ${
+                  className={`px-4 py-2 rounded-md border ${
                     currentPage === 1
                       ? "bg-gray-200 cursor-not-allowed"
                       : "bg-white hover:bg-green-50 border-green-500"
@@ -218,7 +218,7 @@ function Subsidy_List() {
                   <button
                     key={i}
                     onClick={() => handlePageChange(i + 1)}
-                    className={`md:px-3 md:py-1 px-1 py-1 rounded-md border ${
+                    className={`px-3 py-1 rounded-md border ${
                       currentPage === i + 1
                         ? "bg-green-600 text-white"
                         : "bg-white hover:bg-green-50 border-green-500"
@@ -230,7 +230,7 @@ function Subsidy_List() {
 
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
-                  className={`md:px-4 md:py-2 px-2 py-2 rounded-md border ${
+                  className={`px-4 py-2 rounded-md border ${
                     currentPage === totalPages
                       ? "bg-gray-200 cursor-not-allowed"
                       : "bg-white hover:bg-green-50 border-green-500"

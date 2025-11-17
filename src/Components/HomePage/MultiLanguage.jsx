@@ -47,7 +47,7 @@ function MultiLanguage({ onClose }) {
         <div ref={dropdownRef} className="fixed bottom-20 right-6 z-60 bg-white rounded-xl shadow-2xl border border-gray-200 w-80 animate-slideUp" onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}
-        <div className="bg-green-700 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
+        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
             <div className="flex items-center space-x-2">
                 <FaLanguage className="text-xl" />
                 <h3 className="font-semibold">Select Language</h3>
@@ -59,7 +59,7 @@ function MultiLanguage({ onClose }) {
         <div className="max-h-96 overflow-y-auto p-2">
             {languages.map((lang) => (
                 <button key={lang.code} className="w-full flex items-center px-4 py-3 hover:bg-green-50 rounded-lg transition-colors duration-200 group" onClick={() => changeLanguage(lang.code)}>
-                    <span className="text-gray-700 group-hover:text-green-700 font-medium">{lang.name}</span>
+                    <span className="text-gray-700 group-hover:text-green-600 font-medium">{lang.name}</span>
                 </button>
             ))}
         </div>

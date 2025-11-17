@@ -10,10 +10,18 @@ export function storeTokens({ access, refresh, role }) {
   if (role) localStorage.setItem(STORAGE_KEYS.ROLE, role);
 }
 
-export function clearAuth() {
-  console.log("works");
-  Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
-}
+export const clearAuth = () => {
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("user_role");
+    localStorage.setItem("isLoggedOut", "true");
+
+    // Remove after 1 second: prevents auto-login immediately after redirect
+    setTimeout(() => {
+        localStorage.removeItem("isLoggedOut");
+    }, 1200);
+};
+
 
 export function getStoredRole() {
   return localStorage.getItem(STORAGE_KEYS.ROLE);

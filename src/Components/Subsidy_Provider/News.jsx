@@ -40,13 +40,9 @@ const News = () => {
     fetchNews();
   }, []);
 
-  const token = localStorage.getItem("access");
-
   const fetchNews = async () => {
     try {
-      const res = await api.get("/news/my-articles/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/news/my-articles/");
       console.log(res.data);
       setNewsArticles(res.data);
     } catch (error) {
@@ -122,21 +118,13 @@ const News = () => {
 
     try {
       if (isEditing) {
-        const token = localStorage.getItem("access");
-        console.log(token);
         await api.put(`/news/update/${selectedNews.id}/`, payload, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            "Authorization": `Bearer ${token}`
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         });
         toast.success("News article updated");
       } else {
         await api.post("/news/create/", payload, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         });
         toast.success("News posted");
       }
@@ -167,17 +155,8 @@ const News = () => {
   };
 
   const handleConfirmDelete = async () => {
-    const tok = localStorage.getItem("access");
-    console.log(tok);
     try {
-      await api.delete(`/news/delete/${selectedNews.id}/`,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${tok}`,
-          },
-        }
-      );
+      await api.delete(`/news/delete/${selectedNews.id}/`);
       toast.success("Deleted successfully");
 
       setShowDeleteModal(false);
