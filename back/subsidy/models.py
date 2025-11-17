@@ -81,6 +81,7 @@ class SubsidyApplication(models.Model):
         ('Approved', 'Approved'),
         ('Under Review', 'Under Review'),
         ('Rejected', 'Rejected'),
+        ('Payment done','Payment done')
     ]
 
 
