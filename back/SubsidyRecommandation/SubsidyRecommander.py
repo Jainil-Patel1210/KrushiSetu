@@ -95,16 +95,16 @@ class SubsidyRecommander:
                                 Answer with JSON:
                                 {{"eligible": true/false, "reason": "brief explanation"}}"""
 
-                # Retry logic for network errors and rate limiting
-                max_retries = 3
+                # Retry logic - reduced for speed
+                max_retries = 2
                 retry_count = 0
                 eligibility_checked = False
                 
                 while retry_count < max_retries and not eligibility_checked:
                     try:
-                        # Add delay to avoid rate limiting (0.5 seconds between requests)
+                        # No initial delay - only on retry
                         if retry_count > 0:
-                            time.sleep(1)  # Wait 1 second before retry
+                            time.sleep(0.3)  # Minimal retry delay
                         
                         messages = [
                             SystemMessage(content = "You are an eligibility checker. Respond only with valid JSON."),
@@ -141,19 +141,16 @@ class SubsidyRecommander:
                         error_msg = str(e).lower()
                         logger.warning(f"Error checking eligibility for {subsidy.get('title')} (attempt {retry_count}/{max_retries}): {error_msg}")
                         
-                        # Check if it's a rate limit error
+                        # Check if it's a rate limit error - shorter wait
                         if "429" in error_msg or "rate limit" in error_msg or "too many requests" in error_msg:
-                            logger.warning(f"Rate limit hit for {subsidy.get('title')}. Waiting before retry...")
-                            time.sleep(2 * retry_count)  # Longer wait for rate limits
+                            logger.warning(f"Rate limit hit for {subsidy.get('title')}. Brief wait...")
+                            time.sleep(0.5)  # Reduced from 2s to 0.5s
                         
                         if retry_count >= max_retries:
                             # After max retries, default to eligible (fail-safe approach)
                             logger.error(f"Max retries reached for {subsidy.get('title')}. Defaulting to eligible.")
                             eligible_subsidies.append(subsidy)
                             eligibility_checked = True
-                        else:
-                            # Wait before retry (exponential backoff)
-                            time.sleep(0.5 * retry_count)
                     
             else :
                 eligible_subsidies.append(subsidy)
