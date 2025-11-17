@@ -7,9 +7,83 @@ from .serializers import SubsidyApplicationSerializer, DocumentSerializer, Offic
 from .models import SubsidyApplication, Document
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.db import transaction
 
 User = get_user_model()
+from .models import SubsidyApplication
+from .serializers import SubsidyApplicationSerializer
 
+class SubsidyApplicationViewSet(viewsets.ModelViewSet):
+    """
+    CRUD viewset for SubsidyApplication.
+    Adds a custom action `mark_payment_done` to transition Approved -> Payment done.
+    """
+    queryset = SubsidyApplication.objects.all().select_related("subsidy", "user")
+    serializer_class = SubsidyApplicationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Optionally filter so providers only see their subsidy applications.
+        Adjust logic if providers are staff or another model.
+        """
+        qs = super().get_queryset()
+        user = self.request.user
+
+        # If provider users should only see applications for subsidies they own,
+        # uncomment following lines and adjust attribute name as needed:
+        # owned_subsidy_pk_list = []
+        # for s in Subsidy.objects.filter(provider=user).values_list('pk', flat=True):
+        #     owned_subsidy_pk_list.append(s)
+        # qs = qs.filter(subsidy__in=owned_subsidy_pk_list)
+
+        return qs
+
+    @action(detail=True, methods=["post"], url_path="mark_payment_done")
+    def mark_payment_done(self, request, pk=None):
+        """
+        POST /api/applications/<pk>/mark_payment_done/
+        Only the subsidy provider (owner) may perform this. Allowed transition: Approved -> Payment done
+        """
+        app = self.get_object()
+
+        # Determine subsidy owner/provider by trying common attribute names
+        subsidy = getattr(app, "subsidy", None)
+        provider_user = None
+        if subsidy is not None:
+            provider_user = getattr(subsidy, "provider", None) \
+                            or getattr(subsidy, "owner", None) \
+                            or getattr(subsidy, "created_by", None) \
+                            or getattr(subsidy, "user", None)
+
+        # Check provider authorization
+        if provider_user is None:
+            return Response({"detail": "Subsidy owner not configured on backend."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if provider_user != request.user and not request.user.is_staff:
+            return Response({"detail": "Not allowed. Only subsidy provider or staff can mark payment."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        # Normalize status check and only allow Approved -> Payment done
+        current_status = (app.status or "").strip().lower()
+        if current_status != "approved":
+            return Response({"detail": f"Invalid status transition: current status = '{app.status}'."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Perform update in a transaction (atomic)
+        with transaction.atomic():
+            app.status = "Payment done"   # EXACT string as in your model choice
+            app.save(update_fields=["status"])
+
+            # Optionally: record an audit log in a separate model, or set reviewed_at etc.
+            # e.g. app.reviewed_at = timezone.now(); app.save(update_fields=["status", "reviewed_at"])
+
+        serializer = self.get_serializer(app)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 # Upload single document (multipart/form-data)
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
