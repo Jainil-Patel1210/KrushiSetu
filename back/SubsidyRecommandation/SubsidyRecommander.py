@@ -275,5 +275,3 @@ class SubsidyRecommander:
         
         return result['final_recommendations']
 
-if __name__ == "__main__":
-    recommander = SubsidyRecommander()
