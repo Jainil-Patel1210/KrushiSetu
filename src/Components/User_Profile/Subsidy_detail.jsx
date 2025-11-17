@@ -62,9 +62,9 @@ function Subsidy_detail({ subsidy, onClose }) {
                             <li className="text-gray-500">No specific eligibility criteria provided.</li>
                         )}
                     </ol>
-                    {/* <button className="mt-6 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105">
+                    <button className="mt-6 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105">
                         Check Eligibility
-                    </button> */}
+                    </button>
                 </div>
 
                 <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-200">

@@ -139,7 +139,7 @@ function RecommendSubsidy() {
         console.log('Submitting form data:', formData);
 
         try {
-            const BASE_URL = import.meta.env.VITE_BASE_URL || "http://127.0.0.1:8000";
+            const BASE_URL = `${import.meta.env.VITE_BASE_URL}`;
             
             // Prepare data in correct format
             const requestData = {
@@ -161,9 +161,7 @@ function RecommendSubsidy() {
             
             console.log('Sending request:', requestData);
             
-            const response = await axios.post(`${BASE_URL}/api/subsidy-recommendations/recommend/`, requestData, {
-                withCredentials: true
-            });
+            const response = await axios.post(`${BASE_URL}/api/subsidy-recommendations/recommend/`, requestData);
             
             if (response.data.success) {
                 setRecommendations(response.data);
