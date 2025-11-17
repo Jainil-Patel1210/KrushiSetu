@@ -80,6 +80,21 @@ def recommend_subsidies(request):
                 'application_end_date': subsidy['application_end_date'].isoformat() if subsidy['application_end_date'] else None,
             })
         
+        # CRITICAL: Limit number of subsidies to avoid rate limits and timeouts
+        # Free tier Groq: 30 requests/min. Limit to 10 subsidies to stay safe
+        MAX_SUBSIDIES_TO_CHECK = 10
+        if len(subsidies_list) > MAX_SUBSIDIES_TO_CHECK:
+            # Filter by state first to get most relevant subsidies
+            state_filtered = [s for s in subsidies_list if 
+                            farmer_profile.get('state', '').lower() in str(s.get('eligibility_criteria', '')).lower()]
+            if len(state_filtered) >= MAX_SUBSIDIES_TO_CHECK:
+                subsidies_list = state_filtered[:MAX_SUBSIDIES_TO_CHECK]
+            else:
+                # If not enough state-specific, take first N
+                subsidies_list = subsidies_list[:MAX_SUBSIDIES_TO_CHECK]
+            
+            print(f"Limited subsidies from {len(subsidies_list)} to {MAX_SUBSIDIES_TO_CHECK} to avoid rate limits")
+        
         # Create cache key for this specific farmer profile
         cache_key_data = {
             'farmer_profile': farmer_profile,
