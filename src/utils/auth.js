@@ -10,18 +10,10 @@ export function storeTokens({ access, refresh, role }) {
   if (role) localStorage.setItem(STORAGE_KEYS.ROLE, role);
 }
 
-export const clearAuth = () => {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    localStorage.removeItem("user_role");
-    localStorage.setItem("isLoggedOut", "true");
-
-    // Remove after 1 second: prevents auto-login immediately after redirect
-    setTimeout(() => {
-        localStorage.removeItem("isLoggedOut");
-    }, 1200);
-};
-
+export function clearAuth() {
+  console.log("works");
+  Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
+}
 
 export function getStoredRole() {
   return localStorage.getItem(STORAGE_KEYS.ROLE);
@@ -42,4 +34,16 @@ export function getRedirectPathForRole(role) {
 
 export function isOfficer() {
   return normalizeRole(getStoredRole()) === 'officer';
+}
+
+export function formatDate(dateStr) {
+  if (!dateStr) return "N/A";
+
+  const date = new Date(dateStr);
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
