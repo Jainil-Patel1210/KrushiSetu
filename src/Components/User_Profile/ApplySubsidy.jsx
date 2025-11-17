@@ -12,7 +12,7 @@ export default function ApplySubsidy() {
   const subsidyTitle = subsidyFromNav?.title || null;
 
   // Wizard step and shared form state
-  const [step, setStep] = useState(0); // 0: Personal, 1: Land, 2: Bank, 3: Documents
+  const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     fullName: '', mobile: '', email: '', aadhar: '',
     state: '', district: '', taluka: '', village: '', address: '',
@@ -30,8 +30,8 @@ export default function ApplySubsidy() {
   const [soilTypeValue, setSoilTypeValue] = useState('');
 
   // Documents
-  const [documents, setDocuments] = useState([]); // server-side uploaded documents
-  const [pendingUploads, setPendingUploads] = useState([]); // staged locally
+  const [documents, setDocuments] = useState([]);
+  const [pendingUploads, setPendingUploads] = useState([]);
   const fileInputRef = useRef(null);
 
   const [showAddDocModal, setShowAddDocModal] = useState(false);
@@ -42,13 +42,11 @@ export default function ApplySubsidy() {
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-  // API endpoints (ensure trailing slash to avoid 301)
   const DOCUMENTS_URL = '/subsidy/documents/';
   const APPLY_URL = '/subsidy/apply/';
 
-  // Master doc types — used for fallback/labels
   const DOC_TYPES = [
     { value: 'aadhar_card', label: 'Aadhaar' },
     { value: 'bank_passbook', label: 'Bank Passbook / Cancelled Cheque' },
@@ -58,7 +56,6 @@ export default function ApplySubsidy() {
     { value: 'shg_membership', label: 'SHG membership' },
   ];
 
-  // derive allowed values from subsidy
   const subsidyRequiredValues = React.useMemo(() => {
     const arr = subsidyFromNav?.documents_required || [];
     if (!Array.isArray(arr)) return [];
@@ -105,7 +102,6 @@ export default function ApplySubsidy() {
 
   const update = (name, value) => setForm(prev => ({ ...prev, [name]: value }));
 
-  // ---------- Validation functions ----------
   const validateField = (name, value) => {
     let msg = '';
     switch (name) {
@@ -189,7 +185,6 @@ export default function ApplySubsidy() {
     return Object.keys(e).length === 0;
   }
 
-  // Document helpers
   const validateDocNumber = (num) => {
     if (!num) return 'Document number is required.';
     if (num.length > 40) return 'Too long';
@@ -211,7 +206,6 @@ export default function ApplySubsidy() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Fetch documents (server) but filter by subsidy required types
   const fetchDocuments = async () => {
     try {
       const resp = await api.get(DOCUMENTS_URL, { withCredentials: true });
@@ -226,7 +220,6 @@ export default function ApplySubsidy() {
     }
   };
 
-  // Fetch profile and documents
   const fetchProfile = async () => {
     try {
       const tries = ['profile/profile/', '/profile/', 'profile/'];
@@ -265,7 +258,6 @@ export default function ApplySubsidy() {
         if (populatedForm.unit) setUnitValue(populatedForm.unit);
         if (populatedForm.soilType) setSoilTypeValue(populatedForm.soilType);
 
-        // profile.documents -> normalize & filter
         if (Array.isArray(profile.documents) && profile.documents.length > 0) {
           let normalized = profile.documents.map(d => ({
             id: d.id,
@@ -297,17 +289,13 @@ export default function ApplySubsidy() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subsidyFromNav]);
 
-  // merged docs for UI = pendingUploads first then server documents
   const mergedDocs = [...pendingUploads, ...documents];
 
-  // missing required docs (by type) — used for banner
   const presentTypes = new Set(mergedDocs.map(d => d.document_type));
   const missingDocs = (subsidyFromNav?.documents_required || []).filter(r => !presentTypes.has((typeof r === 'string' ? r : (r.value || '')))).map(x => (typeof x === 'string' ? x : (x.label || x.value)));
 
-  // ---------- Document actions ----------
   const handleView = (doc) => {
     if (doc.file) {
-      // staged local file -> create blob URL
       if (!doc.file_url) {
         const url = URL.createObjectURL(doc.file);
         window.open(url, '_blank');
@@ -323,7 +311,6 @@ export default function ApplySubsidy() {
     setDocForm({ name: doc.title || '', number: doc.document_number || '', file: null, document_type: doc.document_type || '' });
     setDocErrors({ document_type: '', number: '', file: '' });
 
-    // If doc is pending (staged), remove it from pendingUploads temporarily — will be re-added on save
     if (doc.tempId) {
       setPendingUploads(prev => prev.filter(p => p.tempId !== doc.tempId));
       setCurrentDoc({ ...doc, isPending: true });
@@ -333,7 +320,6 @@ export default function ApplySubsidy() {
   };
 
   const handleDelete = async (idOrTemp) => {
-    // if tempId (starts with 'temp_') -> delete locally
     if (typeof idOrTemp === 'string' && idOrTemp.startsWith('temp_')) {
       setPendingUploads(prev => prev.filter(p => p.tempId !== idOrTemp));
       return;
@@ -352,7 +338,6 @@ export default function ApplySubsidy() {
     }
   };
 
-  // Stage document locally instead of POSTing immediately
   const openAddModalForRequired = () => {
     const typesToShow = remainingRequiredDocs.map(req => {
       const match = DOC_TYPES.find(t => t.value === req);
@@ -382,7 +367,6 @@ export default function ApplySubsidy() {
     setDocErrors(errs);
     if (errs.document_type || errs.number || errs.file) return;
 
-    // Check allowed by subsidy
     if (subsidyRequiredValues.length > 0 && !subsidyRequiredValues.includes(docForm.document_type)) {
       alert('This document type is not required for this subsidy.');
       return;
@@ -401,14 +385,12 @@ export default function ApplySubsidy() {
     setShowAddDocModal(false);
   };
 
-  // Update a staged doc or server doc
   const handleUpdateDocument = async (e) => {
     e.preventDefault();
     const validation = { number: validateDocNumber(docForm.number), file: docForm.file ? validateDocFile(docForm.file) : '' };
     setDocErrors(validation);
     if (validation.number || validation.file) return;
 
-    // If editing a staged doc (currentDoc.isPending)
     if (currentDoc?.isPending && currentDoc?.tempId) {
       const updated = {
         tempId: currentDoc.tempId,
@@ -424,7 +406,6 @@ export default function ApplySubsidy() {
       return;
     }
 
-    // Else update server document
     const uploadFormData = new FormData();
     uploadFormData.append('document_type', docForm.document_type || currentDoc.document_type);
     uploadFormData.append('document_number', docForm.number.trim());
@@ -433,7 +414,7 @@ export default function ApplySubsidy() {
     setLoadingDocs(true);
     try {
       const response = await api.put(`${DOCUMENTS_URL}${currentDoc.id}/`, uploadFormData, {
-        headers: { 'X-CSRFToken': Cookies.get('csrftoken') }, // do NOT set Content-Type
+        headers: { 'X-CSRFToken': Cookies.get('csrftoken') },
         withCredentials: true,
       });
       const respDoc = response.data;
@@ -454,8 +435,6 @@ export default function ApplySubsidy() {
     }
   };
 
-  // ---------- Improved uploadPendingDocuments ----------
-  // Upload all pending files in parallel using FormData and return created docs.
   async function uploadPendingDocuments() {
     if (!pendingUploads.length) return [];
 
@@ -468,7 +447,6 @@ export default function ApplySubsidy() {
       try {
         const res = await api.post(DOCUMENTS_URL, fd, {
           headers: {
-            // DO NOT set Content-Type — browser will set it including boundary
             'X-CSRFToken': Cookies.get('csrftoken'),
           },
           withCredentials: true,
@@ -482,11 +460,8 @@ export default function ApplySubsidy() {
       }
     };
 
-    // Option A: parallel upload (fail-fast)
     const created = await Promise.all(pendingUploads.map(p => uploadOne(p)));
-    // append created to server documents
     setDocuments(prev => [...created, ...prev]);
-    // clear pending uploads
     setPendingUploads([]);
     return created;
   }
@@ -571,6 +546,12 @@ export default function ApplySubsidy() {
 
   function nextStep() { if (validateCurrentStep()) setStep(s => s + 1); }
   function prevStep() { setStep(s => Math.max(0, s - 1)); }
+
+  const handleClose = () => {
+    if (window.confirm('Are you sure you want to close? All unsaved changes will be lost.')) {
+      navigate(-1);
+    }
+  };
 
     return (
     <>
@@ -679,7 +660,6 @@ export default function ApplySubsidy() {
                   </select>
                   {errors.village ? <div className="text-red-500 text-sm mt-1">{errors.village}</div> : null}
                 </div>
-              </div>
 
               <div className="flex flex-col">
                 <label className="text-gray-700 font-semibold mb-2" htmlFor="address">Address</label>
@@ -771,75 +751,65 @@ export default function ApplySubsidy() {
             <div className={`${step === 3 ? '' : 'hidden'} w-full space-y-6`}>
               <h1 className='text-green-600 font-extrabold text-3xl mb-6 pb-2 border-b-2 border-green-200'>Upload Documents</h1>
 
-              {/* Missing documents banner */}
               {missingDocs.length > 0 && (
                 <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
                   <strong className="font-bold">Missing required documents:</strong> {missingDocs.map(prettifyLabel).join(', ')}
                 </div>
               )}
 
-              <div className="max-w-3xl w-full mt-2">
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <div className="min-h-[120px]">
-                    {mergedDocs.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-gray-500 text-lg">No documents uploaded yet.</p>
-                        <p className="text-gray-400 text-sm mt-2">Use the button below to upload documents required by this subsidy.</p>
-                      </div>
-                    ) : (
-                      <div className="w-full">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b bg-gray-100">
-                              <th className="py-2 text-left">Sr.</th>
-                              <th className="py-2 text-left">Name</th>
-                              <th className="py-2 text-left">Number</th>
-                              <th className="py-2 text-left">Date</th>
-                              <th className="py-2 text-left">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {mergedDocs.map((doc, i) => (
-                              <tr key={doc.id ?? doc.tempId} className="border-b hover:bg-gray-50">
-                                <td className="py-2">{i + 1}.</td>
-                                <td className="py-2">{doc.title || DOC_TYPES.find(d => d.value === doc.document_type)?.label || prettifyLabel(doc.document_type)}</td>
-                                <td className="py-2">{doc.document_number || ''}</td>
-                                <td className="py-2">{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : ''}</td>
-                                <td className="py-2">
-                                  <div className="flex gap-2">
-                                    <button type="button" onClick={() => handleView(doc)} className="px-2 py-1 border-2 border-green-600 text-green-600 rounded-md">View</button>
-                                    <button type="button" onClick={() => handleEdit(doc)} className="px-2 py-1 border-2 border-blue-600 text-blue-600 rounded-md">Edit</button>
-                                    <button type="button" onClick={() => handleDelete(doc.id ?? doc.tempId)} className="px-2 py-1 border-2 border-red-600 text-red-600 rounded-md">Delete</button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-
-                    <div className="flex justify-center mt-4">
-                      <button type="button" onClick={() => { resetDocForm(); openAddModalForRequired(); }} className="bg-green-600 text-white px-4 py-2 rounded-md">Add Documents</button>
-                    </div>
+              <div className="bg-gray-50 rounded-lg p-6">
+                {mergedDocs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 text-lg">No documents uploaded yet.</p>
+                    <p className="text-gray-400 text-sm mt-2">Use the button below to upload required documents.</p>
                   </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-gray-100">
+                          <th className="py-2 px-4 text-left">Sr.</th>
+                          <th className="py-2 px-4 text-left">Name</th>
+                          <th className="py-2 px-4 text-left">Number</th>
+                          <th className="py-2 px-4 text-left">Date</th>
+                          <th className="py-2 px-4 text-left">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mergedDocs.map((doc, i) => (
+                          <tr key={doc.id ?? doc.tempId} className="border-b hover:bg-gray-50">
+                            <td className="py-2 px-4">{i + 1}.</td>
+                            <td className="py-2 px-4">{doc.title || DOC_TYPES.find(d => d.value === doc.document_type)?.label || prettifyLabel(doc.document_type)}</td>
+                            <td className="py-2 px-4">{doc.document_number || ''}</td>
+                            <td className="py-2 px-4">{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : ''}</td>
+                            <td className="py-2 px-4">
+                              <div className="flex gap-2">
+                                <button type="button" onClick={() => handleView(doc)} className="px-2 py-1 text-sm border border-green-600 text-green-600 rounded hover:bg-green-50">View</button>
+                                <button type="button" onClick={() => handleEdit(doc)} className="px-2 py-1 text-sm border border-blue-600 text-blue-600 rounded hover:bg-blue-50">Edit</button>
+                                <button type="button" onClick={() => handleDelete(doc.id ?? doc.tempId)} className="px-2 py-1 text-sm border border-red-600 text-red-600 rounded hover:bg-red-50">Delete</button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div className="flex justify-center mt-6">
+                  <button type="button" onClick={() => { resetDocForm(); openAddModalForRequired(); }} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Add Documents</button>
                 </div>
               </div>
 
-              {/* Add Document Modal (staging only) */}
+              {/* Add Document Modal */}
               {showAddDocModal && (
-                <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                   <div className="bg-white rounded-lg p-6 max-w-md w-full">
                     <h3 className="text-2xl font-bold mb-4 text-green-700">Add New Document</h3>
                     <div>
                       <div className="mb-4">
                         <label className="block text-gray-700 font-semibold mb-2">Select Document Type</label>
-                        <select
-                          name="document_type"
-                          value={docForm.document_type}
-                          onChange={e => setDocForm(f => ({ ...f, document_type: e.target.value }))}
-                          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${docErrors.document_type ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'}`}
-                        >
+                        <select name="document_type" value={docForm.document_type} onChange={e => setDocForm(f => ({ ...f, document_type: e.target.value }))} className={inputClass(docErrors.document_type)}>
                           <option value="">-- Select Document --</option>
                           {addModalTypes.map(t => (<option key={t.value} value={t.value}>{t.label}</option>))}
                         </select>
@@ -848,7 +818,7 @@ export default function ApplySubsidy() {
 
                       <div className="mb-4">
                         <label className="block text-gray-700 font-semibold mb-2">Document Number</label>
-                        <input type="text" value={docForm.number} onChange={e => { setDocForm(f => ({ ...f, number: e.target.value })); setDocErrors(prev => ({ ...prev, number: '' })); }} className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="e.g., ABC1234567" />
+                        <input type="text" value={docForm.number} onChange={e => { setDocForm(f => ({ ...f, number: e.target.value })); setDocErrors(prev => ({ ...prev, number: '' })); }} className={inputClass(docErrors.number)} placeholder="e.g., ABC1234567" />
                         {docErrors.number && <p className="text-red-500 text-sm mt-1">{docErrors.number}</p>}
                       </div>
 
@@ -860,8 +830,8 @@ export default function ApplySubsidy() {
                       </div>
 
                       <div className="flex gap-3">
-                        <button type="button" onClick={handleAddDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Stage Document</button>
-                        <button type="button" onClick={() => { resetDocForm(); setShowAddDocModal(false); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
+                        <button type="button" onClick={handleAddDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Stage Document</button>
+                        <button type="button" onClick={() => { resetDocForm(); setShowAddDocModal(false); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
                       </div>
                     </div>
                   </div>
@@ -870,7 +840,7 @@ export default function ApplySubsidy() {
 
               {/* Edit Document Modal */}
               {showEditModal && (
-                <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                   <div className="bg-white rounded-lg p-6 max-w-md w-full">
                     <h3 className="text-2xl font-bold mb-4 text-green-700">Edit Document</h3>
                     <div>
@@ -893,14 +863,16 @@ export default function ApplySubsidy() {
                       </div>
 
                       <div className="flex gap-3">
-                        <button type="button" onClick={handleUpdateDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">Save</button>
-                        <button type="button" onClick={() => { resetDocForm(); setShowEditModal(false); setCurrentDoc(null); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
+                        <button type="button" onClick={handleUpdateDocument} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Save</button>
+                        <button type="button" onClick={() => { resetDocForm(); setShowEditModal(false); setCurrentDoc(null); }} className="flex-1 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
             </div>
+          </form>
+        </div>
 
             <div className="flex justify-between items-center pt-6 border-t border-gray-200 mt-8">
               {step > 0 ? (
