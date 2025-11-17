@@ -24,9 +24,16 @@ class SubsidyRecommander:
     def __init__(self):
         self.groq_api_key = os.getenv("GROQ_API_KEY")
         
-        # Validate API key
+        # Validate API key with better error message
         if not self.groq_api_key:
-            raise ValueError("GROQ_API_KEY environment variable is not set. Please configure it in your deployment environment.")
+            error_msg = (
+                "GROQ_API_KEY environment variable is not set. "
+                "Please configure it in your deployment environment (Render/Vercel). "
+                "For Render: Go to Environment tab and add GROQ_API_KEY. "
+                "Get your API key from https://console.groq.com/"
+            )
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         
         # Initialize model with API key and increased timeout for cloud deployments
         try:
@@ -35,11 +42,13 @@ class SubsidyRecommander:
                 model="llama-3.1-70b-versatile",  # Updated to a valid Groq model
                 temperature=0.3,
                 max_tokens=1500,  
-                timeout=60  # Increased timeout for cloud deployments
+                timeout=120,  # Increased timeout for cloud deployments (2 minutes)
+                max_retries=3  # Add retries for network issues
             )
+            logger.info("ChatGroq model initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize ChatGroq model: {e}")
-            raise ValueError(f"Failed to initialize AI model: {str(e)}")
+            raise ValueError(f"Failed to initialize AI model. Please check GROQ_API_KEY is valid: {str(e)}")
         
         self.graph = self.build_graph()
     

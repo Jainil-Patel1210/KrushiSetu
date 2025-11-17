@@ -39,7 +39,8 @@ def recommend_subsidies(request):
         if missing_fields:
             return Response({
                 "success": False,
-                "error": f"Missing required fields: {', '.join(missing_fields)}"
+                "error": f"Missing required fields: {', '.join(missing_fields)}",
+                "error_type": "validation_error"
             }, status=status.HTTP_400_BAD_REQUEST)
             
         # ------------------------ Load Subsidy From Backend (with caching) ---------------------
@@ -61,8 +62,9 @@ def recommend_subsidies(request):
         if not subsidies:
             return Response({
                 "success": False,
-                "error": "No subsidies available in the system."
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                "error": "No subsidies available in the system.",
+                "error_type": "no_data"
+            }, status=status.HTTP_404_NOT_FOUND)
         
         # Convert to list and format for recommender
         subsidies_list = []
@@ -89,7 +91,7 @@ def recommend_subsidies(request):
         recommendation_result = cache.get(cache_key)
         
         if recommendation_result is None:
-            # Get recommendations using FastSubsidyRecommander
+            # Get recommendations using SubsidyRecommander
             try:
                 recommender = SubsidyRecommander()
                 recommendation_result = recommender.recommend_subsidies(farmer_profile, subsidies_list)
@@ -97,11 +99,24 @@ def recommend_subsidies(request):
                 # Cache the result for 5 minutes
                 cache.set(cache_key, recommendation_result, 300)
                 print(f"Generated new recommendations for farmer profile")
+            except ValueError as ve:
+                # API key or configuration error
+                print(f"Configuration error: {ve}")
+                return Response({
+                    "success": False,
+                    "error": str(ve),
+                    "error_type": "configuration_error",
+                    "help": "Please contact administrator to configure GROQ_API_KEY in the backend deployment environment."
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             except Exception as e:
                 print(f"Error creating or using recommender: {e}")
                 import traceback
                 traceback.print_exc()
-                raise
+                return Response({
+                    "success": False,
+                    "error": f"AI recommendation service error: {str(e)}",
+                    "error_type": "ai_service_error"
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         else:
             print(f"Retrieved recommendations from cache")
         
@@ -117,10 +132,27 @@ def recommend_subsidies(request):
     
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        error_trace = traceback.format_exc()
+        print(f"Unexpected error in recommend_subsidies: {e}")
+        print(error_trace)
+        
+        # Provide helpful error message
+        error_message = str(e)
+        if "GROQ_API_KEY" in error_message:
+            error_type = "configuration_error"
+            help_text = "Backend AI service not configured. Contact administrator."
+        elif "timeout" in error_message.lower():
+            error_type = "timeout_error"
+            help_text = "Request took too long. Please try again."
+        else:
+            error_type = "server_error"
+            help_text = "An unexpected error occurred. Please try again later."
+        
         return Response({
             "success": False,
-            "error": str(e)
+            "error": error_message,
+            "error_type": error_type,
+            "help": help_text
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
