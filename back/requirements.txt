@@ -71,9 +71,9 @@ sendgrid
 django-sendgrid-v5
 cloudinary
 django-cloudinary-storage
-groq
-langchain-groq
-langchain-core
-langgraph
+groq>=0.4.0
+langchain-groq>=0.1.0
+langchain-core>=0.1.0
+langgraph>=0.0.1
 django-anymail
 ulid-py

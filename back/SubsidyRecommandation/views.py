@@ -158,8 +158,26 @@ def recommend_subsidies(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def recommendation_status(request):
-    return Response({
+    """
+    Check if the subsidy recommendation service is operational.
+    Returns diagnostic information about API key and service status.
+    """
+    import os
+    
+    groq_key_set = bool(os.getenv("GROQ_API_KEY"))
+    groq_key_prefix = os.getenv("GROQ_API_KEY", "")[:7] if groq_key_set else "Not set"
+    
+    status_info = {
         "success": True,
-        "message": "Subsidy Recommendation Service is operational."
-    }, status=status.HTTP_200_OK)    
+        "message": "Subsidy Recommendation Service Status",
+        "groq_api_key_configured": groq_key_set,
+        "groq_key_prefix": groq_key_prefix if groq_key_set else "Not set",
+        "service_operational": groq_key_set,
+    }
+    
+    if not groq_key_set:
+        status_info["warning"] = "GROQ_API_KEY not configured. AI recommendations will not work."
+        status_info["help"] = "Add GROQ_API_KEY to environment variables in Render dashboard."
+    
+    return Response(status_info, status=status.HTTP_200_OK)    
         

@@ -95,13 +95,17 @@ class SubsidyRecommander:
                                 Answer with JSON:
                                 {{"eligible": true/false, "reason": "brief explanation"}}"""
 
-                # Retry logic for network errors
+                # Retry logic for network errors and rate limiting
                 max_retries = 3
                 retry_count = 0
                 eligibility_checked = False
                 
                 while retry_count < max_retries and not eligibility_checked:
                     try:
+                        # Add delay to avoid rate limiting (0.5 seconds between requests)
+                        if retry_count > 0:
+                            time.sleep(1)  # Wait 1 second before retry
+                        
                         messages = [
                             SystemMessage(content = "You are an eligibility checker. Respond only with valid JSON."),
                             HumanMessage(content = user_prompt)
@@ -134,8 +138,13 @@ class SubsidyRecommander:
                     
                     except Exception as e:
                         retry_count += 1
-                        error_msg = str(e)
+                        error_msg = str(e).lower()
                         logger.warning(f"Error checking eligibility for {subsidy.get('title')} (attempt {retry_count}/{max_retries}): {error_msg}")
+                        
+                        # Check if it's a rate limit error
+                        if "429" in error_msg or "rate limit" in error_msg or "too many requests" in error_msg:
+                            logger.warning(f"Rate limit hit for {subsidy.get('title')}. Waiting before retry...")
+                            time.sleep(2 * retry_count)  # Longer wait for rate limits
                         
                         if retry_count >= max_retries:
                             # After max retries, default to eligible (fail-safe approach)
