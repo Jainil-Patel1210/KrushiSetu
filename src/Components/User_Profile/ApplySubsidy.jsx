@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Data from './assets/data.json';
 import api from './api1';
 import Cookies from 'js-cookie';
+import Settings from '../HomePage/Settings.jsx';
 
 export default function ApplySubsidy() {
   const navigate = useNavigate();
@@ -552,77 +553,78 @@ export default function ApplySubsidy() {
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl my-8 relative">
-        {/* Header with Close Button */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 rounded-t-lg px-8 py-4 flex justify-between items-center z-10">
-          <div>
-            <h2 className="text-2xl font-bold text-green-600">
-              {subsidyTitle ? `${subsidyTitle} Application` : 'Subsidy Application'}
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">Step {step + 1} of 4</p>
-          </div>
+    return (
+    <>
+      <div className="fixed inset-0 bg-gray-100 bg-opacity-75 flex justify-center items-center p-2 sm:p-4 z-50 overflow-y-auto">
+        <Settings />
+        <div className="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-5xl p-4 sm:p-6 md:p-8 relative my-auto">
           <button
-            onClick={handleClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+            onClick={() => navigate(-1)}
+            className="absolute top-2 right-2 md:top-4 md:right-4 w-10 h-10 flex items-center justify-center text-gray-500 hover:rounded-full hover:bg-gray-200 transition-all duration-200 text-2xl font-bold hover:shadow-md z-10"
             aria-label="Close"
           >
-            ×
+            &times;
           </button>
-        </div>
-
-        {/* Content */}
-        <div className="px-8 py-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-          <form onSubmit={e => e.preventDefault()}>
+          <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold text-gray-900 mb-2 text-center leading-tight pt-0 px-12">{subsidyTitle ? `${subsidyTitle} Application Form` : 'Subsidy Application Form'}</h2>
+          <p className="text-center text-xs sm:text-sm text-gray-600 mb-6 md:mb-8">Step {step + 1} of 4</p>
+          <form className="space-y-8" onSubmit={e => e.preventDefault()}>
             {/* Step 0: Personal */}
-            <div className={`${step === 0 ? '' : 'hidden'} w-full`}>
-              <h1 className='text-green-600 font-bold text-xl mb-6'>Personal Information</h1>
+            <div className={`${step === 0 ? '' : 'hidden'} w-full space-y-6`}>
+              <h1 className='text-green-600 font-extrabold text-2xl md:text-3xl mb-6 pb-2 border-b-2 border-green-200'>Personal Information</h1>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2" htmlFor="fullName">Full Name</label>
-                  <input className={inputClass(errors.fullName)}
-                    type="text" placeholder='Enter Full Name' id="fullName" name="fullName"
-                    value={form.fullName}
-                    onChange={(e) => { update('fullName', e.target.value); if (errors.fullName) validateField('fullName', e.target.value); }}
-                    onBlur={(e) => validateField('fullName', e.target.value)} />
-                  {errors.fullName ? <div className="text-red-500 text-sm mt-1">{errors.fullName}</div> : null}
-                </div>
+              {/* Full Name */}
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="fullName">Full Name</label>
+                <input className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all"
+                  type="text" placeholder='Enter Full Name' id="fullName" name="fullName"
+                  value={form.fullName}
+                  onChange={(e) => { update('fullName', e.target.value); if (errors.fullName) validateField('fullName', e.target.value); }}
+                  onBlur={(e) => validateField('fullName', e.target.value)} />
+                {errors.fullName ? <div className="text-red-500 text-sm mt-1">{errors.fullName}</div> : null}
+              </div>
 
-                <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2" htmlFor="mobile">Mobile Number</label>
-                  <input className={inputClass(errors.mobile)}
-                    type="text" placeholder='Enter Mobile Number' id="mobile" name="mobile"
-                    value={form.mobile}
-                    onChange={(e) => { update('mobile', e.target.value); if (errors.mobile) validateField('mobile', e.target.value); }}
-                    onBlur={(e) => validateField('mobile', e.target.value)} />
-                  {errors.mobile ? <div className="text-red-500 text-sm mt-1">{errors.mobile}</div> : null}
-                </div>
+              {/* Mobile */}
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="mobile">Mobile Number</label>
+                <input className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all"
+                  type="text" placeholder='Enter Mobile Number' id="mobile" name="mobile"
+                  value={form.mobile}
+                  onChange={(e) => { update('mobile', e.target.value); if (errors.mobile) validateField('mobile', e.target.value); }}
+                  onBlur={(e) => validateField('mobile', e.target.value)} />
+                {errors.mobile ? <div className="text-red-500 text-sm mt-1">{errors.mobile}</div> : null}
+              </div>
 
-                <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2" htmlFor="email">Email</label>
-                  <input className={inputClass(errors.email)}
-                    type="email" placeholder='Enter Email' id="email" name="email"
-                    value={form.email}
-                    onChange={(e) => { update('email', e.target.value); if (errors.email) validateField('email', e.target.value); }}
-                    onBlur={(e) => validateField('email', e.target.value)} />
-                  {errors.email ? <div className="text-red-500 text-sm mt-1">{errors.email}</div> : null}
-                </div>
+              {/* Email */}
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="email">Email</label>
+                <input className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all"
+                  type="email" placeholder='Enter Email' id="email" name="email"
+                  value={form.email}
+                  onChange={(e) => { update('email', e.target.value); if (errors.email) validateField('email', e.target.value); }}
+                  onBlur={(e) => validateField('email', e.target.value)} />
+                {errors.email ? <div className="text-red-500 text-sm mt-1">{errors.email}</div> : null}
+              </div>
 
-                <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2" htmlFor="aadhar">Aadhar Number</label>
-                  <input className={inputClass(errors.aadhar)}
-                    type="text" placeholder='Enter Aadhar Number' id="aadhar" name="aadhar"
-                    value={form.aadhar}
-                    onChange={(e) => { update('aadhar', e.target.value); if (errors.aadhar) validateField('aadhar', e.target.value); }}
-                    onBlur={(e) => validateField('aadhar', e.target.value)} />
-                  {errors.aadhar ? <div className="text-red-500 text-sm mt-1">{errors.aadhar}</div> : null}
-                </div>
+              {/* Aadhaar */}
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="aadhar">Aadhar Number</label>
+                <input className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all"
+                  type="text" placeholder='Enter Aadhar Number' id="aadhar" name="aadhar"
+                  value={form.aadhar}
+                  onChange={(e) => { update('aadhar', e.target.value); if (errors.aadhar) validateField('aadhar', e.target.value); }}
+                  onBlur={(e) => validateField('aadhar', e.target.value)} />
+                {errors.aadhar ? <div className="text-red-500 text-sm mt-1">{errors.aadhar}</div> : null}
+              </div>
 
+              </div>
+
+              {/* State/District/Taluka/Village */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2">State</label>
+                  <label className="text-gray-700 font-semibold mb-2">State</label>
                   <select value={stateValue} onChange={(e) => { setStateValue(e.target.value); setDistrictValue(''); setTalukaValue(''); setVillageValue(''); update('state', e.target.value); validateField('state', e.target.value); }}
-                    className={inputClass(errors.state)}>
+                    className="h-12 border border-gray-300 rounded-lg px-4 text-sm focus:ring-2 focus:ring-green-600 focus:outline-none bg-gray-50 transition-all">
                     <option value="">Select State</option>
                     {Array.isArray(Data) && Data.map((stateData, index) => (<option key={index} value={stateData.state}>{stateData.state}</option>))}
                   </select>
@@ -630,9 +632,9 @@ export default function ApplySubsidy() {
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2">District</label>
+                  <label className="text-gray-700 font-semibold mb-2">District</label>
                   <select value={districtValue} onChange={(e) => { setDistrictValue(e.target.value); setTalukaValue(''); setVillageValue(''); update('district', e.target.value); validateField('district', e.target.value); }}
-                    className={inputClass(errors.district)}>
+                    className="h-12 border border-gray-300 rounded-lg px-4 text-sm focus:ring-2 focus:ring-green-600 focus:outline-none bg-gray-50 transition-all">
                     <option value="">Select District</option>
                     {stateValue && Array.isArray(Data) && Data.find(s => s.state === stateValue)?.districts.map((districtData, index) => (<option key={index} value={districtData.district}>{districtData.district}</option>))}
                   </select>
@@ -640,9 +642,9 @@ export default function ApplySubsidy() {
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2">Taluka</label>
+                  <label className="text-gray-700 font-semibold mb-2">Taluka</label>
                   <select value={talukaValue} onChange={(e) => { setTalukaValue(e.target.value); setVillageValue(''); update('taluka', e.target.value); validateField('taluka', e.target.value); }}
-                    className={inputClass(errors.taluka)}>
+                    className="h-12 border border-gray-300 rounded-lg px-4 text-sm focus:ring-2 focus:ring-green-600 focus:outline-none bg-gray-50 transition-all">
                     <option value="">Select Taluka</option>
                     {districtValue && stateValue && Data && Array.isArray(Data) && Data.find(s => s.state === stateValue)?.districts.find(d => d.district === districtValue)?.subDistricts.map((subDistrictData, index) => (<option key={index} value={subDistrictData.subDistrict}>{subDistrictData.subDistrict}</option>))}
                   </select>
@@ -650,107 +652,108 @@ export default function ApplySubsidy() {
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2">Village</label>
+                  <label className="text-gray-700 font-semibold mb-2">Village</label>
                   <select value={villageValue} onChange={(e) => { setVillageValue(e.target.value); update('village', e.target.value); validateField('village', e.target.value); }}
-                    className={inputClass(errors.village)}>
+                    className="h-12 border border-gray-300 rounded-lg px-4 text-sm focus:ring-2 focus:ring-green-600 focus:outline-none bg-gray-50 transition-all">
                     <option value="">Select Village</option>
                     {talukaValue && districtValue && stateValue && Data && Array.isArray(Data) && Data.find(s => s.state === stateValue)?.districts.find(d => d.district === districtValue)?.subDistricts.find(sd => sd.subDistrict === talukaValue)?.villages.map((village, index) => (<option key={index} value={village}>{village}</option>))}
                   </select>
                   {errors.village ? <div className="text-red-500 text-sm mt-1">{errors.village}</div> : null}
                 </div>
 
-                <div className="flex flex-col md:col-span-2">
-                  <label className="text-black font-semibold mb-2" htmlFor="address">Address</label>
-                  <input className={inputClass(errors.address)}
-                    type="text" placeholder='Enter Address' id="address" name="address"
-                    value={form.address}
-                    onChange={(e) => { update('address', e.target.value); if (errors.address) validateField('address', e.target.value); }}
-                    onBlur={(e) => validateField('address', e.target.value)} />
-                  {errors.address ? <div className="text-red-500 text-sm mt-1">{errors.address}</div> : null}
-                </div>
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="address">Address</label>
+                <input className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all"
+                  type="text" placeholder='Enter Address' id="address" name="address"
+                  value={form.address}
+                  onChange={(e) => { update('address', e.target.value); if (errors.address) validateField('address', e.target.value); }}
+                  onBlur={(e) => validateField('address', e.target.value)} />
+                {errors.address ? <div className="text-red-500 text-sm mt-1">{errors.address}</div> : null}
               </div>
             </div>
 
             {/* Step 1: Land details */}
-            <div className={`${step === 1 ? '' : 'hidden'} w-full`}>
-              <h1 className='text-green-600 font-bold text-xl mb-6'>Land Information</h1>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2" htmlFor="landArea">Land Area</label>
-                  <input className={inputClass(errors.landArea)} type="number" id="landArea" name="landArea" placeholder="Enter land area" value={form.landArea} onChange={(e) => { update('landArea', e.target.value); if (errors.landArea) validateField('landArea', e.target.value); }} onBlur={(e) => validateField('landArea', e.target.value)} />
-                  {errors.landArea ? <div className="text-red-500 text-sm mt-1">{errors.landArea}</div> : null}
-                </div>
+            <div className={`${step === 1 ? '' : 'hidden'} w-full space-y-6`}>
+              <h1 className='text-green-600 font-extrabold text-3xl mb-6 pb-2 border-b-2 border-green-200'>Land Information</h1>
 
-                <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2" htmlFor="landAreaUnit">Land Area Unit</label>
-                  <select className={inputClass(errors.unit)} id="landAreaUnit" name="landAreaUnit" value={unitValue} onChange={(e) => { setUnitValue(e.target.value); update('unit', e.target.value); validateField('unit', e.target.value); }}>
-                    <option value="">Select Unit</option>
-                    <option value="acres">Acres</option>
-                    <option value="hectares">Hectares</option>
-                  </select>
-                  {errors.unit ? <div className="text-red-500 text-sm mt-1">{errors.unit}</div> : null}
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="landArea">Land Area</label>
+                <input className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all" type="number" id="landArea" name="landArea" value={form.landArea} onChange={(e) => { update('landArea', e.target.value); if (errors.landArea) validateField('landArea', e.target.value); }} onBlur={(e) => validateField('landArea', e.target.value)} />
+                {errors.landArea ? <div className="text-red-500 text-sm mt-1">{errors.landArea}</div> : null}
+              </div>
 
-                <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2" htmlFor="soilType">Soil Type</label>
-                  <select className={inputClass(errors.soilType)} id="soilType" name="soilType" value={soilTypeValue} onChange={(e) => { setSoilTypeValue(e.target.value); update('soilType', e.target.value); validateField('soilType', e.target.value); }}>
-                    <option value="">Select Soil Type</option>
-                    <option value="Alluvial">Alluvial</option>
-                    <option value="Black">Black</option>
-                    <option value="Red & Yellow">Red & Yellow</option>
-                    <option value="Laterite">Laterite</option>
-                    <option value="Arid">Arid</option>
-                    <option value="Forest & Mountain">Forest & Mountain</option>
-                    <option value="Saline & Alkaline">Saline & Alkaline</option>
-                    <option value="Peaty">Peaty</option>
-                    <option value="Marshy">Marshy</option>
-                  </select>
-                  {errors.soilType ? <div className="text-red-500 text-sm mt-1">{errors.soilType}</div> : null}
-                </div>
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="landAreaUnit">Unit</label>
+                <select className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all" id="landAreaUnit" name="landAreaUnit" value={unitValue} onChange={(e) => { setUnitValue(e.target.value); update('unit', e.target.value); validateField('unit', e.target.value); }}>
+                  <option value="">Select Unit</option>
+                  <option value="acres">Acres</option>
+                  <option value="hectares">Hectares</option>
+                </select>
+                {errors.unit ? <div className="text-red-500 text-sm mt-1">{errors.unit}</div> : null}
+              </div>
 
-                <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2" htmlFor="ownership">Ownership Type</label>
-                  <select className={inputClass(errors.ownership)} id="ownership" name="ownership" value={form.ownership} onChange={(e) => { update('ownership', e.target.value); validateField('ownership', e.target.value); }}>
-                    <option value="">Select Ownership</option>
-                    <option value="owned">Owned</option>
-                    <option value="leased">Leased</option>
-                  </select>
-                  {errors.ownership ? <div className="text-red-500 text-sm mt-1">{errors.ownership}</div> : null}
-                </div>
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="soilType">Soil Type</label>
+                <select className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all" id="soilType" name="soilType" value={soilTypeValue} onChange={(e) => { setSoilTypeValue(e.target.value); update('soilType', e.target.value); validateField('soilType', e.target.value); }}>
+                  <option value="">Select Soil Type</option>
+                  <option value="Alluvial">Alluvial</option>
+                  <option value="Black">Black</option>
+                  <option value="Red & Yellow">Red & Yellow</option>
+                  <option value="Laterite">Laterite</option>
+                  <option value="Arid">Arid</option>
+                  <option value="Forest & Mountain">Forest & Mountain</option>
+                  <option value="Saline & Alkaline">Saline & Alkaline</option>
+                  <option value="Peaty">Peaty</option>
+                  <option value="Marshy">Marshy</option>
+                </select>
+                {errors.soilType ? <div className="text-red-500 text-sm mt-1">{errors.soilType}</div> : null}
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="ownership">Ownership</label>
+                <select className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all" id="ownership" name="ownership" value={form.ownership} onChange={(e) => { update('ownership', e.target.value); validateField('ownership', e.target.value); }}>
+                  <option value="">Select Ownership</option>
+                  <option value="owned">Owned</option>
+                  <option value="leased">Leased</option>
+                </select>
+                {errors.ownership ? <div className="text-red-500 text-sm mt-1">{errors.ownership}</div> : null}
+              </div>
               </div>
             </div>
 
             {/* Step 2: Bank details */}
-            <div className={`${step === 2 ? '' : 'hidden'} w-full`}>
-              <h1 className='text-green-600 font-bold text-xl mb-6'>Bank Details</h1>
-              <div className="grid grid-cols-1 gap-6">
-                <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2" htmlFor="bankName">Bank Name</label>
-                  <input className={inputClass(errors.bankName)} type="text" id="bankName" name="bankName" placeholder="Enter bank name" value={form.bankName} onChange={(e) => { update('bankName', e.target.value); if (errors.bankName) validateField('bankName', e.target.value); }} onBlur={(e) => validateField('bankName', e.target.value)} />
-                  {errors.bankName ? <div className="text-red-500 text-sm mt-1">{errors.bankName}</div> : null}
-                </div>
+            <div className={`${step === 2 ? '' : 'hidden'} w-full space-y-6`}>
+              <h1 className='text-green-600 font-extrabold text-3xl mb-6 pb-2 border-b-2 border-green-200'>Bank Details</h1>
+              
+              <div className="space-y-6">
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="bankName">Bank Name</label>
+                <input className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all" type="text" id="bankName" name="bankName" value={form.bankName} onChange={(e) => { update('bankName', e.target.value); if (errors.bankName) validateField('bankName', e.target.value); }} onBlur={(e) => validateField('bankName', e.target.value)} />
+                {errors.bankName ? <div className="text-red-500 text-sm mt-1">{errors.bankName}</div> : null}
+              </div>
 
-                <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2" htmlFor="ifscCode">IFSC Code</label>
-                  <input className={inputClass(errors.ifsc)} type="text" id="ifscCode" name="ifscCode" placeholder="Enter IFSC code" value={form.ifsc} onChange={(e) => { update('ifsc', e.target.value); if (errors.ifsc) validateField('ifsc', e.target.value); }} onBlur={(e) => validateField('ifsc', e.target.value)} />
-                  {errors.ifsc ? <div className="text-red-500 text-sm mt-1">{errors.ifsc}</div> : null}
-                </div>
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="ifscCode">IFSC Code</label>
+                <input className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all" type="text" id="ifscCode" name="ifscCode" value={form.ifsc} onChange={(e) => { update('ifsc', e.target.value); if (errors.ifsc) validateField('ifsc', e.target.value); }} onBlur={(e) => validateField('ifsc', e.target.value)} />
+                {errors.ifsc ? <div className="text-red-500 text-sm mt-1">{errors.ifsc}</div> : null}
+              </div>
 
-                <div className="flex flex-col">
-                  <label className="text-black font-semibold mb-2" htmlFor="accountNumber">Account Number</label>
-                  <input className={inputClass(errors.bankAccount)} type="text" id="accountNumber" name="accountNumber" placeholder="Enter account number" value={form.bankAccount} onChange={(e) => { update('bankAccount', e.target.value); if (errors.bankAccount) validateField('bankAccount', e.target.value); }} onBlur={(e) => validateField('bankAccount', e.target.value)} />
-                  {errors.bankAccount ? <div className="text-red-500 text-sm mt-1">{errors.bankAccount}</div> : null}
-                </div>
+              <div className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2" htmlFor="accountNumber">Account Number</label>
+                <input className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all" type="text" id="accountNumber" name="accountNumber" value={form.bankAccount} onChange={(e) => { update('bankAccount', e.target.value); if (errors.bankAccount) validateField('bankAccount', e.target.value); }} onBlur={(e) => validateField('bankAccount', e.target.value)} />
+                {errors.bankAccount ? <div className="text-red-500 text-sm mt-1">{errors.bankAccount}</div> : null}
+              </div>
               </div>
             </div>
 
-            {/* Step 3: Documents */}
-            <div className={`${step === 3 ? '' : 'hidden'} w-full`}>
-              <h1 className='text-green-600 font-bold text-xl mb-6'>Upload Documents</h1>
+            {/* Step 3: Documents (SIMPLIFIED) */}
+            <div className={`${step === 3 ? '' : 'hidden'} w-full space-y-6`}>
+              <h1 className='text-green-600 font-extrabold text-3xl mb-6 pb-2 border-b-2 border-green-200'>Upload Documents</h1>
 
               {missingDocs.length > 0 && (
-                <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
-                  <strong>Missing required documents:</strong> {missingDocs.map(prettifyLabel).join(', ')}
+                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+                  <strong className="font-bold">Missing required documents:</strong> {missingDocs.map(prettifyLabel).join(', ')}
                 </div>
               )}
 
@@ -871,20 +874,26 @@ export default function ApplySubsidy() {
           </form>
         </div>
 
-        {/* Footer with Navigation Buttons */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 rounded-b-lg px-8 py-4 flex justify-between items-center">
-          {step > 0 ? (
-            <button type="button" className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50" onClick={prevStep}>Back</button>
-          ) : <span />}
-          {step < 3 ? (
-            <button type="button" className="bg-green-600 text-white rounded-md px-6 py-2 hover:bg-green-700" onClick={nextStep}>Next</button>
-          ) : (
-            <button type="button" disabled={isSubmitting} className="bg-green-600 text-white rounded-md px-6 py-2 hover:bg-green-700 disabled:bg-gray-400" onClick={handleSubmitApplication}>
-              {isSubmitting ? 'Submitting...' : 'Submit Application'}
-            </button>
-          )}
+            <div className="flex justify-between items-center pt-6 border-t border-gray-200 mt-8">
+              {step > 0 ? (
+                <button type="button" className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all duration-200" onClick={prevStep}>
+                  ← Back
+                </button>
+              ) : <span />}
+              {step < 3 ? (
+                <button type="button" className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg" onClick={nextStep}>
+                  Next →
+                </button>
+              ) : (
+                <button type="button" disabled={isSubmitting} className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleSubmitApplication}>
+                  {isSubmitting ? 'Submitting...' : '✓ Submit Application'}
+                </button>
+              )}
+            </div>
+
+          </form>
         </div>
       </div>
-    </div>
+    </>
   );
 }

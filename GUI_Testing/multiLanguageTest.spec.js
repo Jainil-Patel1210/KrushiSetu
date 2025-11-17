@@ -14,49 +14,44 @@ describe('MultiLanguage_Test', function() {
     await driver.quit();
   })
   it('MultiLanguage_Test', async function() {
-    await driver.get("https://krushi-setu.vercel.app/")
-    await driver.manage().window().setRect({ width: 1314, height: 744 })
+    await driver.get("http://localhost:5173/")
+    await driver.manage().window().setRect({ width: 1034, height: 658 })
+    {
+      const element = await driver.findElement(By.css(".px-8"))
+      await driver.actions({ bridge: true }).moveToElement(element).perform()
+    }
+    await driver.findElement(By.css(".text-2xl > path")).click()
+    await driver.findElement(By.css(".w-full:nth-child(1) > .text-gray-700")).click()
+    {
+      const element = await driver.findElement(By.css(".text-2xl > path"))
+      await driver.actions({ bridge: true }).moveToElement(element).perform()
+    }
+    {
+      const element = await driver.findElement(By.CSS_SELECTOR, "body")
+      await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
+    }
     await driver.findElement(By.css(".fixed")).click()
-    await driver.findElement(By.css(".hover\\3A bg-green-50:nth-child(1)")).click()
-    await driver.findElement(By.css(".group-hover\\3Arotate-90")).click()
     await driver.findElement(By.css(".w-full:nth-child(2) > .text-gray-700")).click()
-    await driver.findElement(By.css(".group-hover\\3Arotate-90")).click()
-    await driver.findElement(By.css(".w-full:nth-child(3) > .text-gray-700")).click()
     {
-      const element = await driver.findElement(By.css(".fixed"))
+      const element = await driver.findElement(By.css(".group-hover\\3Arotate-90"))
       await driver.actions({ bridge: true }).moveToElement(element).perform()
     }
     {
       const element = await driver.findElement(By.CSS_SELECTOR, "body")
       await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
     }
-    await driver.findElement(By.css(".fixed")).click()
+    await driver.findElement(By.css(".text-2xl > path")).click()
+    await driver.findElement(By.css(".px-4:nth-child(3)")).click()
+    await driver.findElement(By.css(".text-2xl > path")).click()
+    {
+      const element = await driver.findElement(By.css(".w-full:nth-child(8)"))
+      await driver.actions({ bridge: true }).moveToElement(element).perform()
+    }
+    {
+      const element = await driver.findElement(By.CSS_SELECTOR, "body")
+      await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
+    }
     await driver.findElement(By.css(".w-full:nth-child(4) font > font")).click()
-    await driver.findElement(By.css(".text-2xl > path")).click()
-    await driver.findElement(By.css(".w-full:nth-child(5) font > font")).click()
-    await driver.findElement(By.css(".group-hover\\3Arotate-90")).click()
-    {
-      const element = await driver.findElement(By.css(".w-full:nth-child(8)"))
-      await driver.actions({ bridge: true }).moveToElement(element).perform()
-    }
-    {
-      const element = await driver.findElement(By.CSS_SELECTOR, "body")
-      await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
-    }
-    await driver.findElement(By.css(".w-full:nth-child(6)")).click()
-    await driver.findElement(By.css(".group-hover\\3Arotate-90")).click()
-    await driver.findElement(By.css(".w-full:nth-child(7) font > font")).click()
-    await driver.findElement(By.css(".text-2xl > path")).click()
-    {
-      const element = await driver.findElement(By.css(".w-full:nth-child(8)"))
-      await driver.actions({ bridge: true }).moveToElement(element).perform()
-    }
-    {
-      const element = await driver.findElement(By.CSS_SELECTOR, "body")
-      await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
-    }
-    await driver.findElement(By.css(".w-full:nth-child(7) > .text-gray-700")).click()
-    await driver.findElement(By.css(".fixed")).click()
     {
       const element = await driver.findElement(By.css(".fixed"))
       await driver.actions({ bridge: true }).moveToElement(element).perform()
@@ -65,7 +60,8 @@ describe('MultiLanguage_Test', function() {
       const element = await driver.findElement(By.CSS_SELECTOR, "body")
       await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
     }
-    await driver.findElement(By.css(".w-full:nth-child(7)")).click()
+    await driver.findElement(By.css(".group-hover\\3Arotate-90")).click()
+    await driver.findElement(By.css(".w-full:nth-child(5) font > font")).click()
     await driver.findElement(By.css(".text-2xl > path")).click()
     {
       const element = await driver.findElement(By.css(".text-2xl > path"))
@@ -75,26 +71,48 @@ describe('MultiLanguage_Test', function() {
       const element = await driver.findElement(By.CSS_SELECTOR, "body")
       await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
     }
+    await driver.findElement(By.css(".w-full:nth-child(6)")).click()
     {
-      const element = await driver.findElement(By.css(".w-full:nth-child(7) > .text-gray-700"))
+      const element = await driver.findElement(By.css(".text-2xl > path"))
       await driver.actions({ bridge: true }).moveToElement(element).perform()
     }
     {
       const element = await driver.findElement(By.CSS_SELECTOR, "body")
       await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
     }
-    await driver.findElement(By.css(".w-full:nth-child(7) font > font")).click()
-    await driver.findElement(By.css(".text-2xl > path")).click()
-    await driver.findElement(By.css(".w-full:nth-child(8)")).click()
     await driver.findElement(By.css(".group-hover\\3Arotate-90")).click()
+    await driver.findElement(By.css(".w-full:nth-child(7) font > font")).click()
+    await driver.findElement(By.css(".fixed")).click()
     {
-      const element = await driver.findElement(By.css(".bottom-6"))
+      const element = await driver.findElement(By.css(".fixed"))
       await driver.actions({ bridge: true }).moveToElement(element).perform()
     }
-    await driver.findElement(By.css(".w-full:nth-child(9)")).click()
-    await driver.findElement(By.css(".fixed")).click()
+    {
+      const element = await driver.findElement(By.CSS_SELECTOR, "body")
+      await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
+    }
     await driver.findElement(By.css(".w-full:nth-child(8) font > font")).click()
-    await driver.findElement(By.css(".text-2xl > path")).click()
+    {
+      const element = await driver.findElement(By.css(".text-2xl > path"))
+      await driver.actions({ bridge: true }).moveToElement(element).perform()
+    }
+    {
+      const element = await driver.findElement(By.CSS_SELECTOR, "body")
+      await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
+    }
+    await driver.findElement(By.css(".group-hover\\3Arotate-90")).click()
+    await driver.findElement(By.css(".w-full:nth-child(9)")).click()
+    {
+      const element = await driver.findElement(By.css(".fixed"))
+      await driver.actions({ bridge: true }).moveToElement(element).perform()
+    }
+    {
+      const element = await driver.findElement(By.CSS_SELECTOR, "body")
+      await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
+    }
+    await driver.findElement(By.css(".fixed")).click()
+    await driver.findElement(By.css(".w-full:nth-child(10) font > font")).click()
+    await driver.findElement(By.css(".fixed")).click()
     {
       const element = await driver.findElement(By.css(".w-full:nth-child(7)"))
       await driver.actions({ bridge: true }).moveToElement(element).perform()
@@ -103,10 +121,18 @@ describe('MultiLanguage_Test', function() {
       const element = await driver.findElement(By.CSS_SELECTOR, "body")
       await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
     }
-    await driver.findElement(By.css(".w-full:nth-child(10)")).click()
-    await driver.findElement(By.css(".group-hover\\3Arotate-90")).click()
+    await driver.findElement(By.css(".w-full:nth-child(11) font > font")).click()
     {
-      const element = await driver.findElement(By.css(".w-full:nth-child(6)"))
+      const element = await driver.findElement(By.css(".text-2xl > path"))
+      await driver.actions({ bridge: true }).moveToElement(element).perform()
+    }
+    {
+      const element = await driver.findElement(By.CSS_SELECTOR, "body")
+      await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
+    }
+    await driver.findElement(By.css(".text-2xl > path")).click()
+    {
+      const element = await driver.findElement(By.css(".w-full:nth-child(5)"))
       await driver.actions({ bridge: true }).moveToElement(element).perform()
     }
     {
@@ -114,5 +140,15 @@ describe('MultiLanguage_Test', function() {
       await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
     }
     await driver.findElement(By.css(".w-full:nth-child(11)")).click()
+    {
+      const element = await driver.findElement(By.css(".fixed"))
+      await driver.actions({ bridge: true }).moveToElement(element).perform()
+    }
+    await driver.findElement(By.css(".fixed")).click()
+    {
+      const element = await driver.findElement(By.CSS_SELECTOR, "body")
+      await driver.actions({ bridge: true }).moveToElement(element, 0, 0).perform()
+    }
+    await driver.findElement(By.css(".w-full:nth-child(12) font > font")).click()
   })
 })

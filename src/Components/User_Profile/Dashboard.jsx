@@ -87,7 +87,7 @@ const Dashboard = () => {
       <Settings />
 
       <div className="w-full bg-gray-100 min-h-screen">
-        <div className="max-w-6xl mx-auto py-6 px-4">
+        <div className="max-w-6xl mx-auto py-6 p-6">
 
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-gray-600 mt-2 font-semibold">
