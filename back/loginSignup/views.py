@@ -130,6 +130,41 @@ class UserSignupView(generics.CreateAPIView):
         if password != confirm:
             return Response({"error": "Passwords do not match"}, status=400)
 
+        email = request.data.get("email_address")
+        mobile = request.data.get("mobile_number")
+
+        # ---------------------------------------------
+        # 1️⃣ Check if user already exists
+        # ---------------------------------------------
+        existing_user = User.objects.filter(email_address=email).first()
+
+        if existing_user:
+            if existing_user.is_active:
+                # User already fully registered
+                return Response(
+                    {"error": "Account already exists. Please log in."},
+                    status=400
+                )
+
+            # ---------------------------------------------
+            # 2️⃣ User exists but NOT ACTIVE → resend OTP
+            # ---------------------------------------------
+            # Update user fields (in case user changed name/mobile)
+            existing_user.full_name = request.data.get("full_name")
+            existing_user.mobile_number = mobile
+            existing_user.set_password(password)
+            existing_user.save()
+
+            send_otp(existing_user, "email_verify")
+
+            return Response({
+                "message": "Account already exists but is not verified. OTP re-sent to email.",
+                "user_id": existing_user.id
+            }, status=200)
+
+        # ---------------------------------------------
+        # 3️⃣ No user → Create new one
+        # ---------------------------------------------
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -139,7 +174,11 @@ class UserSignupView(generics.CreateAPIView):
 
         send_otp(user, "email_verify")
 
-        return Response({"message": "Signup successful. Verify your email using the OTP sent to you."})
+        return Response({
+            "message": "Signup successful. Verify your email using the OTP sent to you.",
+            "user_id": user.id
+        }, status=201)
+
 
 
 # --------------------------------------------------------------------
