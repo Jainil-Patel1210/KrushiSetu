@@ -30,4 +30,5 @@ urlpatterns = [
     path('api/subsidy-recommendations/', include('SubsidyRecommandation.urls')),
     path('subsidy/', include("subsidy.urls")),
     path('news/', include('news_post.urls')),
+    path("notify/", include("notifications.urls")),
 ]

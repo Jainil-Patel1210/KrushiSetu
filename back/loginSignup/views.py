@@ -32,7 +32,8 @@ def forgot_password_send_otp(request):
     except User.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
 
-    send_otp(user, "forgot_password")
+    # IMPORTANT CHANGE ↓↓↓
+    send_otp(user, "reset_password")
 
     return Response({"success": "OTP sent to your email."})
 

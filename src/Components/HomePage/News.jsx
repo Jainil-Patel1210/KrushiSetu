@@ -25,9 +25,7 @@ function News() {
     const fetchLatestNews = async () => {
         const token = localStorage.getItem("access");
         try {
-            const res = await api.get("/news/articles/?limit=3", {
-                headers: { "Authorization": `Bearer ${token}` },
-            });
+            const res = await api.get("/news/articles/?limit=3");
             setNewsData(res.data);
         } catch (err) {
             console.error("Error fetching news:", err);

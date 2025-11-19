@@ -6,6 +6,9 @@ from django.core.mail import send_mail
 from twilio.rest import Client
 from django.conf import settings
 from .models import OTP
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.conf import settings
 
 OTP_EXPIRY_SECONDS = 300   # 5 min expiry
 MAX_ATTEMPTS = 3
@@ -49,23 +52,62 @@ def send_sms(number, body):
 def send_otp(user, purpose):
     otp_obj = get_or_create_otp(user, purpose)
     otp = otp_obj.otp
+    user_email = user.email_address
 
-    # ----- SMS for mobile-based OTP -----
+    # --------- SMS for mobile OTP ---------
     if purpose in ("login", "mobile_verify"):
         message = (
             f"Your {APP_NAME} {purpose.replace('_', ' ')} OTP is {otp}. "
             f"It expires in 5 minutes. Do NOT share this with anyone."
         )
         send_sms(user.mobile_number, message)
+        return otp
 
-    # ----- Email for email-based OTP -----
-    else:
-        subject = f"{APP_NAME} - OTP Verification"
-        message = (
-            f"Your {purpose.replace('_', ' ')} OTP is {otp}. "
-            f"It expires in 5 minutes. Do NOT share it with anyone."
-        )
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email_address])
+    # --------- EMAIL for other OTP purposes ---------
+
+    # Customize subject/heading/description based on purpose
+    purpose_map = {
+        "email_verify": {
+            "subject": f"{APP_NAME} - Email Verification",
+            "heading": "Verify Your Email",
+            "description": f"We received a request to verify the email {user_email}."
+        },
+        "reset_password": {
+            "subject": f"{APP_NAME} - Reset Password OTP",
+            "heading": "Reset Your Password",
+            "description": f"We received a request to reset your password for {user_email}."
+        },
+        "account_security": {
+            "subject": f"{APP_NAME} - Security Alert",
+            "heading": "Secure Your Account",
+            "description": "Use the OTP below to secure your account."
+        },
+        "default": {
+            "subject": f"{APP_NAME} - OTP Verification",
+            "heading": "OTP Verification",
+            "description": "Use this OTP to continue."
+        }
+    }
+
+    config = purpose_map.get(purpose, purpose_map["default"])
+
+    # Render HTML email
+    html_content = render_to_string("otp_email.html", {
+        "otp": otp,
+        "user_email": user_email,
+        "heading": config["heading"],
+        "description": config["description"]
+    })
+
+    email = EmailMultiAlternatives(
+        subject=config["subject"],
+        body=f"Your OTP is {otp}. It expires in 5 minutes.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user_email],
+    )
+
+    email.attach_alternative(html_content, "text/html")
+    email.send()
 
     return otp
 

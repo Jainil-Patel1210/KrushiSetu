@@ -12,13 +12,10 @@ function NewsDetail() {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch specific article
   const fetchArticle = async () => {
     try {
       const token = localStorage.getItem("access");
-      const res = await api.get(`/news/articles/${id}/`, {
-        headers: { "Authorization": `Bearer ${token}` },
-      });
+      const res = await api.get(`/news/articles/${id}/`);
       setArticle(res.data);
     } catch (err) {
       console.error("Error fetching article:", err);

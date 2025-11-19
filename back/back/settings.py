@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'subsidy',
     "anymail",
     'news_post',
+    'notifications'
 ]
 
 

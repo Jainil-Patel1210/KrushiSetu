@@ -120,7 +120,10 @@ function Signup({ onSignupSuccess = null }) {
             });
 
             toast.success("Signup completed! You can now login.");
-            navigate("/login");
+            setTimeout(() => {
+                    handlePageSwitch('login');
+            }, 1200);
+            onSignupSuccess();
         } catch (err) {
             toast.error(err.response?.data?.error || "Invalid OTP");
         }
