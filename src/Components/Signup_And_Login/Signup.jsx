@@ -8,55 +8,58 @@ import { Toaster, toast } from "react-hot-toast";
 function Signup({ onSignupSuccess = null }) {
     const navigate = useNavigate();
 
-    // UI States
-    const [step, setStep] = useState(1); // 1=Register, 2=Email OTP, 3=Mobile OTP
+    const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Form states
     const [fullName, setFullName] = useState("");
     const [mobile, setMobile] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
-    // Error states
     const [fullNameError, setFullNameError] = useState("");
     const [mobileError, setMobileError] = useState("");
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
 
-    // Password toggles
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const nameRestriction = /^[A-Za-z\s.]+$/;
+    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const passwordRestriction = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
-    // OTP States
     const [emailOtp, setEmailOtp] = useState("");
     const [mobileOtp, setMobileOtp] = useState("");
     const [otpTimer, setOtpTimer] = useState(0);
     const [userId, setUserId] = useState("");
 
-    // ----------------------------
-    // VALIDATIONS
-    // ----------------------------
-
-    const validateEmail = (email) =>
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-    const passwordRestriction =
-        /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
-
-    const nameRestriction = /^[A-Za-z\s]+$/;
-
-    // ----------------------------
-    // REGISTER SUBMIT
-    // ----------------------------
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleSignupSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
 
+        if (!nameRestriction.test(fullName)) {
+            toast.error("Enter a valid name containing only letters.");
+            setIsLoading(false);
+            return;
+        }
+        if (!validateEmail(email)) {
+            toast.error("Enter a valid email address.");
+            setIsLoading(false);
+            return;
+        }
+        if (mobile.length !== 10) {
+            toast.error("Mobile number must be exactly 10 digits.");
+            setIsLoading(false);
+            return;
+        }
+        if (!passwordRestriction.test(password)) {
+            toast.error("Password must have 8 chars, 1 letter, 1 digit, 1 special char.");
+            setIsLoading(false);
+            return;
+        }
         if (password !== confirmPassword) {
-            setPasswordError("Passwords do not match.");
+            toast.error("Passwords do not match.");
             setIsLoading(false);
             return;
         }
@@ -70,19 +73,16 @@ function Signup({ onSignupSuccess = null }) {
                 confirm_password: confirmPassword,
             });
 
-            toast.success("Account created! Verify your email.");
-            setUserId(res.data.user_id || null);
-            setStep(2); // go to email OTP step
+            toast.success("Account created. Verify email OTP.");
+            setUserId(res.data.user_id);
+            setOtpTimer(30);
+            setStep(2);
         } catch (err) {
             toast.error(err.response?.data?.error || "Signup failed");
         }
 
         setIsLoading(false);
     };
-
-    // ----------------------------
-    // VERIFY EMAIL OTP
-    // ----------------------------
 
     const handleVerifyEmailOtp = async (e) => {
         e.preventDefault();
@@ -94,36 +94,10 @@ function Signup({ onSignupSuccess = null }) {
                 otp: emailOtp,
             });
 
-            toast.success("Email verified! OTP sent to mobile.");
+            toast.success("Email verified. Mobile OTP sent.");
             setUserId(res.data.user_id);
             setOtpTimer(30);
             setStep(3);
-        } catch (error) {
-            toast.error(error.response?.data?.error || "Invalid OTP");
-        }
-
-        setIsLoading(false);
-    };
-
-    // ----------------------------
-    // VERIFY MOBILE OTP
-    // ----------------------------
-
-    const handleVerifyMobileOtp = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-
-        try {
-            const res = await api.post("/verify-mobile-otp/", {
-                user_id: userId,
-                otp: mobileOtp,
-            });
-
-            toast.success("Signup completed! You can now login.");
-            setTimeout(() => {
-                    handlePageSwitch('login');
-            }, 1200);
-            onSignupSuccess();
         } catch (err) {
             toast.error(err.response?.data?.error || "Invalid OTP");
         }
@@ -131,91 +105,97 @@ function Signup({ onSignupSuccess = null }) {
         setIsLoading(false);
     };
 
+    const handleVerifyMobileOtp = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+
+        try {
+            await api.post("/verify-mobile-otp/", {
+                user_id: userId,
+                otp: mobileOtp,
+            });
+
+            toast.success("Signup complete! You can now login.");
+            if (onSignupSuccess) onSignupSuccess();
+            setTimeout(() => navigate("/login"), 1200);
+        } catch (err) {
+            toast.error(err.response?.data?.error || "Invalid OTP");
+        }
+
+        setIsLoading(false);
+    };
 
     const resendEmailOtp = async () => {
         try {
-            const res = await api.post("/resend-email-otp/", {
-                email_address: email,
-            });
-
-            toast.success("Email OTP resent!");
+            await api.post("/resend-email-otp/", { email_address: email });
+            toast.success("Email OTP resent.");
             setOtpTimer(30);
         } catch (err) {
-            toast.error(err.response?.data?.error || "Failed to resend OTP");
+            toast.error("Failed to resend OTP.");
         }
     };
 
     const resendMobileOtp = async () => {
         try {
-            const res = await api.post("/resend-mobile-otp/", {
-                user_id: userId,
-            });
-
-            toast.success("Mobile OTP resent!");
+            await api.post("/resend-mobile-otp/", { user_id: userId });
+            toast.success("Mobile OTP resent.");
             setOtpTimer(30);
         } catch (err) {
-            toast.error(err.response?.data?.error || "Failed to resend OTP");
+            toast.error("Failed to resend OTP.");
         }
     };
-
-
-
-    // ----------------------------
-    // OTP Timer
-    // ----------------------------
 
     useEffect(() => {
         let interval;
         if (otpTimer > 0) {
             interval = setInterval(() => {
-                setOtpTimer((prev) => prev - 1);
+                setOtpTimer((t) => t - 1);
             }, 1000);
         }
         return () => clearInterval(interval);
     }, [otpTimer]);
 
-    // ------------------------------------------------------------
-    // STEP UI
-    // ------------------------------------------------------------
 
     return (
         <>
             <Toaster position="top-center" />
 
             <div>
-                <p className="text-black text-center text-xl font-bold mb-0.5">
+                <p className="text-black text-center text-xl font-bold mb-1">
                     Create Your Account
                 </p>
 
-                {/* ---------------------------------------------------------
-                    STEP 1: SIGNUP FORM
-                --------------------------------------------------------- */}
+                {/* STEP 1 — SIGNUP FORM */}
                 {step === 1 && (
                     <form onSubmit={handleSignupSubmit}>
                         <div className="p-2">
+
                             {/* Full Name */}
                             <input
-                                className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
-                                type="text"
+                                className="w-full p-2 mb-2 border rounded"
                                 placeholder="Full Name"
                                 value={fullName}
                                 onChange={(e) => {
                                     setFullName(e.target.value);
                                     setFullNameError(
-                                        nameRestriction.test(e.target.value) ? "" : "Invalid name"
+                                        nameRestriction.test(e.target.value)
+                                            ? ""
+                                            : "Only letters allowed"
                                     );
                                 }}
                                 required
                             />
                             {fullNameError && (
-                                <p className="text-red-600">{fullNameError}</p>
+                                <p className="text-red-600 text-xs mb-1">
+                                    {fullNameError}
+                                </p>
                             )}
 
                             {/* Email */}
                             <input
-                                className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+                                className="w-full p-2 mb-2 border rounded"
                                 type="email"
-                                placeholder="Email"
+                                placeholder="Email Address"
                                 value={email}
                                 onChange={(e) => {
                                     setEmail(e.target.value);
@@ -228,56 +208,67 @@ function Signup({ onSignupSuccess = null }) {
                                 required
                             />
                             {emailError && (
-                                <p className="text-red-600 text-xs mb-1">{emailError}</p>
+                                <p className="text-red-600 text-xs mb-1">
+                                    {emailError}
+                                </p>
                             )}
 
                             {/* Mobile */}
                             <input
-                                className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+                                className="w-full p-2 mb-2 border rounded"
                                 type="text"
                                 placeholder="Mobile Number"
                                 value={mobile}
                                 onChange={(e) => {
-                                    const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                                    setMobile(val);
+                                    const v = e.target.value
+                                        .replace(/\D/g, "")
+                                        .slice(0, 10);
+                                    setMobile(v);
                                     setMobileError(
-                                        val.length === 10 ? "" : "Must be 10 digits"
+                                        v.length === 10
+                                            ? ""
+                                            : "Must be exactly 10 digits"
                                     );
                                 }}
                                 required
                             />
                             {mobileError && (
-                                <p className="text-red-600 text-xs mb-1">{mobileError}</p>
+                                <p className="text-red-600 text-xs mb-1">
+                                    {mobileError}
+                                </p>
                             )}
-
 
                             {/* Password */}
                             <div className="relative">
                                 <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+                                    className="w-full p-2 mb-2 border rounded"
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Password"
                                     value={password}
                                     onChange={(e) => {
                                         setPassword(e.target.value);
                                         setPasswordError(
-                                            passwordRestriction.test(e.target.value)
+                                            passwordRestriction.test(
+                                                e.target.value
+                                            )
                                                 ? ""
-                                                : "Weak password"
+                                                : 'Password must be at least 8 characters, include 1 letter, 1 digit, and 1 special character.'
                                         );
                                     }}
                                     required
                                 />
                                 <PasswordToggleIcon
                                     visible={showPassword}
-                                    onClick={() => setShowPassword(!showPassword)}
+                                    onClick={() =>
+                                        setShowPassword(!showPassword)
+                                    }
                                 />
                             </div>
 
                             {/* Confirm Password */}
                             <div className="relative">
                                 <input
-                                    className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+                                    className="w-full p-2 mb-2 border rounded"
                                     type={showConfirmPassword ? "text" : "password"}
                                     placeholder="Confirm Password"
                                     value={confirmPassword}
@@ -298,20 +289,24 @@ function Signup({ onSignupSuccess = null }) {
                                     }
                                 />
                             </div>
+
                             {passwordError && (
-                                <p className="text-red-600 text-xs mb-1">{passwordError}</p>
+                                <p className="text-red-600 text-xs mb-1">
+                                    {passwordError}
+                                </p>
                             )}
                         </div>
 
+                        {/* Terms */}
                         <div className="flex items-center space-x-2 pl-4 mb-2">
-                            <input type="checkbox" id="agree" className="h-4 w-4 text-green-700 border-gray-300 rounded focus:ring-green-500" required />
-                            <label htmlFor="agree" className="text-black">I agree to the <span className='text-green-700'>Terms & Conditions</span></label>
+                            <input type="checkbox" required />
+                            <label>I agree to the Terms & Conditions</label>
                         </div>
 
                         {/* Submit */}
                         <div className="flex justify-center pb-3">
                             <button
-                                className="bg-green-700 text-white p-2 rounded w-40"
+                                className="bg-green-700 text-white w-40 p-2 rounded"
                                 type="submit"
                                 disabled={isLoading}
                             >
@@ -321,25 +316,25 @@ function Signup({ onSignupSuccess = null }) {
                     </form>
                 )}
 
-                {/* ---------------------------------------------------------
-                    STEP 2: EMAIL OTP
-                --------------------------------------------------------- */}
+                {/* STEP 2 — EMAIL OTP */}
                 {step === 2 && (
                     <form onSubmit={handleVerifyEmailOtp}>
                         <p className="text-center mb-2">Enter Email OTP</p>
-
                         <input
-                            className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
-                            type="text"
+                            className="w-full p-2 mb-2 border rounded"
                             placeholder="Enter OTP"
                             value={emailOtp}
-                            onChange={(e) => setEmailOtp(e.target.value)}
+                            onChange={(e) =>
+                                setEmailOtp(
+                                    e.target.value.replace(/\D/g, "").slice(0, 6)
+                                )
+                            }
                             required
                         />
 
                         {otpTimer > 0 ? (
-                            <p className="text-center text-gray-500">
-                                Resend OTP in {otpTimer}s
+                            <p className="text-center text-gray-600">
+                                Resend in {otpTimer}s
                             </p>
                         ) : (
                             <p
@@ -362,27 +357,25 @@ function Signup({ onSignupSuccess = null }) {
                     </form>
                 )}
 
-
-                {/* ---------------------------------------------------------
-                    STEP 3: MOBILE OTP
-                    (Uses same login-with-OTP UI style)
-                --------------------------------------------------------- */}
+                {/* STEP 3 — MOBILE OTP */}
                 {step === 3 && (
                     <form onSubmit={handleVerifyMobileOtp}>
                         <p className="text-center mb-2">Enter Mobile OTP</p>
-
                         <input
-                            className="w-full p-2 mb-3 border rounded"
-                            type="text"
+                            className="w-full p-2 mb-2 border rounded"
                             placeholder="Enter OTP"
                             value={mobileOtp}
-                            onChange={(e) => setMobileOtp(e.target.value)}
+                            onChange={(e) =>
+                                setMobileOtp(
+                                    e.target.value.replace(/\D/g, "").slice(0, 6)
+                                )
+                            }
                             required
                         />
 
                         {otpTimer > 0 ? (
-                            <p className="text-center text-gray-500">
-                                Resend OTP in {otpTimer}s
+                            <p className="text-center text-gray-600">
+                                Resend in {otpTimer}s
                             </p>
                         ) : (
                             <p
@@ -392,8 +385,6 @@ function Signup({ onSignupSuccess = null }) {
                                 Resend OTP
                             </p>
                         )}
-
-                        
 
                         <div className="flex justify-center pb-3">
                             <button
