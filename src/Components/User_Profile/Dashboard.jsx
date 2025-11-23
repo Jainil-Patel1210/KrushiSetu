@@ -30,7 +30,11 @@ const Dashboard = () => {
   }
 
   function ActionButton({ app }) {
+    const subsidyId =
+      app.subsidy?.id || app.subsidy_id || app.subsidy?.subsidy_id;
+
     const isPaid = app.status === "Payment done";
+
     return (
       <button
         className={`border rounded-md px-3 py-1 text-sm hover:bg-gray-50 flex items-center gap-1 ${
@@ -38,7 +42,11 @@ const Dashboard = () => {
             ? "border-yellow-500 text-yellow-700"
             : "border-gray-300 text-gray-700"
         }`}
-        onClick={() => navigate(`/viewdetails/${app.id}`)} // <-- use numeric id
+        onClick={() =>
+          isPaid
+            ? navigate(`/rate-review/${subsidyId}`)
+            : navigate(`/viewdetails/${app.id}`)
+        }
       >
         {isPaid ? "☆ Rate & Review" : "View Details"}
       </button>
@@ -85,15 +93,12 @@ const Dashboard = () => {
     }
   }
 
-  // ---------- Dashboard Totals ----------
   const totalSubsidies = applications.length;
 
-  // “Subsidy Done” means status === "Payment done"
   const totalDone = applications.filter(
     (app) => app.status === "Payment done"
   ).length;
 
-  // Total Amount Received only for "Payment done"
   const totalAmountReceived = applications
     .filter((app) => app.status === "Payment done" && app.amount)
     .reduce((sum, app) => sum + Number(app.amount), 0);
@@ -132,7 +137,7 @@ const Dashboard = () => {
                 ₹{totalAmountReceived.toLocaleString()}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                (Only counted when status is &quot;Payment done&quot;)
+                (Only counted when status is "Payment done")
               </p>
             </div>
           </div>
@@ -166,85 +171,118 @@ const Dashboard = () => {
                     </thead>
 
                     <tbody>
-                      {applications.map((app) => (
-                        <tr key={app.id} className="border-t">
-                          <td className="px-4 py-3">
-                            {app.subsidy_name || app.subsidy_title || "—"}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {app.application_id}
-                          </td>
-                          <td className="px-4 py-3">
-                            {(app.applied_on || app.submitted_at || "")
-                              .toString()
-                              .slice(0, 10)}
-                          </td>
-                          <td className="px-4 py-3">
-                            {app.amount ? `₹${app.amount}` : "—"}
-                          </td>
-                          <td className="px-4 py-3">
-                            <StatusBadge status={app.status} />
-                          </td>
-                          <td className="px-4 py-3">
-                            <ActionButton app={app} />
-                          </td>
-                        </tr>
-                      ))}
+                      {applications.map((app) => {
+                        const subsidyId =
+                          app.subsidy?.id ||
+                          app.subsidy_id ||
+                          app.subsidy?.subsidy_id;
+
+                        return (
+                          <tr key={app.id} className="border-t">
+                            <td className="px-4 py-3">
+                              {app.subsidy_name || app.subsidy_title || "—"}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {app.application_id}
+                            </td>
+                            <td className="px-4 py-3">
+                              {(app.applied_on || app.submitted_at || "")
+                                .toString()
+                                .slice(0, 10)}
+                            </td>
+                            <td className="px-4 py-3">
+                              {app.amount ? `₹${app.amount}` : "—"}
+                            </td>
+                            <td className="px-4 py-3">
+                              <StatusBadge status={app.status} />
+                            </td>
+                            <td className="px-4 py-3">
+                              <button
+                                className={`border rounded-md px-3 py-1 text-sm flex items-center gap-1 ${
+                                  app.status === "Payment done"
+                                    ? "border-yellow-500 text-yellow-700"
+                                    : "border-gray-300 text-gray-700"
+                                }`}
+                                onClick={() =>
+                                  app.status === "Payment done"
+                                    ? navigate(`/rate-review/${subsidyId}`)
+                                    : navigate(`/viewdetails/${app.id}`)
+                                }
+                              >
+                                {app.status === "Payment done"
+                                  ? "☆ Rate & Review"
+                                  : "View Details"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
 
                 {/* Mobile Cards */}
                 <div className="lg:hidden space-y-4">
-                  {applications.map((app) => (
-                    <div
-                      key={app.id}
-                      className="bg-gray-50 rounded-lg p-4 border"
-                    >
-                      <div className="flex justify-between mb-2">
-                        <h3 className="font-bold">
-                          {app.subsidy_name || app.subsidy_title || "—"}
-                        </h3>
-                        <StatusBadge status={app.status} />
-                      </div>
+                  {applications.map((app) => {
+                    const subsidyId =
+                      app.subsidy?.id ||
+                      app.subsidy_id ||
+                      app.subsidy?.subsidy_id;
 
-                      <p className="text-sm text-gray-500">
-                        {app.application_id}
-                      </p>
-
-                      <div className="grid grid-cols-2 gap-4 mt-3">
-                        <div>
-                          <p className="text-gray-600 text-sm">
-                            Date Applied
-                          </p>
-                          <p className="font-semibold">
-                            {(app.applied_on || app.submitted_at || "")
-                              .toString()
-                              .slice(0, 10)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 text-sm">Amount</p>
-                          <p className="font-semibold text-green-700">
-                            {app.amount ? `₹${app.amount}` : "—"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        className={`mt-3 border rounded-md px-3 py-1 text-sm flex items-center gap-1 ${
-                          app.status === "Payment done"
-                            ? "border-yellow-500 text-yellow-700"
-                            : "border-gray-300 text-gray-700"
-                        }`}
-                        onClick={() => navigate(`/viewdetails/${app.id}`)}
+                    return (
+                      <div
+                        key={app.id}
+                        className="bg-gray-50 rounded-lg p-4 border"
                       >
-                        {app.status === "Payment done"
-                          ? "☆ Rate & Review"
-                          : "View Details"}
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex justify-between mb-2">
+                          <h3 className="font-bold">
+                            {app.subsidy_name || app.subsidy_title || "—"}
+                          </h3>
+                          <StatusBadge status={app.status} />
+                        </div>
+
+                        <p className="text-sm text-gray-500">
+                          {app.application_id}
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-4 mt-3">
+                          <div>
+                            <p className="text-gray-600 text-sm">
+                              Date Applied
+                            </p>
+                            <p className="font-semibold">
+                              {(app.applied_on || app.submitted_at || "")
+                                .toString()
+                                .slice(0, 10)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 text-sm">Amount</p>
+                            <p className="font-semibold text-green-700">
+                              {app.amount ? `₹${app.amount}` : "—"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          className={`mt-3 border rounded-md px-3 py-1 text-sm flex items-center gap-1 ${
+                            app.status === "Payment done"
+                              ? "border-yellow-500 text-yellow-700"
+                              : "border-gray-300 text-gray-700"
+                          }`}
+                          onClick={() =>
+                            app.status === "Payment done"
+                              ? navigate(`/rate-review/${subsidyId}`)
+                              : navigate(`/viewdetails/${app.id}`)
+                          }
+                        >
+                          {app.status === "Payment done"
+                            ? "☆ Rate & Review"
+                            : "View Details"}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </>
             )}

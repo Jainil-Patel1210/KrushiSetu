@@ -7,6 +7,7 @@ import {
   Route,
   RouterProvider,
 } from "react-router-dom";
+import RateReview from "./Components/User_Profile/RateReview.jsx";
 
 import Homepage from "../src/Components/HomePage/Homepage.jsx";
 import Authentication from "./Components/Signup_And_Login/Authentication.jsx";
@@ -54,6 +55,7 @@ function AppWrapper() {
 
         {/* ✅ ADDED THIS */}
         <Route path="/viewdetails/:id" element={<ViewDetails />} />
+        <Route path="/rate-review/:id" element={<RateReview />} />
       </>
     )
   );
