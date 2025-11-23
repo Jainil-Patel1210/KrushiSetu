@@ -40,9 +40,13 @@ const News = () => {
     fetchNews();
   }, []);
 
+  const token = localStorage.getItem("access");
+
   const fetchNews = async () => {
     try {
-      const res = await api.get("/news/my-articles/");
+      const res = await api.get("/news/my-articles/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       console.log(res.data);
       setNewsArticles(res.data);
     } catch (error) {
@@ -118,13 +122,21 @@ const News = () => {
 
     try {
       if (isEditing) {
+        const token = localStorage.getItem("access");
+        console.log(token);
         await api.put(`/news/update/${selectedNews.id}/`, payload, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "Authorization": `Bearer ${token}`
+          },
         });
         toast.success("News article updated");
       } else {
         await api.post("/news/create/", payload, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
         });
         toast.success("News posted");
       }
@@ -155,8 +167,17 @@ const News = () => {
   };
 
   const handleConfirmDelete = async () => {
+    const tok = localStorage.getItem("access");
+    console.log(tok);
     try {
-      await api.delete(`/news/delete/${selectedNews.id}/`);
+      await api.delete(`/news/delete/${selectedNews.id}/`,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${tok}`,
+          },
+        }
+      );
       toast.success("Deleted successfully");
 
       setShowDeleteModal(false);
@@ -384,6 +405,21 @@ const News = () => {
                   rows="5"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="Enter article description"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  Tag / Category <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="tag"
+                  value={formData.tag}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="e.g., Agriculture, Technology, Sustainability"
                   required
                 />
               </div>

@@ -1,7 +1,7 @@
 import React,{useEffect, useState} from 'react'
 import { useNavigate } from 'react-router-dom'
 import Dashboard from './Dashboard.jsx';
-import Grievance from './Grievance.jsx'; // Add this import
+import Grievance from './Grievance.jsx';
 import { isOfficer } from '../../utils/auth';
 
 function Officer_Sidebar() {
@@ -23,7 +23,6 @@ function Officer_Sidebar() {
         setIsOpen(!isOpen);
     }
 
-    // Sidebar options array
     const sidebar_options = [
         {id : 'Dashboard', label: 'Dashboard', icon: './Home.svg'},
         {id : 'Grievance', label: 'Grievance', icon: './Support.svg'}

@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 function Login({ onForgotPasswordClick, redirectTo }) {
 
+
     const navigate = useNavigate();
 
     const [loginWithOtp, setLoginWithOtp] = useState(false);
@@ -32,49 +33,55 @@ function Login({ onForgotPasswordClick, redirectTo }) {
     const [otpTimer, setOtpTimer] = useState(0);
 
     useEffect(() => {
-
-        if (localStorage.getItem("isLoggedOut") === "true") {
-            clearAuth();  
-            return;  
-        }
-
         const access = localStorage.getItem("access");
-        const storedRole = localStorage.getItem("user_role");
+        const role = localStorage.getItem("user_role");
+        const isLoggedOut = localStorage.getItem("isLoggedOut") === "true";
 
-        const redirectWithDelay = (role) => {
-            const path = getRedirectPathForRole(role);
-            setTimeout(() => {
-                navigate(path);
-            }, 3000); // ⏳ 3 second delay
-        };
-
-        if (access && storedRole) {
-            redirectWithDelay(storedRole);
+        // If user just logged out → DO NOT auto-login
+        if (isLoggedOut) {
+            clearAuth();
+            // Clear the logout flag so user can login again
+            localStorage.removeItem("isLoggedOut");
             return;
         }
 
-        const tryRefresh = async () => {
+        // Function to redirect based on role
+        const redirectUser = () => {
+            const path = getRedirectPathForRole(role);
+            navigate(path);
+        };
+
+        // Case 1 → Access token already exists
+        if (access && role) {
+            redirectUser();
+            return;
+        }
+
+        // Case 2 → Try to refresh using cookies (only if user has some auth data)
+        const tryCookieRefresh = async () => {
             try {
                 const res = await api.post("/token/refresh/");
 
-                storeTokens({
-                    access: res.data.access,
-                    refresh: res.data.refresh,
-                    role: storedRole,
-                });
-
-                redirectWithDelay(storedRole);
+                // Store tokens returned only if backend includes them
+                if (res.data.access) localStorage.setItem("access", res.data.access);
+                if (res.data.refresh) localStorage.setItem("refresh", res.data.refresh);
+                
+                // Get role from response or existing storage
+                const userRole = res.data.role || localStorage.getItem("user_role");
+                if (userRole && res.data.access) {
+                    redirectUser();
+                }
             } catch (err) {
+                // Refresh failed → ensure user stays logged out
                 clearAuth();
             }
         };
 
-        tryRefresh();
+        // Only try to refresh if we don't have access token but might have refresh token
+        if (!access) {
+            tryCookieRefresh();
+        }
     }, [navigate]);
-
-
-
-
 
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -174,6 +181,7 @@ function Login({ onForgotPasswordClick, redirectTo }) {
                 refresh: response.data.refresh,
                 role: normalizedRole,
             });
+            localStorage.setItem("isLoggedOut", "false");
             setRole('');
             setIsLoading(false);
             const redirectPath = getRedirectPathForRole(normalizedRole);
@@ -252,6 +260,7 @@ function Login({ onForgotPasswordClick, redirectTo }) {
 
             setLoginEmailError("");
             toast.success("Logged in successfully!");
+            localStorage.setItem("isLoggedOut", "false");
             setLoginMobileOrEmail("");
             setLoginPassword("");
             setRole('');
@@ -302,7 +311,7 @@ function Login({ onForgotPasswordClick, redirectTo }) {
                                 onChange={handleLoginPasswordChange}
                                 required
                             />
-                            <PasswordToggleIcon visible={showLoginPassword} onClick={() => setShowLoginPassword((prev) => !prev)} />
+                            <PasswordToggleIcon visible={showLoginPassword} onClick={() => setShowLoginPassword((prev) => !prev)} top="1/2" />
                         </div>
                         <RoleDropdown
                             role={role}

@@ -52,11 +52,12 @@ api.interceptors.response.use(
       try {
         await api.post("/token/refresh/");
         processQueue(null);
+        localStorage.setItem("isLoggedOut", "false");
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
 
-        localStorage.setItem("isLoggedOut", "true");
+  
 
         window.location.href = "/login";
         return Promise.reject(refreshError);
