@@ -35,6 +35,11 @@ class SubsidyMiniSerializer(serializers.ModelSerializer):
 class SubsidyApplicationSerializer(serializers.ModelSerializer):
     assigned_officer = OfficerSerializer(read_only=True)
     subsidy = SubsidyMiniSerializer(read_only=True)
+    subsidy_id = serializers.PrimaryKeyRelatedField(
+    queryset=AppSubsidy.objects.all(),
+    source='subsidy',
+    write_only=True
+)
 
     class Meta:
         model = SubsidyApplication
@@ -47,7 +52,7 @@ class SubsidyApplicationSerializer(serializers.ModelSerializer):
 
             # Subsidy
             "subsidy",
-
+            "subsidy_id",
             # Status
             "status",
             "assigned_officer",
@@ -109,7 +114,7 @@ class OfficerSubsidyApplicationSerializer(serializers.ModelSerializer):
             # Personal
             "full_name",
             "mobile",
-            "email_address",   # FIXED EMAIL FIELD
+            "email",   # FIXED EMAIL FIELD
             "aadhaar",
             "address",
             "state",
