@@ -23,20 +23,16 @@ function SocialLogin() {
                 token,
             });
 
-            // Extract data from backend
-            const { access, refresh, role } = res.data;
-
-            if (!access || !refresh || !role) {
-                toast.error("Invalid response from server.");
-                return;
-            }
+            const { access_token, refresh_token} = res.data;
+            const role = res.data.user.role;
+            console.log("Login response:", res.data);
 
             const normalizedRole = normalizeRole(role);
 
             // Store tokens + role
             storeTokens({
-                access,
-                refresh,
+                access_token,
+                refresh_token,
                 role: normalizedRole,
             });
             localStorage.setItem("isLoggedOut", "false");

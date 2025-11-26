@@ -172,7 +172,7 @@ function Signup({ onSignupSuccess = null }) {
 
                             {/* Full Name */}
                             <input
-                                className="w-full p-2 mb-2 border rounded"
+                                className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                                 placeholder="Full Name"
                                 value={fullName}
                                 onChange={(e) => {
@@ -193,7 +193,7 @@ function Signup({ onSignupSuccess = null }) {
 
                             {/* Email */}
                             <input
-                                className="w-full p-2 mb-2 border rounded"
+                                className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                                 type="email"
                                 placeholder="Email Address"
                                 value={email}
@@ -215,7 +215,7 @@ function Signup({ onSignupSuccess = null }) {
 
                             {/* Mobile */}
                             <input
-                                className="w-full p-2 mb-2 border rounded"
+                                className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                                 type="text"
                                 placeholder="Mobile Number"
                                 value={mobile}
@@ -241,7 +241,7 @@ function Signup({ onSignupSuccess = null }) {
                             {/* Password */}
                             <div className="relative">
                                 <input
-                                    className="w-full p-2 mb-2 border rounded"
+                                    className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Password"
                                     value={password}
@@ -268,7 +268,7 @@ function Signup({ onSignupSuccess = null }) {
                             {/* Confirm Password */}
                             <div className="relative">
                                 <input
-                                    className="w-full p-2 mb-2 border rounded"
+                                    className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                                     type={showConfirmPassword ? "text" : "password"}
                                     placeholder="Confirm Password"
                                     value={confirmPassword}
@@ -321,7 +321,7 @@ function Signup({ onSignupSuccess = null }) {
                     <form onSubmit={handleVerifyEmailOtp}>
                         <p className="text-center mb-2">Enter Email OTP</p>
                         <input
-                            className="w-full p-2 mb-2 border rounded"
+                            className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                             placeholder="Enter OTP"
                             value={emailOtp}
                             onChange={(e) =>
@@ -362,7 +362,7 @@ function Signup({ onSignupSuccess = null }) {
                     <form onSubmit={handleVerifyMobileOtp}>
                         <p className="text-center mb-2">Enter Mobile OTP</p>
                         <input
-                            className="w-full p-2 mb-2 border rounded"
+                            className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                             placeholder="Enter OTP"
                             value={mobileOtp}
                             onChange={(e) =>

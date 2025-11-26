@@ -24,6 +24,9 @@ User = get_user_model()
 class GoogleLoginView(APIView):
     def post(self, request):
         token = request.data.get("token")
+        if not token:
+            return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
+
 
         try:
             # Verify Google token
@@ -35,6 +38,10 @@ class GoogleLoginView(APIView):
 
             email = idinfo.get("email")
             name = idinfo.get("name", "")
+
+            if not email:
+                return Response({"error": "Email missing from Google token"}, status=status.HTTP_400_BAD_REQUEST)
+
 
             user, created = User.objects.get_or_create(
                 email_address=email,

@@ -33,55 +33,53 @@ function Login({ onForgotPasswordClick, redirectTo }) {
     const [otpTimer, setOtpTimer] = useState(0);
 
     useEffect(() => {
-        const access = localStorage.getItem("access");
-        const role = localStorage.getItem("user_role");
-        const isLoggedOut = localStorage.getItem("isLoggedOut") === "true";
+        const run = async () => {
+            await new Promise(res => setTimeout(res, 5000));
 
-        // If user just logged out → DO NOT auto-login
-        if (isLoggedOut) {
-            clearAuth();
-            // Clear the logout flag so user can login again
-            localStorage.removeItem("isLoggedOut");
-            return;
-        }
+            const access = localStorage.getItem("access");
+            const role = localStorage.getItem("user_role");
+            const isLoggedOut = localStorage.getItem("isLoggedOut") === "true";
 
-        // Function to redirect based on role
-        const redirectUser = () => {
-            const path = getRedirectPathForRole(role);
-            navigate(path);
-        };
-
-        // Case 1 → Access token already exists
-        if (access && role) {
-            redirectUser();
-            return;
-        }
-
-        // Case 2 → Try to refresh using cookies (only if user has some auth data)
-        const tryCookieRefresh = async () => {
-            try {
-                const res = await api.post("/token/refresh/");
-
-                // Store tokens returned only if backend includes them
-                if (res.data.access) localStorage.setItem("access", res.data.access);
-                if (res.data.refresh) localStorage.setItem("refresh", res.data.refresh);
-                
-                // Get role from response or existing storage
-                const userRole = res.data.role || localStorage.getItem("user_role");
-                if (userRole && res.data.access) {
-                    redirectUser();
-                }
-            } catch (err) {
-                // Refresh failed → ensure user stays logged out
+            if (isLoggedOut) {
                 clearAuth();
+                localStorage.removeItem("isLoggedOut");
+                return;
+            }
+
+            const redirectUser = () => {
+                const path = getRedirectPathForRole(role);
+                navigate(path);
+            };
+
+            if (access && role) {
+                redirectUser();
+                return;
+            }
+            
+            const tryCookieRefresh = async () => {
+                try {
+                    const res = await api.post("/token/refresh/");
+
+                    if (res.data.access) localStorage.setItem("access", res.data.access);
+                    if (res.data.refresh) localStorage.setItem("refresh", res.data.refresh);
+
+                    const userRole = res.data.role || localStorage.getItem("user_role");
+                    if (userRole && res.data.access) {
+                        redirectUser();
+                    }
+                } catch (err) {
+                    clearAuth();
+                }
+            };
+
+            if (!access) {
+                tryCookieRefresh();
             }
         };
 
-        // Only try to refresh if we don't have access token but might have refresh token
-        if (!access) {
-            tryCookieRefresh();
-        }
+        run();
     }, [navigate]);
+
 
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 

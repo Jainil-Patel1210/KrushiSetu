@@ -27,6 +27,10 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, full_name, mobile_number, email_address, password, aadhaar_number=None):
+        if not password:
+            raise ValueError("Superuser must have a password.")
+        if not email_address:
+            raise ValueError("Superuser must have an email address.")
         user = self.create_user(
             full_name=full_name,
             mobile_number=mobile_number,

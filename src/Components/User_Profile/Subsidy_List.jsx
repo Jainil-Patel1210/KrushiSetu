@@ -13,15 +13,17 @@ function Subsidy_List() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const subsidiesPerPage = 10;
   const navigate = useNavigate();
 
-  const fetchSubsidies = async () => {
+  const fetchSubsidies = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await api.get("/api/subsidies/");
-      setSubsidies(response.data);
+      const response = await api.get(`/api/subsidies/?page=${page}`);
+
+      setSubsidies(response.data.results);      // Only the page results
+      setTotalPages(Math.ceil(response.data.count / 10)); // Backend count
     } catch (error) {
       console.error("Error fetching subsidies:", error);
       setError("Failed to load Subsidies.");
@@ -30,20 +32,12 @@ function Subsidy_List() {
     }
   };
 
+
   useEffect(() => {
-    fetchSubsidies();
-  }, []);
+    fetchSubsidies(currentPage);
+  }, [currentPage]);
 
-  const filteredSubsidies = subsidies.filter((subsidy) =>
-    subsidy.title.toLowerCase().includes(searchSubsidy.toLowerCase())
-  );
 
-  const totalPages = Math.ceil(filteredSubsidies.length / subsidiesPerPage);
-  const startIndex = (currentPage - 1) * subsidiesPerPage;
-  const currentSubsidies = filteredSubsidies.slice(
-    startIndex,
-    startIndex + subsidiesPerPage
-  );
 
   const handlePageChange = (num) => {
     if (num >= 1 && num <= totalPages) {
@@ -93,7 +87,7 @@ function Subsidy_List() {
           </div>
 
           <div className="mt-6">
-            {currentSubsidies.map((subsidy) => (
+            {subsidies.map((subsidy) => (
               <div
                 key={subsidy.id}
                 className="bg-white p-6 rounded-xl shadow-md mb-4 flex justify-between"
