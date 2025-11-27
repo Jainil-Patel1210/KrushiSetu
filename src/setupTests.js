@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
 // Mock window.matchMedia
 window.matchMedia = window.matchMedia || function() {
@@ -10,13 +11,13 @@ window.matchMedia = window.matchMedia || function() {
 };
 
 // Mock window.scrollTo
-window.scrollTo = jest.fn();
+window.scrollTo = vi.fn();
 
 // Mock localStorage
 const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 global.localStorage = localStorageMock;
