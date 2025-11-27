@@ -90,4 +90,12 @@ function Authentication() {
     );
 }
 
+// Helper: compute tab button class names — exported for unit testing.
+export function computeTabClass(page, forgotPasswordActive, tabName) {
+    const isLoginTab = tabName === 'login';
+    if (forgotPasswordActive && isLoginTab) return 'bg-[#07843A] text-white rounded-md';
+    if (page === tabName) return 'bg-[#07843A] text-white rounded-md';
+    return '';
+}
+
 export default Authentication;
