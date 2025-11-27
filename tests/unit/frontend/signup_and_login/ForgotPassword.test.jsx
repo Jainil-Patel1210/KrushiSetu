@@ -15,7 +15,7 @@ vi.mock('react-hot-toast', () => ({ __esModule: true, Toaster: () => <div data-t
 const postMock = vi.fn()
 vi.mock('../../src/Components/Signup_And_Login/api', () => ({ __esModule: true, default: { post: (...args) => postMock(...args) } }))
 
-import ForgotPassword from '../../src/Components/Signup_And_Login/ForgotPassword.jsx'
+import ForgotPassword from '../../../../src/Components/Signup_And_Login/ForgotPassword.jsx'
 
 describe('ForgotPassword component', () => {
   beforeEach(() => {
