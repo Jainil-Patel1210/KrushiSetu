@@ -49,7 +49,7 @@ vi.mock('../src/Components/Signup_And_Login/ForgotPassword', () => ({
 }));
 
 // Import component under test after mocks
-import Authentication from '../src/Components/Signup_And_Login/Authentication.jsx';
+import Authentication from '../../../../src/Components/Signup_And_Login/Authentication.jsx';
 
 describe('Authentication component', () => {
   beforeEach(() => {
@@ -123,7 +123,7 @@ describe('Authentication component', () => {
 describe('computeTabClass helper', () => {
   let computeTabClass;
   beforeAll(async () => {
-    const mod = await import('../src/Components/Signup_And_Login/Authentication.jsx');
+    const mod = await import('../../../../src/Components/Signup_And_Login/Authentication.jsx');
     computeTabClass = mod.computeTabClass;
   });
 

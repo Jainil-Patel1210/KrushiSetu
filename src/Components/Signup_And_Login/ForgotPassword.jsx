@@ -65,7 +65,6 @@ function ForgotPassword({ onBackToLogin }) {
             // otpVerified is not used for UI, but was in original logic
             setForgotStep(3);
             toast.success('OTP verified. You can now reset your password.');
-            setTimeout('', 1200);
             btn.disabled = false;
         } catch (err) {
             console.error(err);
