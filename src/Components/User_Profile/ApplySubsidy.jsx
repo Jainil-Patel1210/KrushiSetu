@@ -23,6 +23,23 @@ export default function ApplySubsidy() {
       ? subsidyFromNav.name
       : 'Subsidy');
 
+  // Handle close button navigation
+  const handleClose = () => {
+    // Check if we came from login page or if there's a "from" state
+    const fromPage = location?.state?.from;
+    
+    // If coming from login or homepage, go to dashboard
+    if (fromPage === '/login' || fromPage === '/' || fromPage === '/homepage') {
+      navigate('/sidebar');
+    } else if (fromPage) {
+      // If there's a specific "from" page, navigate there
+      navigate(fromPage);
+    } else {
+      // Otherwise, go back in history
+      navigate(-1);
+    }
+  };
+
   // Wizard step and shared form state
   const [step, setStep] = useState(0); // 0: Personal, 1: Land, 2: Bank, 3: Documents
   const [form, setForm] = useState({
@@ -130,6 +147,100 @@ export default function ApplySubsidy() {
       [name]: value,
     }));
 
+  // Formatter for Aadhaar: groups of 4 digits for display
+  const formatAadhaar = raw => {
+    if (!raw) return '';
+    const digits = String(raw).replace(/\D/g, '');
+    return digits.match(/.{1,4}/g)?.join(' ') || digits;
+  };
+
+  // Handlers with restrictions
+  const handleFullNameChange = e => {
+    // Only allow letters and spaces - filter out everything else
+    const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+    update('fullName', val);
+    // Clear error if field becomes valid
+    if (val && prevHasError('fullName')) {
+      setErrors(prev => ({ ...prev, fullName: '' }));
+    }
+  };
+
+  const handleMobileChange = e => {
+    const v = e.target.value.replace(/\D/g, '').slice(0, 10);
+    update('mobile', v);
+    // show error when not complete
+    setErrors(prev => ({ ...prev, mobile: v.length === 10 ? '' : 'Enter a valid 10-digit mobile number' }));
+  };
+
+  const handleEmailChange = e => {
+    // Remove all spaces from email
+    const v = e.target.value.replace(/\s/g, '');
+    update('email', v);
+    setErrors(prev => ({ ...prev, email: /\S+@\S+\.\S+/.test(v) ? '' : 'Enter a valid email' }));
+  };
+
+  const handleAadhaarChange = e => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 12);
+    update('aadhar', digits);
+    setErrors(prev => ({ ...prev, aadhar: digits.length === 12 ? '' : 'Aadhaar must be 12 digits' }));
+  };
+
+  const handleLandAreaChange = e => {
+    let val = e.target.value;
+    // Remove any minus signs and non-numeric characters except decimal point
+    val = val.replace(/-/g, '').replace(/[^\d.]/g, '');
+    // Ensure only one decimal point
+    const parts = val.split('.');
+    if (parts.length > 2) {
+      val = parts[0] + '.' + parts.slice(1).join('');
+    }
+    // Update only if it's a valid positive number or empty
+    if (val === '' || parseFloat(val) >= 0) {
+      update('landArea', val);
+      if (prevHasError('landArea')) {
+        setErrors(prev => ({ ...prev, landArea: '' }));
+      }
+    }
+  };
+
+  const handleBankNameChange = e => {
+    // Allow letters, spaces, and common bank name characters (., &, -)
+    const val = e.target.value.replace(/[^a-zA-Z\s.&-]/g, '');
+    update('bankName', val);
+    if (val && prevHasError('bankName')) {
+      setErrors(prev => ({ ...prev, bankName: '' }));
+    }
+  };
+
+  const handleIFSCChange = e => {
+    // IFSC format: 4 letters + 0 + 6 alphanumeric (e.g., SBIN0001234)
+    const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 11);
+    update('ifsc', val);
+    if (val.length === 11 && /^[A-Z]{4}0[A-Z0-9]{6}$/.test(val)) {
+      setErrors(prev => ({ ...prev, ifsc: '' }));
+    } else if (val.length > 0 && val.length < 11) {
+      setErrors(prev => ({ ...prev, ifsc: 'Enter valid IFSC code (11 characters)' }));
+    } else if (val.length === 0) {
+      setErrors(prev => ({ ...prev, ifsc: '' }));
+    }
+  };
+
+  const handleAccountNumberChange = e => {
+    // Allow only digits, typically 9-18 digits
+    const val = e.target.value.replace(/\D/g, '').slice(0, 18);
+    update('bankAccount', val);
+    if (val.length >= 9 && val.length <= 18) {
+      setErrors(prev => ({ ...prev, bankAccount: '' }));
+    } else if (val.length > 0 && val.length < 9) {
+      setErrors(prev => ({ ...prev, bankAccount: 'Account number must be 9-18 digits' }));
+    } else if (val.length === 0) {
+      setErrors(prev => ({ ...prev, bankAccount: '' }));
+    }
+  };
+
+  // helper to check if an error key existed previously
+  const prevHasError = key => Boolean(errors && errors[key]);
+
   // ---------- Validation functions ----------
   const validateField = (name, value) => {
     let msg = '';
@@ -163,6 +274,7 @@ export default function ApplySubsidy() {
         break;
       case 'landArea':
         if (!value) msg = 'Enter land area';
+        else if (parseFloat(value) <= 0) msg = 'Land area must be positive';
         break;
       case 'unit':
         if (!value) msg = 'Select unit';
@@ -174,13 +286,15 @@ export default function ApplySubsidy() {
         if (!value) msg = 'Select ownership type';
         break;
       case 'bankName':
-        if (!value) msg = 'Enter bank name';
+        if (!value?.trim()) msg = 'Enter bank name';
         break;
       case 'bankAccount':
         if (!value) msg = 'Enter account number';
+        else if (value.length < 9 || value.length > 18) msg = 'Account number must be 9-18 digits';
         break;
       case 'ifsc':
         if (!value) msg = 'Enter IFSC';
+        else if (value.length !== 11 || !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(value)) msg = 'Enter valid IFSC code (11 characters)';
         break;
       default:
         break;
@@ -202,13 +316,16 @@ export default function ApplySubsidy() {
       if (!form.address.trim()) e.address = 'Address required';
     } else if (step === 1) {
       if (!form.landArea) e.landArea = 'Enter land area';
+      else if (parseFloat(form.landArea) <= 0) e.landArea = 'Land area must be positive';
       if (!form.unit) e.unit = 'Select unit';
       if (!form.soilType) e.soilType = 'Select soil type';
       if (!form.ownership) e.ownership = 'Select ownership type';
     } else if (step === 2) {
-      if (!form.bankName) e.bankName = 'Enter bank name';
+      if (!form.bankName?.trim()) e.bankName = 'Enter bank name';
       if (!form.bankAccount) e.bankAccount = 'Enter account number';
+      else if (form.bankAccount.length < 9 || form.bankAccount.length > 18) e.bankAccount = 'Account number must be 9-18 digits';
       if (!form.ifsc) e.ifsc = 'Enter IFSC';
+      else if (form.ifsc.length !== 11 || !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(form.ifsc)) e.ifsc = 'Enter valid IFSC code (11 characters)';
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -384,7 +501,11 @@ export default function ApplySubsidy() {
     if (!window.confirm('Are you sure you want to delete this document?')) return;
     setLoadingDocs(true);
     try {
-      await api.delete(`${DOCUMENTS_URL}${idOrTemp}/`, { withCredentials: true });
+      const token = localStorage.getItem('access');
+      await api.delete(`${DOCUMENTS_URL}${idOrTemp}/`, { 
+        withCredentials: true,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       setDocuments(prev => prev.filter(doc => doc.id !== idOrTemp));
       alert('Document deleted successfully!');
     } catch (error) {
@@ -478,8 +599,12 @@ export default function ApplySubsidy() {
 
     setLoadingDocs(true);
     try {
+      const token = localStorage.getItem('access');
       const response = await api.put(`${DOCUMENTS_URL}${currentDoc.id}/`, uploadFormData, {
-        headers: { 'X-CSRFToken': Cookies.get('csrftoken') }, // do NOT set Content-Type
+        headers: { 
+          'X-CSRFToken': Cookies.get('csrftoken'),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        }, // do NOT set Content-Type
         withCredentials: true,
       });
       const respDoc = response.data;
@@ -612,10 +737,12 @@ export default function ApplySubsidy() {
         ifsc: form.ifsc,
       };
 
+      const token = localStorage.getItem('access');
       await api.post(APPLY_URL, payload, {
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': Cookies.get('csrftoken'),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         withCredentials: true,
       });
@@ -653,7 +780,7 @@ export default function ApplySubsidy() {
         <Settings />
         <div className="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-5xl p-4 sm:p-6 md:p-8 relative my-auto">
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleClose}
             className="absolute top-2 right-2 md:top-4 md:right-4 w-10 h-10 flex items-center justify-center text-gray-500 hover:rounded-full hover:bg-gray-200 transition-all duration-200 text-2xl font-bold hover:shadow-md z-10"
             aria-label="Close"
           >
@@ -689,10 +816,7 @@ export default function ApplySubsidy() {
                     id="fullName"
                     name="fullName"
                     value={form.fullName}
-                    onChange={e => {
-                      update('fullName', e.target.value);
-                      if (errors.fullName) validateField('fullName', e.target.value);
-                    }}
+                    onChange={handleFullNameChange}
                     onBlur={e => validateField('fullName', e.target.value)}
                   />
                   {errors.fullName ? (
@@ -712,10 +836,8 @@ export default function ApplySubsidy() {
                     id="mobile"
                     name="mobile"
                     value={form.mobile}
-                    onChange={e => {
-                      update('mobile', e.target.value);
-                      if (errors.mobile) validateField('mobile', e.target.value);
-                    }}
+                    inputMode="numeric"
+                    onChange={handleMobileChange}
                     onBlur={e => validateField('mobile', e.target.value)}
                   />
                   {errors.mobile ? (
@@ -735,10 +857,7 @@ export default function ApplySubsidy() {
                     id="email"
                     name="email"
                     value={form.email}
-                    onChange={e => {
-                      update('email', e.target.value);
-                      if (errors.email) validateField('email', e.target.value);
-                    }}
+                    onChange={handleEmailChange}
                     onBlur={e => validateField('email', e.target.value)}
                   />
                   {errors.email ? (
@@ -757,12 +876,10 @@ export default function ApplySubsidy() {
                     placeholder="Enter Aadhar Number"
                     id="aadhar"
                     name="aadhar"
-                    value={form.aadhar}
-                    onChange={e => {
-                      update('aadhar', e.target.value);
-                      if (errors.aadhar) validateField('aadhar', e.target.value);
-                    }}
-                    onBlur={e => validateField('aadhar', e.target.value)}
+                    value={formatAadhaar(form.aadhar)}
+                    inputMode="numeric"
+                    onChange={handleAadhaarChange}
+                    onBlur={e => validateField('aadhar', e.target.value.replace(/\s/g, ''))}
                   />
                   {errors.aadhar ? (
                     <div className="text-red-500 text-sm mt-1">{errors.aadhar}</div>
@@ -927,13 +1044,13 @@ export default function ApplySubsidy() {
                   <input
                     className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all"
                     type="number"
+                    placeholder="Enter Land Area"
                     id="landArea"
                     name="landArea"
+                    min="0"
+                    step="0.01"
                     value={form.landArea}
-                    onChange={e => {
-                      update('landArea', e.target.value);
-                      if (errors.landArea) validateField('landArea', e.target.value);
-                    }}
+                    onChange={handleLandAreaChange}
                     onBlur={e => validateField('landArea', e.target.value)}
                   />
                   {errors.landArea ? (
@@ -1035,13 +1152,11 @@ export default function ApplySubsidy() {
                   <input
                     className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all"
                     type="text"
+                    placeholder="Enter Bank Name"
                     id="bankName"
                     name="bankName"
                     value={form.bankName}
-                    onChange={e => {
-                      update('bankName', e.target.value);
-                      if (errors.bankName) validateField('bankName', e.target.value);
-                    }}
+                    onChange={handleBankNameChange}
                     onBlur={e => validateField('bankName', e.target.value)}
                   />
                   {errors.bankName ? (
@@ -1056,13 +1171,12 @@ export default function ApplySubsidy() {
                   <input
                     className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all"
                     type="text"
+                    placeholder="Enter IFSC Code"
                     id="ifscCode"
                     name="ifscCode"
+                    maxLength="11"
                     value={form.ifsc}
-                    onChange={e => {
-                      update('ifsc', e.target.value);
-                      if (errors.ifsc) validateField('ifsc', e.target.value);
-                    }}
+                    onChange={handleIFSCChange}
                     onBlur={e => validateField('ifsc', e.target.value)}
                   />
                   {errors.ifsc ? (
@@ -1077,13 +1191,13 @@ export default function ApplySubsidy() {
                   <input
                     className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all"
                     type="text"
+                    placeholder="Enter Account Number"
                     id="accountNumber"
                     name="accountNumber"
+                    inputMode="numeric"
+                    maxLength="18"
                     value={form.bankAccount}
-                    onChange={e => {
-                      update('bankAccount', e.target.value);
-                      if (errors.bankAccount) validateField('bankAccount', e.target.value);
-                    }}
+                    onChange={handleAccountNumberChange}
                     onBlur={e => validateField('bankAccount', e.target.value)}
                   />
                   {errors.bankAccount ? (
@@ -1107,17 +1221,18 @@ export default function ApplySubsidy() {
                 </div>
               )}
 
-              <div className="max-w-3xl w-full mt-2">
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <div className="min-h-[120px]">
-                    {mergedDocs.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-gray-500 text-lg">No documents uploaded yet.</p>
-                        <p className="text-gray-400 text-sm mt-2">
-                          Use the button below to upload documents required by this subsidy.
-                        </p>
-                      </div>
-                    ) : (
+              <div className="flex justify-center w-full mt-2">
+                <div className="max-w-3xl w-full">
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <div className="min-h-[120px]">
+                      {mergedDocs.length === 0 ? (
+                        <div className="text-center py-8">
+                          <p className="text-gray-500 text-lg">No documents uploaded yet.</p>
+                          <p className="text-gray-400 text-sm mt-2">
+                            Use the button below to upload documents required by this subsidy.
+                          </p>
+                        </div>
+                      ) : (
                       <div className="w-full">
                         <table className="w-full">
                           <thead>
@@ -1196,6 +1311,7 @@ export default function ApplySubsidy() {
                   </div>
                 </div>
               </div>
+            </div>
 
               {/* Add Document Modal (staging only) */}
               {showAddDocModal && (
