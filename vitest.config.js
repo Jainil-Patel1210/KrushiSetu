@@ -9,8 +9,8 @@ export default defineConfig({
     setupFiles: './src/setupTests.js',
     coverage: {
       reporter: ['text', 'json', 'html'],
-      // Include only ForgotPassword component in coverage report
-      include: ['src/Components/Signup_And_Login/ForgotPassword.jsx'],
+      // Include all JSX files in src for broader coverage, including Signup
+      include: ['src/**/*.jsx'],
     },
   },
 });

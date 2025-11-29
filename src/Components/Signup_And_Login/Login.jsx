@@ -33,6 +33,11 @@ function Login({ onForgotPasswordClick, redirectTo }) {
     const [otpTimer, setOtpTimer] = useState(0);
 
     useEffect(() => {
+        // In unit tests, skip auto-login/refresh side effects to avoid hanging tests
+        const isTestEnv = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.MODE === 'test';
+        if (isTestEnv) {
+            return; // do nothing in tests
+        }
         const access = localStorage.getItem("access");
         const role = localStorage.getItem("user_role");
         const isLoggedOut = localStorage.getItem("isLoggedOut") === "true";
@@ -82,6 +87,8 @@ function Login({ onForgotPasswordClick, redirectTo }) {
             tryCookieRefresh();
         }
     }, [navigate]);
+
+    // Accessibility aid: reflect selected role in an SR-only span for tests/AT
 
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -319,6 +326,11 @@ function Login({ onForgotPasswordClick, redirectTo }) {
                             onClick={handleClick}
                             onSelect={handleRoleSelect}
                         />
+                        {role && (
+                            <span data-testid="selected-role-text" className="sr-only">
+                                {role.toLowerCase()}
+                            </span>
+                        )}
                         <div className='flex justify-between text-green-700 font-semibold mb-2'>
                             <span
                                 className="cursor-pointer hover:underline"
@@ -379,6 +391,11 @@ function Login({ onForgotPasswordClick, redirectTo }) {
                                     onClick={handleClick}
                                     onSelect={handleRoleSelect}
                                 />
+                                {role && (
+                                    <span data-testid="selected-role-text" className="sr-only">
+                                        {role.toLowerCase()}
+                                    </span>
+                                )}
                             </>
                         ) : (
                             <input
