@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "./Sidebar";
 import Subsidy_detail from "./Subsidy_detail";
 import Settings from "../HomePage/Settings.jsx";
 import ReviewsModal from "./ReviewsModal";
 import api from "./api1.js";
+import Header from "./Header.jsx";
+import Navbar from "../HomePage/Navbar.jsx";
 
-function Subsidy_List() {
+function Subsidy_List({isHeaderVisible}) {
   const [searchSubsidy, setSearchSubsidy] = useState("");
   const [subsidies, setSubsidies] = useState([]);
   const [selectedSubsidy, setSelectedSubsidy] = useState(null);
@@ -89,6 +92,12 @@ function Subsidy_List() {
 
   return (
     <>
+      {isHeaderVisible && 
+      <>
+        <Header />
+        <Settings />
+      </>}
+      {!isHeaderVisible && <Navbar />}
       <div className="w-full min-h-screen">
         <div className="max-w-6xl mx-auto py-8 px-4">
           <h1 className="text-3xl font-bold">Subsidy Schemes</h1>
@@ -174,24 +183,45 @@ function Subsidy_List() {
               </p>
             )}
           </div>
+              <div className="flex justify-center items-center gap-3 mt-6 ">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className={`md:px-4 md:py-2 px-2 py-2 rounded-md border ${
+                    currentPage === 1
+                      ? "hidden"
+                      : "bg-white hover:bg-green-50 border-green-500"
+                  }`}
+                >
+                  Previous
+                </button>
 
-          {/* PAGINATION */}
-          <div className="flex justify-center gap-3 mt-6">
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => handlePageChange(i + 1)}
-                className={`px-3 py-1 rounded-md border ${
-                  currentPage === i + 1
-                    ? "bg-green-600 text-white"
-                    : "bg-white"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePageChange(i + 1)}
+                    className={`md:px-3 md:py-1 px-1 py-1 rounded-md border ${
+                      currentPage === i + 1
+                        ? "bg-green-600 text-white"
+                        : "bg-white hover:bg-green-50 border-green-500"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
 
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className={`md:px-4 md:py-2 px-2 py-2 rounded-md border ${
+                    currentPage === totalPages
+                      ? "hidden"
+                      : "bg-white hover:bg-green-50 border-green-500"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          
           {/* MODALS */}
           {selectedSubsidy && (
             <Subsidy_detail
@@ -207,7 +237,6 @@ function Subsidy_List() {
             />
           )}
         </div>
-      </div>
     </>
   );
 }

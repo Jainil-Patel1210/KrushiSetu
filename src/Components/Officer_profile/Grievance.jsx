@@ -7,8 +7,8 @@ import api from '../User_Profile/api1';
 
 const Grievance = () => {
   const [grievances, setGrievances] = useState([]);
-  const [filteredGrievances, setFilteredGrievances] = useState([]); 
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [filteredGrievances, setFilteredGrievances] = useState([]);
+  const [selectedFilter, setSelectedFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -63,11 +63,9 @@ const Grievance = () => {
 
   useEffect(() => {
     let filtered = grievances;
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(g => g.status.toLowerCase() === statusFilter.toLowerCase());
+    if (selectedFilter !== 'all') {
+      filtered = filtered.filter(g => deriveStatusKey(g.status) === selectedFilter);
     }
-
     if (searchTerm) {
       filtered = filtered.filter(g =>
         g.farmer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,22 +73,71 @@ const Grievance = () => {
         g.grievance_id?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
     setFilteredGrievances(filtered);
-  }, [statusFilter, searchTerm, grievances]);
+  }, [selectedFilter, searchTerm, grievances]);
 
-  const getStatusBadgeClass = (status) => {
-    const s = status.toLowerCase();
-    if (s === 'approved') return 'bg-green-100 text-green-700';
-    if (s === 'under review') return 'bg-blue-100 text-blue-700';
-    if (s === 'rejected') return 'bg-red-100 text-red-700';
-    return 'bg-gray-100 text-gray-700';
+  // Dashboard-style status logic
+  const STATUS_LABELS = {
+    approved: 'Approved',
+    'under review': 'Under Review',
+    rejected: 'Rejected',
+    submitted: 'Pending',
+    resolved: 'Resolved',
   };
 
-  const getStatusCount = (status) => {
-    if (status === 'all') return grievances.length;
-    return grievances.filter(g => g.status.toLowerCase() === status.toLowerCase()).length;
+  const STATUS_BUTTONS = [
+    { key: 'all', label: 'All' },
+    { key: 'approved', label: STATUS_LABELS.approved },
+    { key: 'under review', label: STATUS_LABELS['under review'] },
+    { key: 'resolved', label: STATUS_LABELS.resolved },
+    { key: 'rejected', label: STATUS_LABELS.rejected, hideWhenZero: true },
+  ];
+
+  const deriveStatusKey = (rawStatus) => {
+    const normalized = (rawStatus || '').toLowerCase();
+    if (STATUS_LABELS[normalized]) {
+      return normalized;
+    }
+    return 'submitted';
   };
+
+  const deriveStatusLabel = (statusKey) => STATUS_LABELS[statusKey] || STATUS_LABELS.submitted;
+
+  const statusCounts = React.useMemo(() => {
+    const counts = {
+      approved: 0,
+      'under review': 0,
+      resolved: 0,
+      submitted: 0,
+      rejected: 0,
+    };
+    grievances.forEach((item) => {
+      const key = deriveStatusKey(item.status);
+      if (counts[key] !== undefined) {
+        counts[key] += 1;
+      } else {
+        counts.submitted += 1;
+      }
+    });
+    return counts;
+  }, [grievances]);
+
+  const statusStyles = {
+    Approved: 'bg-green-100 text-green-800',
+    'Under Review': 'bg-sky-100 text-sky-800',
+    Pending: 'bg-amber-100 text-amber-800',
+    Rejected: 'bg-red-100 text-red-700',
+    Resolved: 'bg-green-100 text-green-700',
+  };
+
+  function StatusBadge({ status }) {
+    const cls = statusStyles[status] || 'bg-gray-100 text-gray-800';
+    return (
+      <span className={`inline-flex items-center px-2 py-1 rounded-lg text-sm font-medium ${cls}`}>
+        {status}
+      </span>
+    );
+  }
 
   const handleViewDetails = (grievance) => {
     setSelectedGrievance(grievance);
@@ -183,8 +230,8 @@ const Grievance = () => {
 
       {/* MAIN PAGE */}
       <div className="w-full bg-gray-100 min-h-screen">
-        <div className="max-w-7xl mx-auto py-6 px-6">
-          <h1 className="text-3xl font-bold">Grievance Management</h1>
+        <div className="max-w-7xl mx-auto py-6 pb-2 px-6">
+          <h1 className="text-2xl md:text-3xl font-bold">Grievance Management</h1>
           <p className="text-gray-600 mt-2 text-lg">
             Track and resolve farmer grievances
           </p>
@@ -192,7 +239,7 @@ const Grievance = () => {
 
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h1 className="text-green-700 text-2xl font-bold mb-4">Farmer Grievances</h1>
+            <h1 className="text-green-700 text-xl font-semibold mb-4">Farmer Grievances</h1>
 
             {/* SEARCH */}
             <div className="relative mb-6">
@@ -201,7 +248,7 @@ const Grievance = () => {
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-3 pl-12 border rounded-lg"
+                className="w-full px-4 py-3 pl-12 border rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
               />
               <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,23 +257,34 @@ const Grievance = () => {
               </svg>
             </div>
 
-            {/* STATUS FILTER */}
-            <div className="mb-6 bg-gray-50 rounded-lg p-4 flex flex-wrap gap-3">
-              <span className="font-semibold text-gray-700">Filter by Status :</span>
-
-              {["all", "approved", "under Review", "rejected"].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStatusFilter(s)}D
-                  className={`px-4 py-2 rounded-full text-sm ${
-                    statusFilter === s
-                      ? "bg-green-600 text-white"
-                      : "bg-white border"
-                  }`}
-                >
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
-                </button>
-              ))}
+            {/* STATUS FILTER (Dashboard style) */}
+            <div className="mb-6 bg-gray-50 rounded-lg p-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="text-gray-700 font-semibold text-xs sm:text-sm md:text-base w-full sm:w-auto mb-2 sm:mb-0">Filter by Status :</span>
+                {STATUS_BUTTONS.map((button) => {
+                  if (button.hideWhenZero && !statusCounts[button.key]) {
+                    return null;
+                  }
+                  return (
+                    <button
+                      key={button.key}
+                      onClick={() => setSelectedFilter(button.key)}
+                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 sm:gap-2 ${
+                        selectedFilter === button.key
+                          ? 'bg-green-600 text-white'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >
+                      {button.label}
+                      {button.key !== 'all' && (
+                        <span className="bg-gray-200 text-gray-700 px-1.5 sm:px-2 py-0.5 rounded-full text-xs">
+                          {statusCounts[button.key] || 0}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* TABLE */}
@@ -264,9 +322,7 @@ const Grievance = () => {
                         <td className="px-4 py-3">{g.grievance_id}</td>
                         <td className="px-4 py-3">{g.subject}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded-lg text-sm ${getStatusBadgeClass(g.status)}`}>
-                            {g.status}
-                          </span>
+                          <StatusBadge status={deriveStatusLabel(deriveStatusKey(g.status))} />
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex justify-center items-center">
@@ -294,9 +350,7 @@ const Grievance = () => {
                   <p className="text-sm">{g.subject}</p>
                   <p className="text-xs text-gray-500">{g.grievance_id}</p>
 
-                  <span className={`mt-2 inline-block px-2 py-1 rounded-lg ${getStatusBadgeClass(g.status)}`}>
-                    {g.status}
-                  </span>
+                  <StatusBadge status={deriveStatusLabel(deriveStatusKey(g.status))} />
 
                   <button
                     onClick={() => handleViewDetails(g)}
@@ -365,7 +419,7 @@ const Grievance = () => {
                 <select
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full mt-2 p-2 border rounded"
+                  className="w-full mt-2 p-2 border rounded border-gray-300"
                 >
                   <option value="Under Review">Under Review</option>
                   <option value="Approved">Resolved</option>

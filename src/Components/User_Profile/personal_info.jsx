@@ -264,7 +264,7 @@ function Personal_info() {
             <Settings />
 
             <div className="w-full lg:max-w-5xl md:max-w-4xl mx-auto p-6 bg-gray-100">
-                <h1 className="font-bold text-3xl text-gray-900">Profile & Personal Details</h1>
+                <h1 className="font-bold text-2xl md:text-3xl text-gray-900">Profile & Personal Details</h1>
                 <p className="text-gray-600 mt-2 lg:max-w-2xl md:max-w-xl">
                     Manage your personal information, land details, and bank accounts. Keep your documents secure by uploading verified identity proofs.
                 </p>
@@ -375,8 +375,8 @@ function Personal_info() {
                         </div>
 
                         {/* ------------------Address Information------------------ */}
-                        <div className="flex flex-wrap justify-between gap-6 mt-8">
-                            <div className="flex flex-col flex-1 lg:min-w-[180px] sm:min-w-[150px]">
+                        <div className="flex flex-wrap justify-between md:gap-6 mt-8">
+                            <div className="flex flex-col flex-1 lg:min-w-[180px] md:min-w-[150px] w-32 md:mb-auto mb-2">
                                 <label className="text-md font-semibold">State <span className="text-red-500">*</span></label>
                                 <select
                                     value={formData.state}
@@ -393,7 +393,7 @@ function Personal_info() {
                                 </select>
                             </div>
 
-                            <div className="flex flex-col flex-1 min-w-[180px]">
+                            <div className="flex flex-col flex-1 min-w-[180px] md:mb-auto mb-2">
                                 <label className="text-md font-semibold">District <span className="text-red-500">*</span></label>
                                 <select
                                     value={formData.district}
@@ -409,7 +409,7 @@ function Personal_info() {
                                 </select>
                             </div>
 
-                            <div className="flex flex-col flex-1 min-w-[180px]">
+                            <div className="flex flex-col flex-1 min-w-[180px] md:mb-auto mb-2">
                                 <label className="text-md font-semibold">Taluka <span className="text-red-500">*</span></label>
                                 <select
                                     value={formData.taluka}
@@ -497,7 +497,7 @@ function Personal_info() {
                             </div>
                         </div>
                         <div className="mt-4">
-                            <label className="text-sm font-semibold">Land Ownership Proof <span className="text-red-500">*</span></label>
+                            <label className="text-md font-semibold">Land Ownership Proof <span className="text-red-500">*</span></label>
                         </div>
                         <div>
                             <div
@@ -578,7 +578,7 @@ function Personal_info() {
                             </div>
                         </div>
                         <div className="flex flex-col mt-4">
-                            <label className="text-sm font-semibold">Bank Name <span className="text-red-500">*</span></label>
+                            <label className="text-md font-semibold">Bank Name <span className="text-red-500">*</span></label>
                             <input
                                 type="text"
                                 value={formData.bank_name}
@@ -589,7 +589,7 @@ function Personal_info() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                             <div className="flex flex-col">
-                                <label className="text-sm font-semibold">PAN Card <span className="text-red-500">*</span></label>
+                                <label className="text-md font-semibold">PAN Card <span className="text-red-500">*</span></label>
                                 <div
                                     className={`border-2 border-dashed p-3 rounded-md mt-1 ${inputFileError ? "border-red-600 bg-red-50" : "border-gray-200 bg-gray-50"
                                         }`}
@@ -621,7 +621,7 @@ function Personal_info() {
                                 </div>
                             </div>
                             <div className="flex flex-col">
-                                <label className="text-sm font-semibold">Aadhaar Card <span className="text-red-500">*</span></label>
+                                <label className="text-md font-semibold">Aadhaar Card <span className="text-red-500">*</span></label>
                                 <div
                                     className={`border-2 border-dashed p-3 rounded-md mt-1 ${inputFileError ? "border-red-600 bg-red-50" : "border-gray-200 bg-gray-50"
                                         }`}
@@ -656,9 +656,8 @@ function Personal_info() {
 
                         {/* -------------------------------------------------------Submit & Clear---------------------------------------------- */}
                         <div className="flex gap-3 justify-end mt-6">
-                            <button className="px-5 py-2 rounded-md bg-white border border-gray-200 text-gray-700" onClick={handleRemoveChanges}>Cancel</button>
                             <button
-                                className="px-5 py-2 rounded-md bg-green-600 text-white shadow hover:bg-green-700"
+                                className="md:px-5 py-2 px-2 rounded-md bg-green-600 text-white shadow hover:bg-green-700"
                                 id="submit_btn"
                                 onClick={handleSubmit}
                             >

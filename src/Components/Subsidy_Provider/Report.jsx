@@ -381,7 +381,7 @@ export default function Report() {
               <div className="flex-1 relative">
                 <input
                   type="text"
-                  placeholder="Search by Subsidy, Farmer Name, Application ID or Status..."
+                  placeholder="Search by Subsidy, Farmer Name, Application ID, Status or Date..."
                   value={searchQuery}
                   onChange={handleSearchChange}
                   maxLength={50}

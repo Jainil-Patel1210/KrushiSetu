@@ -99,27 +99,21 @@ function Header() {
   // ------------------ OPEN NOTIFICATION PANEL ------------------
   const handleNotificationClick = () => {
     setNotificationOpen(true);
-    // default to unread only to avoid showing read messages unexpectedly
     fetchNotifications("unread");
   };
 
   // ------------------ HANDLE WHEN USER CLICKS A NOTIFICATION ITEM ------------------
-  // marks it read and updates UI; you can extend to navigate to detail pages
   const handleOpenNotification = async (notif) => {
-    // If already read, do nothing server-side but you may still open detail
     if (notif.is_new) {
       const ok = await markAsRead(notif.id);
       if (ok) {
-        // update local state to show as read (remove "New" badge)
         setNotifications((prev) =>
           prev.map((n) => (n.id === notif.id ? { ...n, is_new: false } : n))
         );
       }
-      // After marking single read, refresh unread list so badge and counts update
-      // (optional) — we'll reload unread to be consistent
+     
       await fetchNotifications("unread");
     } else {
-      // already read — you might still want to open the item or show details
     }
   };
 
@@ -151,7 +145,6 @@ function Header() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // reload unread only → should be empty
       await fetchNotifications("unread");
     } catch (err) {
       console.error("Failed to clear all notifications", err);
@@ -159,7 +152,7 @@ function Header() {
     }
   };
 
-  // ------------------ CLICK OUTSIDE HANDLER ------------------
+
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -174,7 +167,7 @@ function Header() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ------------------ ICON RENDER ------------------
+
   const getNotificationIcon = (type) => {
     switch (type) {
       case "approved":
@@ -245,11 +238,10 @@ function Header() {
     Cookies.remove("refresh_token");
 
     setTimeout(() => {
-      window.location.href = "/login";
+      window.location.href = "/";
     }, 1500);
   };
 
-  // ------------------ UI ------------------
   return (
     <>
       <Toaster position="top-center" />
@@ -258,7 +250,6 @@ function Header() {
       <div className="lg:block hidden">
         <div className="sticky top-0 bg-white w-full flex justify-end items-center py-4 px-6">
           <div className="flex items-center gap-6">
-            {/* Notification button + badge */}
             <div className="relative">
               <img
                 src="./Notification.svg"
@@ -308,17 +299,16 @@ function Header() {
 
         <hr className="border-gray-300" />
       </div>
-
-      {/* Notifications modal */}
+      
+      {/* -----------------------Notification-------------------------- */}
       {notificationOpen && (
         <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
           <div ref={notificationRef} className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 relative">
-            {/* Header */}
             <div className="flex items-center justify-between p-4">
               <h2 className="text-xl text-green-700 font-bold">Notifications</h2>
             </div>
 
-            {/* List */}
+
             <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
               {loading ? (
                 <div className="flex justify-center py-8">
@@ -331,7 +321,6 @@ function Header() {
                   <div
                     key={n.id}
                     className="flex items-start gap-3 p-4 border rounded-lg group hover:shadow transition relative"
-                    // allow clicking the whole notification to mark as read / open details
                     onClick={() => handleOpenNotification(n)}
                     role="button"
                     tabIndex={0}
@@ -353,7 +342,6 @@ function Header() {
                       <p className="text-xs text-gray-500 mt-2">{formatDate(n.created_at)}</p>
                     </div>
 
-                    {/* Show X only for UNREAD */}
                     {n.is_new && (
                       <button
                         onClick={(e) => {
@@ -364,7 +352,7 @@ function Header() {
                         className="absolute top-3 right-3 text-xs text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition "
                         title="Mark as read"
                       >
-                        ❌
+                        &times
                       </button>
                     )}
                   </div>

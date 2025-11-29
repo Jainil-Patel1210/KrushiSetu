@@ -36,6 +36,19 @@ function Support() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // prevent background scrolling when modals are open
+    useEffect(() => {
+        const originalOverflow = document.body.style.overflow;
+        if (showForm || showDetails) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = originalOverflow;
+        }
+        return () => {
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [showForm, showDetails]);
+
     const fetchGrievances = async () => {
         try {
             const token = localStorage.getItem('access');
@@ -135,7 +148,7 @@ function Support() {
             await fetchGrievances();
             resetForm();
             setShowForm(false);
-            toast.sucess("Grievance submitted successfully");
+            toast.success("Grievance submitted successfully");
             btn.disabled = false;
             
         } catch (err) {
@@ -190,7 +203,7 @@ function Support() {
                         <p className='text-gray-600 mt-2 max-w-2xl'>Having an issue? Let us know and we'll help you resolve it</p>
                     </div>
                     <div>
-                        <button onClick={() => setShowForm(true)} className='bg-green-700 text-white p-2 rounded-md text-semibold flex items-center gap-2'>
+                        <button onClick={() => setShowForm(true)} className='bg-green-600 hover:bg-green-700 text-white p-2 rounded-md text-semibold flex items-center gap-2'>
                             <FaPlus className="text-sm" />New Grievance
                         </button>
                     </div>
@@ -198,20 +211,20 @@ function Support() {
 
                 {/* ---------------------------------Grievance Form-------------------------------------- */}
                 {showForm && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-black opacity-40" onClick={() => setShowForm(false)}></div>
-                        <div className="relative bg-white rounded-lg shadow-lg w-full max-w-2xl mx-4 p-4 sm:p-6 z-10">
+                    <div className="fixed inset-0 z-30 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowForm(false)}></div>
+                        <div className="relative bg-white rounded-lg shadow-lg w-full max-w-xl mx-4 p-4 sm:p-6 z-10 min-h-[45vh] sm:min-h-[50vh] md:min-h-[55vh] max-h-[90vh] overflow-y-auto">
                             <h3 className="text-lg sm:text-xl font-semibold text-green-700">Raise New Grievance</h3>
-                            <form onSubmit={handleSubmit} className="mt-3 sm:mt-4 space-y-3 sm:space-y-4">
+                            <form onSubmit={handleSubmit} className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Subject <span className='text-red-500'>*</span></label>
-                                    <input value={subject} onChange={(e) => setSubject(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" placeholder="Short summary" />
+                                    <label className="block text-sm font-medium text-gray-700 focus:ring-2">Subject <span className='text-red-500'>*</span></label>
+                                    <input value={subject} onChange={(e) => setSubject(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="Short summary" />
                                     {errors.subject && <p className="text-red-500 text-xs mt-1">{errors.subject}</p>}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Description <span className='text-red-500'>*</span></label>
-                                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" placeholder="Describe the issue in detail" />
+                                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="Describe the issue in detail" />
                                     {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
                                 </div>
 
@@ -227,17 +240,9 @@ function Support() {
                                     }} />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Preferred contact</label>
-                                    <div className="mt-1 flex items-center gap-4">
-                                        <label className="flex items-center gap-2"><input type="radio" name="contact" checked={preferredContact === 'email'} onChange={() => setPreferredContact('email')} /> Email</label>
-                                        <label className="flex items-center gap-2"><input type="radio" name="contact" checked={preferredContact === 'phone'} onChange={() => setPreferredContact('phone')} /> Phone</label>
-                                    </div>
-                                </div>
-
                                 <div className="flex justify-end gap-3 mt-4">
                                     <button type="button" onClick={() => { resetForm(); setShowForm(false); }} className="px-4 py-2 rounded-md border border-gray-300">Cancel</button>
-                                    <button type="submit" id='btn' className="px-4 py-2 rounded-md bg-green-700 text-white">Submit</button>
+                                    <button type="submit" id='btn' className="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white">Submit</button>
                                 </div>
                             </form>
                         </div>
@@ -315,14 +320,14 @@ function Support() {
                 {/* ---------------------------------Grievance Details Modal-------------------------------------- */}
                 {showDetails && selectedGrievance && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-black opacity-40" onClick={() => { setShowDetails(false); setSelectedGrievance(null); }}></div>
-                        <div className="relative bg-white rounded-lg shadow-lg w-full max-w-xl mx-4 p-4 sm:p-6 z-10">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setShowDetails(false); setSelectedGrievance(null); }}></div>
+                        <div className="relative bg-white rounded-lg shadow-lg w-full max-w-xl mx-4 p-4 sm:p-6 z-10 min-h-[40vh] sm:min-h-[45vh] max-h-[85vh] overflow-y-auto">
                             <div className="flex justify-between items-start gap-3 sm:gap-4">
                                 <div>
                                     <h3 className="text-lg sm:text-xl font-semibold text-green-700">Grievance Details</h3>
                                     <p className="text-xs sm:text-sm text-gray-500 mt-1">Details for {selectedGrievance.grievanceId}</p>
                                 </div>
-                                <button onClick={() => { setShowDetails(false); setSelectedGrievance(null); }} className="text-gray-500 hover:text-gray-700">Close</button>
+                                <button onClick={() => { setShowDetails(false); setSelectedGrievance(null); }} className="text-gray-500 hover:text-gray-700 text-2xl font-semibold">&times;</button>
                             </div>
 
                             <div className="mt-4 space-y-3">
