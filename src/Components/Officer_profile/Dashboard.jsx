@@ -248,7 +248,7 @@ const Dashboard = () => {
       <Settings />
       <div className="w-full bg-gray-100 min-h-screen">
         <div className="max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-10">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Application Dashboard</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Application Dashboard</h1>
           <p className="text-[#77797C] font-semibold mt-2 text-sm sm:text-base lg:text-lg">
             Review and Manage Farmer Subsidy Applications
           </p>
@@ -263,14 +263,14 @@ const Dashboard = () => {
         )}
 
         {error && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 pb-2 pt-1">
             <div className="bg-red-100 border border-red-200 text-red-700 rounded-lg p-4">{error}</div>
           </div>
         )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6">
           <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-            <h1 className="text-green-700 text-xl sm:text-2xl font-bold mb-4">Farmer Subsidy Application</h1>
+            <h1 className="text-green-700 text-xl font-semibold mb-4">Farmer Subsidy Application</h1>
 
             <div className="mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -304,7 +304,7 @@ const Dashboard = () => {
             <div className="hidden lg:block overflow-x-auto">
               <table className="w-full table-auto border-collapse">
                 <thead>
-                  <tr className="bg-gray-100 text-left text-base lg:text-lg text-gray-700">
+                  <tr className="bg-gray-100 text-left text-base text-md font-semibold text-gray-700">
                     <th className="px-4 py-3">Sr. No.</th>
                     <th className="px-4 py-3">Farmer Name</th>
                     <th className="px-4 py-3">Scheme Name</th>
@@ -323,7 +323,7 @@ const Dashboard = () => {
                     </tr>
                   ) : (
                     filteredData.map((row) => (
-                      <tr key={row.id} className="border-t border-[#D8D8D8] font-semibold text-[#363636] text-base lg:text-lg">
+                      <tr key={row.id} className="border-t border-[#D8D8D8] font-semibold text-[#363636] text-base text-md">
                         <td className="px-4 py-3">{row.srNo}</td>
                         <td className="px-4 py-3">{row.farmerName}</td>
                         <td className="px-4 py-3">{row.schemeName}</td>

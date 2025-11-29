@@ -21,8 +21,8 @@ function Footer() {
         <div className="w-full md:w-auto px-7 md:px-0">
           <h3 className="text-lg font-semibold mb-2 mt-2">Useful Links</h3>
             <ul className="space-y-1 text-sm">
-              <li><a href="#" className="hover:text-[#1B7A43] transition-colors">Privacy & Policy</a></li>
-              <li><a href="#" className="hover:text-[#1B7A43] transition-colors">Terms & Conditions</a></li>
+              <li><div className="hover:text-[#1B7A43] transition-colors">Privacy & Policy</div></li>
+              <li><div className="hover:text-[#1B7A43] transition-colors">Terms & Conditions</div></li>
             </ul>
         </div>
         <div className="w-full md:w-auto px-7 md:px-0">

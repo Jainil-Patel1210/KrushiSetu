@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Header from "./Header";
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from "react-icons/ai";
 import api from "./api1";
-import axios from "axios";
 import Settings from "../HomePage/Settings.jsx";
 
 // Regex to validate document number format
@@ -41,6 +40,18 @@ const Documents = () => {
     useEffect(() => {
         fetchDocuments();
     }, []);
+
+    // disable background scroll when modals are open
+    useEffect(() => {
+        const original = document.body.style.overflow;
+        if (showAddModal || showEditModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = original;
+        }
+        return () => { document.body.style.overflow = original };
+    }, [showAddModal, showEditModal]);
+
 
     const fetchDocuments = async () => {
         try {
@@ -204,12 +215,13 @@ const Documents = () => {
     const inputClass = (error) =>
         `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${error
             ? 'border-red-500 focus:ring-red-500'
-            : 'border-gray-300 focus:ring-green-500'
+            : 'border-gray-300 focus:ring-green-700'
         }`;
 
     return (
         <>
             {/* Blur background when modal is open */}
+            
             <div className={isBlurred ? 'blur-sm' : ''}>
                 <Header />
             </div>
@@ -252,7 +264,7 @@ const Documents = () => {
                                                     <div className="flex flex-col sm:flex-row justify-center gap-2">
                                                         <button
                                                             onClick={() => handleView(doc)}
-                                                            className="flex items-center justify-center gap-2 px-2 sm:px-3 py-1 text-sm sm:text-base border-2 border-green-600 text-green-600 rounded-md hover:bg-green-50 transition-colors w-full sm:w-auto"
+                                                            className="flex items-center justify-center gap-2 px-2 sm:px-3 py-1 text-sm sm:text-base border-2 border-green-700 text-green-700 rounded-md hover:bg-green-50 transition-colors w-full sm:w-auto"
                                                             disabled={loading}
                                                         >
                                                             <AiOutlineEye className="h-4 w-4" />
@@ -305,7 +317,7 @@ const Documents = () => {
             {/* Add Document Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full min-h-[40vh] sm:min-h-[45vh] max-h-[90vh] overflow-y-auto">
                         <h3 className="text-2xl font-bold mb-4 text-green-700">Add New Document</h3>
                         <form onSubmit={handleAddDocument}>
                             <div className="mb-4">
@@ -319,7 +331,7 @@ const Documents = () => {
                                         setFormData(f => ({ ...f, document_type: value, title: match?.label || '' }));
                                     }}
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                                        errors.document_type ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
+                                        errors.document_type ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-700'
                                     }`}
                                     disabled={loading}
                                 >
@@ -355,7 +367,7 @@ const Documents = () => {
                                     disabled={loading}
                                 />
                                 {formData.file && !errors.file && (
-                                    <p className="text-sm text-green-600 mt-2">
+                                    <p className="text-sm text-green-700 mt-2">
                                         Selected: {formData.file.name} ({(formData.file.size / 1024 / 1024).toFixed(2)} MB)
                                     </p>
                                 )}
@@ -425,7 +437,7 @@ const Modal = ({
     loading
 }) => (
     <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full min-h-[40vh] sm:min-h-[45vh] max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-bold mb-4 text-green-700">{title}</h3>
             <form onSubmit={onSubmit}>
                 <div className="mb-4">
@@ -463,7 +475,7 @@ const Modal = ({
                         disabled={loading}
                     />
                     {formData.file && !errors.file && (
-                        <p className="text-sm text-green-600 mt-2">
+                        <p className="text-sm text-green-700 mt-2">
                             Selected: {formData.file.name} ({(formData.file.size / 1024 / 1024).toFixed(2)} MB)
                         </p>
                     )}

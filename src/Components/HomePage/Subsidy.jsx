@@ -43,12 +43,14 @@ const Subsidy = () => {
     }
   };
   
+  const background = false;
+
   return (
     <>
       <div id="subsidy" className="bg-[#F3FFF1] pt-4 pb-8">
           <div className="text-center mb-12" data-aos="fade-up" data-aos-delay="100">
-            <h2 className="text-4xl font-bold text-gray-800 mb-3">Popular Subsidies{" "}</h2>
-            <p className="text-[#3C3838] max-w-2xl font mx-auto text-center">
+            <h2 className="text-4xl font-bold text-gray-800 mb-3 pt-2">Popular Subsidies{" "}</h2>
+            <p className="text-[#3C3838] max-w-2xl font-lg mt-1 mx-auto text-center">
               Discover a comprehensive range of subsidies tailored to meet your
               needs. From strategic consultancy to hands-on implementation.
             </p>
@@ -75,12 +77,14 @@ const Subsidy = () => {
           </div>
           
           <div className="text-center mt-8 pt-4" data-aos="fade-up">
-            <button 
-              className="bg-green-600 text-xl px-8 py-3 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-md" 
-              onClick={() => navigate('/subsidy-list')}
-            >
-              Explore More
-            </button>
+           <button 
+            className="bg-green-600 text-xl px-8 py-3 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-md" 
+            onClick={() => {
+              navigate('/subsidy-list', { state: { from: 'home_page', isHeaderVisible: false } });
+            }}
+          >
+            Explore More
+          </button>
           </div>
       </div>
     </>

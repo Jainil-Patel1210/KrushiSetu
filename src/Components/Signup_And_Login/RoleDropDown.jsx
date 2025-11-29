@@ -23,7 +23,7 @@ function RoleDropdown({ role, isOpen, onClick, onSelect }) {
                 <div className="absolute left-0 right-0 bg-white border rounded shadow z-10">
                     <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Farmer')}>Farmer</p>
                     <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Officer')}>Officer</p>
-                    <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Admin')}>Admin</p>
+                    {/* <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Admin')}>Admin</p> */}
                     <p className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => onSelect('Subsidy_Provider')}>Subsidy Provider</p>
                 </div>
             )}

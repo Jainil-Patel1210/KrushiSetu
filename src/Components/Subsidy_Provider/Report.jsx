@@ -15,19 +15,15 @@ const Report = () => {
     { id: 6, farmerName: 'Kavita Joshi', subsidyName: 'Solar Pump Subsidy', applicationId: 'APP2024006', date: '2024-03-20', status: 'Pending' }
   ];
 
-  // Function to sanitize search input - only allow alphanumeric, spaces, and hyphens
   const sanitizeInput = (input) => {
-    // Remove all special characters except spaces and hyphens
     return input.replace(/[^a-zA-Z0-9\s-]/g, '');
   };
 
-  // Handle search input change
   const handleSearchChange = (e) => {
     const sanitizedValue = sanitizeInput(e.target.value);
     setSearchQuery(sanitizedValue);
   };
 
-  // Filter applications based on search query
   const filteredApplications = allApplications.filter(app => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
@@ -36,7 +32,8 @@ const Report = () => {
       app.subsidyName.toLowerCase().includes(query) ||
       app.farmerName.toLowerCase().includes(query) ||
       app.applicationId.toLowerCase().includes(query) ||
-      app.status.toLowerCase().includes(query)
+      app.status.toLowerCase().includes(query) ||
+      app.date.toLowerCase().includes(query)
     );
   });
 
@@ -60,8 +57,6 @@ const Report = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Search is already happening in real-time via filteredApplications
-    // This function can be used for additional actions if needed
   };
 
   const handleClearSearch = () => {
@@ -75,10 +70,9 @@ const Report = () => {
 
       <div className="w-full bg-gray-100 min-h-screen">
         <div className="max-w-7xl mx-auto py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-10">
-          {/* Page Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
             <div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">
+              <h1 className="text-2xl md:text-3xl font-bold">
                 Application Reports
               </h1>
               <p className="text-[#77797C] font-semibold mt-1 sm:mt-2 text-xs sm:text-sm md:text-base lg:text-lg">
@@ -87,14 +81,12 @@ const Report = () => {
             </div>
           </div>
 
-          {/* Search and Statistics Section */}
           <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6">
-            {/* Search Form */}
             <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4 sm:mb-6">
               <div className="flex-1 relative">
                 <input
                   type="text"
-                  placeholder="Search by Subsidy, Farmer Name, Application ID or Status..."
+                  placeholder="Search by Subsidy, Farmer Name, Application ID, Status or Date..."
                   value={searchQuery}
                   onChange={handleSearchChange}
                   maxLength={50}
@@ -123,7 +115,6 @@ const Report = () => {
               </button>
             </form>
 
-            {/* Search Help Text */}
             <div className="mb-3 sm:mb-4 text-xs text-gray-500">
               <span className="inline-flex items-center gap-1">
                 <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,14 +124,12 @@ const Report = () => {
               </span>
             </div>
 
-            {/* Search Results Info */}
             {searchQuery && (
               <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-gray-600">
                 Showing {applications.length} result{applications.length !== 1 ? 's' : ''} for "{searchQuery}"
               </div>
             )}
 
-            {/* Statistics Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
               <div className="bg-white border-2 border-gray-200 rounded-lg p-2 sm:p-3 lg:p-4">
                 <p className="text-gray-600 text-xs sm:text-sm md:text-base font-semibold mb-1">Total Applications</p>

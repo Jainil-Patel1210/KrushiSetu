@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "./Header";
 import Sidebar from "./Sidebar";
 import Subsidy_detail from "./Subsidy_detail";
 import Settings from "../HomePage/Settings.jsx";
 import api from "./api1.js";
+import Header from "./Header.jsx";
+import Navbar from "../HomePage/Navbar.jsx";
 
-function Subsidy_List() {
+function Subsidy_List({isHeaderVisible}) {
   const [searchSubsidy, setSearchSubsidy] = useState("");
   const [subsidies, setSubsidies] = useState([]);
   const [selectedSubsidy, setSelectedSubsidy] = useState(null);
@@ -120,6 +121,12 @@ function Subsidy_List() {
 
   return (
     <>
+      {isHeaderVisible && 
+      <>
+        <Header />
+        <Settings />
+      </>}
+      {!isHeaderVisible && <Navbar />}
       <div className="w-full min-h-screen">
         <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 md:px-10">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
@@ -206,10 +213,9 @@ function Subsidy_List() {
                   onClick={() => handlePageChange(currentPage - 1)}
                   className={`md:px-4 md:py-2 px-2 py-2 rounded-md border ${
                     currentPage === 1
-                      ? "bg-gray-200 cursor-not-allowed"
+                      ? "hidden"
                       : "bg-white hover:bg-green-50 border-green-500"
                   }`}
-                  disabled={currentPage === 1}
                 >
                   Previous
                 </button>
@@ -232,10 +238,9 @@ function Subsidy_List() {
                   onClick={() => handlePageChange(currentPage + 1)}
                   className={`md:px-4 md:py-2 px-2 py-2 rounded-md border ${
                     currentPage === totalPages
-                      ? "bg-gray-200 cursor-not-allowed"
+                      ? "hidden"
                       : "bg-white hover:bg-green-50 border-green-500"
                   }`}
-                  disabled={currentPage === totalPages}
                 >
                   Next
                 </button>

@@ -22,11 +22,22 @@ function Signup({ onSignupSuccess = null }) {
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
 
-    const nameRestriction = /^[A-Za-z\s.]+$/;
+    const nameRestriction = /^[A-Za-z\s]+$/;
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     const passwordRestriction = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
     const [emailOtp, setEmailOtp] = useState("");
+    // Only enable button if all fields are filled and no errors
+    const isFormValid =
+        fullName &&
+        email &&
+        mobile &&
+        password &&
+        confirmPassword &&
+        !fullNameError &&
+        !emailError &&
+        !mobileError &&
+        !passwordError;
     const [mobileOtp, setMobileOtp] = useState("");
     const [otpTimer, setOtpTimer] = useState(0);
     const [userId, setUserId] = useState("");
@@ -172,15 +183,16 @@ function Signup({ onSignupSuccess = null }) {
 
                             {/* Full Name */}
                             <input
-                                className="w-full p-2 mb-2 border rounded"
+                                className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                                 placeholder="Full Name"
                                 value={fullName}
                                 onChange={(e) => {
+                                    e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, "")
                                     setFullName(e.target.value);
                                     setFullNameError(
                                         nameRestriction.test(e.target.value)
                                             ? ""
-                                            : "Only letters allowed"
+                                            : "Only letters and spaces allowed"
                                     );
                                 }}
                                 required
@@ -193,7 +205,7 @@ function Signup({ onSignupSuccess = null }) {
 
                             {/* Email */}
                             <input
-                                className="w-full p-2 mb-2 border rounded"
+                                className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                                 type="email"
                                 placeholder="Email Address"
                                 value={email}
@@ -202,7 +214,7 @@ function Signup({ onSignupSuccess = null }) {
                                     setEmailError(
                                         validateEmail(e.target.value)
                                             ? ""
-                                            : "Invalid email"
+                                            : "Enter a valid email address."
                                     );
                                 }}
                                 required
@@ -215,7 +227,7 @@ function Signup({ onSignupSuccess = null }) {
 
                             {/* Mobile */}
                             <input
-                                className="w-full p-2 mb-2 border rounded"
+                                className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                                 type="text"
                                 placeholder="Mobile Number"
                                 value={mobile}
@@ -241,7 +253,7 @@ function Signup({ onSignupSuccess = null }) {
                             {/* Password */}
                             <div className="relative">
                                 <input
-                                    className="w-full p-2 mb-2 border rounded"
+                                    className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Password"
                                     value={password}
@@ -268,7 +280,7 @@ function Signup({ onSignupSuccess = null }) {
                             {/* Confirm Password */}
                             <div className="relative">
                                 <input
-                                    className="w-full p-2 mb-2 border rounded"
+                                    className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                                     type={showConfirmPassword ? "text" : "password"}
                                     placeholder="Confirm Password"
                                     value={confirmPassword}
@@ -297,20 +309,22 @@ function Signup({ onSignupSuccess = null }) {
                             )}
                         </div>
 
-                        {/* Terms */}
-                        <div className="flex items-center space-x-2 pl-4 mb-2">
-                            <input type="checkbox" required />
-                            <label>I agree to the Terms & Conditions</label>
-                        </div>
-
                         {/* Submit */}
-                        <div className="flex justify-center pb-3">
+                        <div className="flex items-center justify-center pt-2">
                             <button
-                                className="bg-green-700 text-white w-40 p-2 rounded"
+                                className={`relative text-white font-bold p-2 mb-3 w-50 rounded-md ${isFormValid ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'} transition duration-200 min-w-[120px]`}
                                 type="submit"
-                                disabled={isLoading}
+                                id="btn6"
+                                disabled={!isFormValid || isLoading}
                             >
-                                {isLoading ? "Loading..." : "Create Account"}
+                                {isLoading ? (
+                                    <div className="flex items-center justify-center space-x-2">
+                                        <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <span>In Progress...</span>
+                                    </div>
+                                ) : (
+                                    'Create Account'
+                                )}
                             </button>
                         </div>
                     </form>
@@ -321,7 +335,7 @@ function Signup({ onSignupSuccess = null }) {
                     <form onSubmit={handleVerifyEmailOtp}>
                         <p className="text-center mb-2">Enter Email OTP</p>
                         <input
-                            className="w-full p-2 mb-2 border rounded"
+                            className="w-full p-2 mb-2 border rounded border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                             placeholder="Enter OTP"
                             value={emailOtp}
                             onChange={(e) =>
@@ -333,12 +347,12 @@ function Signup({ onSignupSuccess = null }) {
                         />
 
                         {otpTimer > 0 ? (
-                            <p className="text-center text-gray-600">
+                            <p className="text-center text-gray-600 ">
                                 Resend in {otpTimer}s
                             </p>
                         ) : (
                             <p
-                                className="text-center text-green-700 cursor-pointer"
+                                className="text-center text-green-700 cursor-pointer mt-2 mb-2"
                                 onClick={resendEmailOtp}
                             >
                                 Resend OTP
@@ -362,7 +376,7 @@ function Signup({ onSignupSuccess = null }) {
                     <form onSubmit={handleVerifyMobileOtp}>
                         <p className="text-center mb-2">Enter Mobile OTP</p>
                         <input
-                            className="w-full p-2 mb-2 border rounded"
+                            className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
                             placeholder="Enter OTP"
                             value={mobileOtp}
                             onChange={(e) =>

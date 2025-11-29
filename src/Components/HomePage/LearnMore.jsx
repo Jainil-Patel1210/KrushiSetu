@@ -24,14 +24,13 @@ function LearnMore() {
       <Navbar />
       <Settings />
 
-      {/* Hero Section */}
       <div className="bg-[#1B7A43] py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center" data-aos="fade-up">
-            <h1 className="text-5xl font-extrabold text-white mb-4">
+            <h1 className="text-4xl font-bold text-white mb-4">
               Welcome to <span className="text-white drop-shadow-lg">KrushiSetu</span>
             </h1>
-            <p className="text-xl text-white/90 max-w-3xl mx-auto">
+            <p className="text-md text-white/90 max-w-3xl mx-auto">
               Your trusted partner in agricultural growth - connecting farmers with government subsidies, 
               resources, and opportunities to enhance farming practices and income.
             </p>
@@ -39,7 +38,6 @@ function LearnMore() {
         </div>
       </div>
 
-      {/* What We Do Section */}
       <div className="py-16 bg-[#F3FFF1]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12" data-aos="fade-up">
@@ -203,7 +201,7 @@ function LearnMore() {
           <h2 className="text-4xl font-bold text-gray-900 mb-6">
             Ready to Get Started?
           </h2>
-          <p className="text-xl text-gray-700 mb-8">
+          <p className="text-md text-gray-700 mb-8">
             Join thousands of farmers who are already benefiting from government subsidies through KrushiSetu
           </p>
           <div className="flex justify-center gap-4 flex-wrap">

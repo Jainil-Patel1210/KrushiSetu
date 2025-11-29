@@ -15,8 +15,8 @@ function formatDate(dateString) {
   });
 }
 
-
 const News = () => {
+  // States
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -27,33 +27,51 @@ const News = () => {
     date: "",
     source: "",
     description: "",
-    image: null,     // <--- now storing multiple
+    image: null,
     tag: ""
   });
 
   const [newsArticles, setNewsArticles] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Error state for each field
+  const [errors, setErrors] = useState({
+    title: '',
+    date: '',
+    source: '',
+    description: '',
+    tag: ''
+  });
 
-  // Fetch news articles (you'll need to implement the API call)
+  // Prevent background scroll when any modal is open
+  useEffect(() => {
+    if (showModal || showDeleteModal || showViewModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showModal, showDeleteModal, showViewModal]);
+
+  const token = localStorage.getItem("access");
+
+  // Fetch news articles on mount
   useEffect(() => {
     fetchNews();
   }, []);
-
-  const token = localStorage.getItem("access");
 
   const fetchNews = async () => {
     try {
       const res = await api.get("/news/my-articles/", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(res.data);
       setNewsArticles(res.data);
     } catch (error) {
       console.error("Error fetching news:", error);
     }
   };
-
 
   const handleAddClick = () => {
     setIsEditing(false);
@@ -63,7 +81,15 @@ const News = () => {
       date: '',
       source: '',
       description: '',
-      image: null
+      image: null,
+      tag: ''
+    });
+    setErrors({
+      title: '',
+      date: '',
+      source: '',
+      description: '',
+      tag: ''
     });
     setShowModal(true);
   };
@@ -76,7 +102,15 @@ const News = () => {
       date: news.date,
       source: news.source,
       description: news.description,
-      image: null // Don't set the image file, but we'll keep the URL
+      image: null, // keep URL, file not set
+      tag: news.tag || ''
+    });
+    setErrors({
+      title: '',
+      date: '',
+      source: '',
+      description: '',
+      tag: ''
     });
     setShowModal(true);
   };
@@ -90,7 +124,8 @@ const News = () => {
       date: '',
       source: '',
       description: '',
-      image: null
+      image: null,
+      tag: ''
     });
   };
 
@@ -103,10 +138,62 @@ const News = () => {
     setFormData({ ...formData, image: e.target.files[0] });
   };
 
+  // Validate form before submitting
+  const validateForm = () => {
+    let isValid = true;
+    let validationErrors = { ...errors };
 
+    // Validate title
+    if (formData.title.trim() === '') {
+      artickleTitleError = 'Title is required';
+      isValid = false;
+    } else {
+      artickleTitleError = '';
+    }
+
+    // Validate date
+    if (formData.date.trim() === '') {
+      artickleDateError = 'Date is required';
+      isValid = false;
+    } else {
+      artickleDateError = '';
+    }
+
+    // Validate source
+    if (formData.source.trim() === '') {
+      artickleSourceError = 'Source is required';
+      isValid = false;
+    } else {
+      artickleSourceError = '';
+    }
+
+    // Validate description
+    if (formData.description.trim() === '') {
+      artickleDescriptionError = 'Description is required';
+      isValid = false;
+    } else {
+      artickleDescriptionError = '';
+    }
+
+    // Validate tag
+    if (formData.tag.trim() === '') {
+      artickleTagError = 'Tag is required';
+      isValid = false;
+    } else {
+      artickleTagError = '';
+    }
+
+    setErrors(validationErrors);
+    return isValid;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check if the form is valid
+    if (!validateForm()) {
+      return;
+    }
 
     const payload = new FormData();
     payload.append("title", formData.title);
@@ -118,12 +205,9 @@ const News = () => {
     if (formData.image) {
       payload.append("image", formData.image);
     }
-    console.log(payload);
 
     try {
-      if (isEditing) {
-        const token = localStorage.getItem("access");
-        console.log(token);
+      if (isEditing && selectedNews) {
         await api.put(`/news/update/${selectedNews.id}/`, payload, {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -141,15 +225,13 @@ const News = () => {
         toast.success("News posted");
       }
 
-      fetchNews();        // refresh list
-      handleCloseModal(); // close modal
-
+      fetchNews();
+      handleCloseModal();
     } catch (err) {
       console.error(err);
       toast.error("Failed to save article");
     }
   };
-
 
   const handleDeleteClick = (news) => {
     setSelectedNews(news);
@@ -167,19 +249,14 @@ const News = () => {
   };
 
   const handleConfirmDelete = async () => {
-    const tok = localStorage.getItem("access");
-    console.log(tok);
     try {
-      await api.delete(`/news/delete/${selectedNews.id}/`,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${tok}`,
-          },
-        }
-      );
+      if (!selectedNews) throw new Error("No article selected");
+      await api.delete(`/news/delete/${selectedNews.id}/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       toast.success("Deleted successfully");
-
       setShowDeleteModal(false);
       fetchNews();
     } catch (error) {
@@ -187,7 +264,6 @@ const News = () => {
       toast.error("Failed to delete article");
     }
   };
-
 
   const handleCancelDelete = () => {
     setShowDeleteModal(false);
@@ -203,7 +279,7 @@ const News = () => {
         <div className="max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-10">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
+              <h1 className="text-2xl md:text-3xl font-bold">
                 Post News
               </h1>
               <p className="text-[#77797C] font-semibold mt-2 text-sm sm:text-base lg:text-lg">
@@ -214,7 +290,7 @@ const News = () => {
               onClick={handleAddClick}
               className="mt-4 sm:mt-0 bg-[#009500] hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
             >
-              <span className="text-xl font-bold">+</span>
+              <span className="text-xl font-bold ">+</span>
               Post New Article
             </button>
           </div>
@@ -227,7 +303,7 @@ const News = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search news articles..."
-                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
               />
               <svg
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -258,8 +334,8 @@ const News = () => {
                   );
                 })
                 .map((news) => (
-                  <div key={news.source} className="bg-white rounded-lg shadow-md overflow-hidden">
-                    {/* Image Placeholder */}
+                  <div key={news.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                    {/* Image */}
                     <div className="bg-gray-300 h-48 flex items-center justify-center">
                       {news.image ? (
                         <img src={news.image} alt={news.title} className="w-full h-full object-cover" />
@@ -267,7 +343,6 @@ const News = () => {
                         <svg>...</svg>
                       )}
                     </div>
-
 
                     {/* Content */}
                     <div className="p-4">
@@ -280,7 +355,6 @@ const News = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <span>{formatDate(news.date)}</span>
-
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
@@ -338,7 +412,7 @@ const News = () => {
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4 backdrop-blur-md">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-              <h2 className="text-2xl font-bold">{isEditing ? 'Edit Article' : 'Post New Article'}</h2>
+              <h2 className="text-2xl text-green-700 font-bold">{isEditing ? 'Edit Article' : 'Post New Article'}</h2>
               <button
                 onClick={handleCloseModal}
                 className="text-gray-500 hover:text-gray-700"
@@ -349,90 +423,130 @@ const News = () => {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">
+                <label className="block text-md font-semibold mb-2">
                   Article Title <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="title"
                   value={formData.title}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  onChange={(e) => {
+                    handleInputChange(e);
+                    if (e.target.value.trim() === '') {
+                      setErrors(prev => ({ ...prev, title: 'Title is required' }));
+                    } else {
+                      setErrors(prev => ({ ...prev, title: '' }));
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Enter article title"
                   required
                 />
+                {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-2">
+                  <label className="block text-md font-semibold mb-2">
                     Date <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
                     name="date"
                     value={formData.date}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    onChange={(e) => {
+                      handleInputChange(e);
+                      if (e.target.value.trim() === '') {
+                        setErrors(prev => ({ ...prev, date: 'Date is required' }));
+                      } else {
+                        setErrors(prev => ({ ...prev, date: '' }));
+                      }
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     required
                   />
+                  {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2">
-                    source <span className="text-red-500">*</span>
+                  <label className="block text-md font-semibold mb-2">
+                    Source <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     name="source"
                     value={formData.source}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    onChange={(e) => {
+                      handleInputChange(e);
+                      if (e.target.value.trim() === '') {
+                        setErrors(prev => ({ ...prev, source: 'Source is required' }));
+                      } else {
+                        setErrors(prev => ({ ...prev, source: '' }));
+                      }
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="e.g., Government of India"
                     required
                   />
+                  {errors.source && <p className="text-red-500 text-xs mt-1">{errors.source}</p>}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">
+                <label className="block text-md font-semibold mb-2">
                   Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   name="description"
                   value={formData.description}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    handleInputChange(e);
+                    if (e.target.value.trim() === '') {
+                      setErrors(prev => ({ ...prev, description: 'Description is required' }));
+                    } else {
+                      setErrors(prev => ({ ...prev, description: '' }));
+                    }
+                  }}
                   rows="5"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Enter article description"
                   required
                 />
+                {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">
+                <label className="block text-md font-semibold mb-2">
                   Tag / Category <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="tag"
                   value={formData.tag}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  onChange={(e) => {
+                    handleInputChange(e);
+                    if (e.target.value.trim() === '') {
+                      setErrors(prev => ({ ...prev, tag: 'Tag is required' }));
+                    } else {
+                      setErrors(prev => ({ ...prev, tag: '' }));
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="e.g., Agriculture, Technology, Sustainability"
                   required
                 />
+                {errors.tag && <p className="text-red-500 text-xs mt-1">{errors.tag}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">
+                <label className="block text-md font-semibold mb-2">
                   Upload Image
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
 
                 <p className="text-xs text-gray-500 mt-1">
@@ -456,116 +570,6 @@ const News = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* View News Details Modal */}
-      {showViewModal && selectedNews && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-              <h2 className="text-2xl font-bold">News Details</h2>
-              <button
-                onClick={handleCloseViewModal}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <AiOutlineClose className="text-2xl" />
-              </button>
-            </div>
-
-            <div className="p-6">
-              {/* Image */}
-              {selectedNews.image && (
-                <div className="mb-6">
-                  <img
-                    src={selectedNews.image}
-                    alt={selectedNews.title}
-                    className="w-full h-64 object-cover rounded-lg"
-                  />
-                </div>
-              )}
-
-              {/* Title */}
-              <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                {selectedNews.title}
-              </h3>
-
-              {/* Date and source */}
-              <div className="flex flex-wrap gap-4 mb-6 text-gray-600">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span className="font-semibold">{selectedNews.date}</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  <span className="font-semibold">{formatDate(selectedNews.source)}</span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Tag / Category <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="tag"
-                  value={formData.tag}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  placeholder="e.g., Agriculture, Technology, Science"
-                  required
-                />
-              </div>
-
-              {/* Full Description */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h4 className="text-lg font-bold text-gray-900 mb-3">Description</h4>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {selectedNews.description}
-                </p>
-              </div>
-
-              {/* Close Button */}
-              <div className="mt-6">
-                <button
-                  onClick={handleCloseViewModal}
-                  className="w-full px-6 py-3 bg-[#009500] text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
-            <p className="text-gray-700 mb-6">
-              Are you sure you want to delete this news article? This action cannot be undone.
-            </p>
-            <div className="flex gap-4">
-              <button
-                onClick={handleCancelDelete}
-                className="flex-1 px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="flex-1 px-6 py-2 bg-[#E7000B] text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Delete
-              </button>
-            </div>
           </div>
         </div>
       )}

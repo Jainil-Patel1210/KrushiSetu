@@ -33,7 +33,7 @@ function FAQ() {
           <img src="./Dropdown_Logo.svg" className={`w-5 h-5 transition-transform duration-300 ease-in-out ${answerno === 0 ? 'transform rotate-180' : ''}`} alt="Dropdown"/>
         </div>
         <div className={`overflow-hidden transition-all duration-500 ease-in-out ${answerno === 0 ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-          <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700">
+          <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700 text-sm">
             To apply for a subsidy, you can visit our website and fill out the application form. Make sure to provide all the required documents and information.
           </div>
         </div>
@@ -43,7 +43,7 @@ function FAQ() {
           <img src="./Dropdown_Logo.svg" className={`w-5 h-5 transition-transform duration-300 ease-in-out ${answerno === 1 ? 'transform rotate-180' : ''}`} alt="Dropdown"/>
         </div>
         <div className={`overflow-hidden transition-all duration-500 ease-in-out ${answerno === 1 ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-          <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700">
+          <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700 text-sm">
             The required documents may vary depending on the subsidy program. Generally, you will need to provide identification proof, land ownership documents, and any other relevant certificates.
           </div>
         </div>
@@ -53,7 +53,7 @@ function FAQ() {
           <img src="./Dropdown_Logo.svg" className={`w-5 h-5 transition-transform duration-300 ease-in-out ${answerno === 2 ? 'transform rotate-180' : ''}`} alt="Dropdown"/>
         </div>
         <div className={`overflow-hidden transition-all duration-500 ease-in-out ${answerno === 2 ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-          <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700">
+          <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700 text-sm">
             The processing time for subsidy applications can vary depending on the program and the volume of applications. Typically, it may take anywhere from a few weeks to a couple of months.
           </div>
         </div>
@@ -63,7 +63,7 @@ function FAQ() {
           <img src="./Dropdown_Logo.svg" className={`w-5 h-5 transition-transform duration-300 ease-in-out ${answerno === 3 ? 'transform rotate-180' : ''}`} alt="Dropdown" />
         </div>
         <div className={`overflow-hidden transition-all duration-500 ease-in-out ${answerno === 3 ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-          <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700">
+          <div className="bg-[#F0F9E8] p-4 rounded-md shadow-sm text-gray-700 text-sm">
             Yes, there are eligibility criteria that farmers must meet to apply for subsidies. These criteria may include factors such as land size, type of crops grown, and income level. Please refer to the specific subsidy program for detailed eligibility requirements.
           </div>
         </div>

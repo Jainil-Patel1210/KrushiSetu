@@ -208,7 +208,7 @@ function Sidebar() {
                     {page==='Dashboard' && <Dashboard/>}
                     {page==='Profile' && <Personal_info/>}
                     {page==='Documents' && <Documents/>}
-                    {page==='Subsidies' && <Subsidy_List/>}
+                    {page==='Subsidies' && <Subsidy_List isHeaderVisible={true} />}
                     {page==='Support' && <Support/>}
                     {page==='RecommendSubsidy' && <RecommendSubsidy/>}
                 </div>
