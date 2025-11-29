@@ -7,6 +7,8 @@ import {
   Route,
   RouterProvider,
 } from "react-router-dom";
+import RateReview from "./Components/User_Profile/RateReview.jsx";
+
 import Homepage from "../src/Components/HomePage/Homepage.jsx";
 import Authentication from "./Components/Signup_And_Login/Authentication.jsx";
 import Sidebar from "./Components/User_Profile/Sidebar.jsx";
@@ -16,9 +18,10 @@ import Subsidy_Provider_Sidebar from "./Components/Subsidy_Provider/Subsidy_Prov
 import ChangePassword from "./Components/User_Profile/ChangePassword.jsx";
 import LearnMore from "./Components/HomePage/LearnMore.jsx";
 import NewsDetail from "./Components/HomePage/NewsDetail.jsx";
-import api from "./Components/Signup_And_Login/api.js";
 import Subsidy_List from "./Components/User_Profile/Subsidy_List.jsx";
 import ProtectedRoute from "./Components/HomePage/ProtectedRoute.js";
+import ViewDetails from "./Components/User_Profile/ViewDetails.jsx";
+import api from "./Components/Signup_And_Login/api.js";
 
 function AppWrapper() {
   useEffect(() => {
@@ -29,7 +32,7 @@ function AppWrapper() {
       } catch (err) {
         console.warn("⚠️ Token refresh failed or session expired");
       }
-    }, 4 * 60 * 1000); 
+    }, 4 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -43,16 +46,13 @@ function AppWrapper() {
         <Route path="/apply/:id" element={
           <ProtectedRoute><ApplySubsidy /></ProtectedRoute>} />
         <Route path="/login" element={<Authentication />} />
-        <Route path="/sidebar" element={
-          <ProtectedRoute><Sidebar /></ProtectedRoute>} />
-        <Route path="/officer_sidebar" element={
-          <ProtectedRoute><Officer_Sidebar /></ProtectedRoute>} />
-        <Route path="/sub" element={
-          <ProtectedRoute><Subsidy_Provider_Sidebar /></ProtectedRoute>} />
-        <Route path="/change-password" element={
-          <ProtectedRoute><ChangePassword /></ProtectedRoute>} />
-        <Route path="/subsidy-list" element={
-          <ProtectedRoute><Subsidy_List /></ProtectedRoute>} />
+        <Route path="/sidebar" element={<Sidebar />} />
+        <Route path="/officer_sidebar" element={<Officer_Sidebar />} />
+        <Route path="/sub" element={<Subsidy_Provider_Sidebar />} />
+        <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/subsidy-list" element={<Subsidy_List />} />
+        <Route path="/viewdetails/:id" element={<ViewDetails />} />
+        <Route path="/rate-review/:id" element={<RateReview />} />
       </>
     )
   );
@@ -61,7 +61,5 @@ function AppWrapper() {
 }
 
 createRoot(document.getElementById("root")).render(
-  // <StrictMode>
   <AppWrapper />
-  // </StrictMode>
 );

@@ -96,74 +96,79 @@ function Personal_info() {
         );  
     };
 
+    const fetchProfile = async () => {
+        try {
+            const token = localStorage.getItem("access");
+            const response = await api.get("/profile/", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = response.data;
+            console.log("Fetched profile data:", data);
+
+            const createFilePreview = (fileOrUrl) => {
+                if (!fileOrUrl) return null;
+
+                if (typeof fileOrUrl === "string") {
+                    // Could be full URL or just a file name
+                    const isUrl = fileOrUrl.startsWith("http") || fileOrUrl.includes("://");
+                    return {
+                        name: fileOrUrl.split("/").pop(),
+                        url: isUrl ? fileOrUrl : null,
+                        preview: isUrl ? fileOrUrl : null,
+                        size: null,
+                    };
+                }
+
+                // Local File object
+                return {
+                    name: fileOrUrl.name,
+                    preview: fileOrUrl.type.startsWith("image/") ? URL.createObjectURL(fileOrUrl) : null,
+                    size: fileOrUrl.size,
+                };
+            };
+
+
+            setInputFileInfo(createFilePreview(data.land_proof_url));
+            setPanFileInfo(createFilePreview(data.pan_card_url));
+            setAadhaarFileInfo(createFilePreview(data.aadhaar_card_url));
+            setPhotoFileInfo(createFilePreview(data.photo_url));
+
+            const phone = data.mobile_number.slice(-10); // Get last 10 digits
+
+            setFormData(prev => ({
+                ...prev,
+                full_name: data.full_name || "",
+                email: data.email_address || "",
+                phone: phone || "",
+                aadhaar_number: data.aadhaar_number || "",
+                state: data.state || "",
+                district: data.district || "",
+                taluka: data.taluka || "",
+                village: data.village || "",
+                address: data.address || "",
+                land_size: data.land_size || "",
+                unit: data.unit || "",
+                soil_type: data.soil_type || "",  
+                ownership_type: data.ownership_type || "",
+                bank_account_number: data.bank_account_number || "",
+                ifsc_code: data.ifsc_code || "",
+                bank_name: data.bank_name || "",
+            }));
+        } catch (err) {
+            console.error("Error fetching profile:", err);
+            toast.error("Failed to fetch profile.");
+        }
+    };
+
+
     // Fetch profile data 
     useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const token = localStorage.getItem("access");
-                const response = await api.get("/profile/", {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                const data = response.data;
-                console.log("Fetched profile data:", data);
-
-                const createFilePreview = (fileOrUrl) => {
-                    if (!fileOrUrl) return null;
-
-                    if (typeof fileOrUrl === "string") {
-                        // Could be full URL or just a file name
-                        const isUrl = fileOrUrl.startsWith("http") || fileOrUrl.includes("://");
-                        return {
-                            name: fileOrUrl.split("/").pop(),
-                            url: isUrl ? fileOrUrl : null,
-                            preview: isUrl ? fileOrUrl : null,
-                            size: null,
-                        };
-                    }
-
-                    // Local File object
-                    return {
-                        name: fileOrUrl.name,
-                        preview: fileOrUrl.type.startsWith("image/") ? URL.createObjectURL(fileOrUrl) : null,
-                        size: fileOrUrl.size,
-                    };
-                };
-
-
-                setInputFileInfo(createFilePreview(data.land_proof_url));
-                setPanFileInfo(createFilePreview(data.pan_card_url));
-                setAadhaarFileInfo(createFilePreview(data.aadhaar_card_url));
-                setPhotoFileInfo(createFilePreview(data.photo_url));
-
-                const phone = data.mobile_number.slice(-10); // Get last 10 digits
-
-                setFormData(prev => ({
-                    ...prev,
-                    full_name: data.full_name || "",
-                    email: data.email_address || "",
-                    phone: phone || "",
-                    aadhaar_number: data.aadhaar_number || "",
-                    state: data.state || "",
-                    district: data.district || "",
-                    taluka: data.taluka || "",
-                    village: data.village || "",
-                    address: data.address || "",
-                    land_size: data.land_size || "",
-                    unit: data.unit || "",
-                    soil_type: data.soil_type || "",  
-                    ownership_type: data.ownership_type || "",
-                    bank_account_number: data.bank_account_number || "",
-                    ifsc_code: data.ifsc_code || "",
-                    bank_name: data.bank_name || "",
-                }));
-            } catch (err) {
-                console.error("Error fetching profile:", err);
-                toast.error("Failed to fetch profile.");
-            }
-        };
-
         fetchProfile();
     }, []);
+
+    const handleRemoveChanges = () => {
+        fetchProfile(); 
+    }
 
 
     const handleInputChange = (value, fieldName) => {

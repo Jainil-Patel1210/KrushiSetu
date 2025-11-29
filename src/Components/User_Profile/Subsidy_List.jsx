@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Subsidy_detail from "./Subsidy_detail";
 import Settings from "../HomePage/Settings.jsx";
+import ReviewsModal from "./ReviewsModal";
 import api from "./api1.js";
 import Header from "./Header.jsx";
 import Navbar from "../HomePage/Navbar.jsx";
@@ -11,113 +12,83 @@ function Subsidy_List({isHeaderVisible}) {
   const [searchSubsidy, setSearchSubsidy] = useState("");
   const [subsidies, setSubsidies] = useState([]);
   const [selectedSubsidy, setSelectedSubsidy] = useState(null);
+  const [openReviews, setOpenReviews] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const subsidiesPerPage = 10; 
+  const [totalPages, setTotalPages] = useState(1);
 
   const navigate = useNavigate();
 
-  const fetchSubsidies = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await api.get("/api/subsidies/");
-      setSubsidies(response.data);
-    } catch (error) {
-      console.error("Error fetching subsidies:", error);
-      setError("Failed to load Subsidies. Try again later.");
-    } finally {
-      setLoading(false);
+  // ======================================================
+  // FIX: SAFE API FETCH
+  // ======================================================
+  const fetchSubsidies = async (page = 1) => {
+  try {
+    setLoading(true);
+
+    const response = await api.get(`/api/subsidies/?page=${page}`);
+
+    const data = response.data;
+
+    // Case 1: paginated response
+    if (Array.isArray(data.results)) {
+      setSubsidies(data.results);
+      setTotalPages(Math.ceil((data.count ?? data.results.length) / 10));
     }
-  };
+
+    // Case 2: non-paginated response (plain list)
+    else if (Array.isArray(data)) {
+      setSubsidies(data);
+      setTotalPages(1);
+    }
+
+    else {
+      setSubsidies([]);
+    }
+
+  } catch (error) {
+    console.error(error);
+    setError("Failed to load Subsidies.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
-    fetchSubsidies();
-  }, []);
+    fetchSubsidies(currentPage);
+  }, [currentPage]);
 
-  const filteredSubsidies = subsidies.filter((subsidy) =>
-    subsidy.title.toLowerCase().includes(searchSubsidy.toLowerCase())
-  );
-
-  // ✅ Pagination logic
-  const totalPages = Math.ceil(filteredSubsidies.length / subsidiesPerPage);
-  const startIndex = (currentPage - 1) * subsidiesPerPage;
-  const currentSubsidies = filteredSubsidies.slice(
-    startIndex,
-    startIndex + subsidiesPerPage
-  );
-
-  const handlePageChange = (pageNumber) => {
-    if (pageNumber >= 1 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
-      window.scrollTo({ top: 0, behavior: "smooth" }); // scroll to top on change
+  const handlePageChange = (num) => {
+    if (num >= 1 && num <= totalPages) {
+      setCurrentPage(num);
+      window.scrollTo(0, 0);
     }
   };
 
   const formatDateRange = (start, end) => {
-    const date = (d) => {
-      const dateObj = new Date(d);
-      const day = dateObj.getDate();
-      const month = dateObj.getMonth() + 1;
-      const year = dateObj.getFullYear();
-      return `${day}/${month}/${year}`;
+    const fmt = (d) => {
+      if (!d) return "N/A";
+      const date = new Date(d);
+      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
     };
-    if (start && end) return `${date(start)} to ${date(end)}`;
-    if (start) return `${date(start)} to N/A`;
-    if (end) return `N/A to ${date(end)}`;
-    return "N/A";
+    return `${fmt(start)} to ${fmt(end)}`;
   };
 
-  if (loading) {
+  if (loading)
     return (
-      <div className="w-full min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 rounded-full border-4 border-gray-200 border-t-green-600 animate-spin"></div>
-          <p className="text-gray-600 font-medium">Loading subsidies...</p>
-        </div>
+      <div className="p-10 text-center">
+        <p>Loading subsidies...</p>
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
-      <div className="w-full min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="max-w-md w-full bg-red-50 border border-red-200 text-red-800 rounded-xl p-6 shadow-sm">
-          <div className="flex items-start gap-3">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="h-6 w-6 text-red-500 mt-1"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.29 3.86l-8.48 14.7A1 1 0 002.62 20h18.76a1 1 0 00.86-1.5l-8.48-14.64a1 1 0 00-1.72 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v4m0 4h.01"
-              />
-            </svg>
-            <div className="flex-1">
-              <p className="mb-4">{error}</p>
-              <button
-                onClick={fetchSubsidies}
-                className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        </div>
+      <div className="p-10 text-center text-red-600">
+        <p>{error}</p>
       </div>
     );
-  }
 
   return (
     <>
@@ -128,86 +99,90 @@ function Subsidy_List({isHeaderVisible}) {
       </>}
       {!isHeaderVisible && <Navbar />}
       <div className="w-full min-h-screen">
-        <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 md:px-10">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
-            Subsidy Schemes
-          </h1>
+        <div className="max-w-6xl mx-auto py-8 px-4">
+          <h1 className="text-3xl font-bold">Subsidy Schemes</h1>
 
-          <div className="mt-6 mb-6">
-            <div className="relative w-full sm:w-1/2 lg:w-1/3">
-              <span className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="h-5 w-5"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l3.817 3.817a1 1 0 01-1.414 1.414l-3.817-3.817A6 6 0 012 8z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </span>
-              <input
-                type="text"
-                placeholder="Search Subsidies..."
-                value={searchSubsidy}
-                onChange={(e) => {
-                  setSearchSubsidy(e.target.value);
-                  setCurrentPage(1); // reset to page 1 on new search
-                }}
-                className="w-full pl-10 pr-3 py-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-600 focus:outline-none"
-              />
-            </div>
+          <div className="mt-6">
+            <input
+              type="text"
+              placeholder="Search Subsidies..."
+              value={searchSubsidy}
+              onChange={(e) => setSearchSubsidy(e.target.value)}
+              className="w-full sm:w-1/2 lg:w-1/3 border px-3 py-2 rounded-md"
+            />
           </div>
 
-          {filteredSubsidies.length === 0 ? (
-            <p>No subsidies found.</p>
-          ) : (
-            <>
-              <div className="max-w-6xl">
-                {currentSubsidies.map((subsidy, index) => (
-                  <div
-                    key={subsidy.id || index}
-                    className="flex justify-between bg-white p-6 rounded-2xl shadow-lg mb-4"
-                  >
-                    <div>
-                      <h2 className="text-xl font-semibold text-gray-600">
-                        {subsidy.title}
-                      </h2>
-                      <p className="text-sm text-gray-600">
-                        Maximum Amount - ₹
-                        {parseFloat(subsidy.amount).toLocaleString("en-IN")}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Date of Application -{" "}
-                        {formatDateRange(
-                          subsidy.application_start_date,
-                          subsidy.application_end_date
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex gap-3 items-center">
-                      <button
-                        className="bg-green-600 text-white px-3 py-2 text-sm rounded-md cursor-pointer"
-                        onClick={() => setSelectedSubsidy(subsidy)}
-                      >
-                        View More
-                      </button>
-                      <button
-                        className="bg-green-600 text-white px-3 py-2 text-sm rounded-md"
-                        onClick={() =>
-                          navigate(`/apply/${subsidy.id}`, { state: { subsidy } })
-                        }
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="mt-6">
+            {/* ======================================================
+               FIX: SAFE MAP WITH FALLBACK
+            ====================================================== */}
+            {subsidies?.length > 0 ? (
+              subsidies.map((subsidy) => (
+                <div
+                  key={subsidy.id}
+                  className="bg-white p-6 rounded-xl shadow-md mb-4 flex justify-between"
+                >
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-700">
+                      {subsidy.title}
+                    </h2>
 
+                    {/* ⭐ Rating + Reviews */}
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-yellow-500 text-lg">★</span>
+                      <span className="font-semibold">
+                        {subsidy.rating?.toFixed(1) || "0.0"}
+                      </span>
+
+                      <button
+                        onClick={() => setOpenReviews(subsidy.id)}
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        ({subsidy.ratings_count || 0} reviews)
+                      </button>
+                    </div>
+
+                    <p className="text-gray-600 mt-2">
+                      Maximum Amount: ₹
+                      {parseFloat(subsidy.amount).toLocaleString("en-IN")}
+                    </p>
+
+                    <p className="text-gray-600">
+                      Application Window:{" "}
+                      {formatDateRange(
+                        subsidy.application_start_date,
+                        subsidy.application_end_date
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      className="bg-green-600 text-white px-3 py-2 rounded-md"
+                      onClick={() => setSelectedSubsidy(subsidy)}
+                    >
+                      View More
+                    </button>
+
+                    <button
+                      className="bg-green-600 text-white px-3 py-2 rounded-md"
+                      onClick={() =>
+                        navigate(`/apply/${subsidy.id}`, {
+                          state: { subsidy },
+                        })
+                      }
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-10">
+                No subsidies found.
+              </p>
+            )}
+          </div>
               <div className="flex justify-center items-center gap-3 mt-6 ">
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
@@ -245,20 +220,25 @@ function Subsidy_List({isHeaderVisible}) {
                   Next
                 </button>
               </div>
-            </>
-          )}
-
+            </div>
+          
+          {/* MODALS */}
           {selectedSubsidy && (
             <Subsidy_detail
               subsidy={selectedSubsidy}
               onClose={() => setSelectedSubsidy(null)}
             />
           )}
+
+          {openReviews && (
+            <ReviewsModal
+              subsidyId={openReviews}
+              onClose={() => setOpenReviews(null)}
+            />
+          )}
         </div>
-      </div>
     </>
   );
 }
 
 export default Subsidy_List;
-    
