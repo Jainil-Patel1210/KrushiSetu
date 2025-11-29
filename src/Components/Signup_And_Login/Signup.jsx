@@ -99,6 +99,8 @@ function Signup({ onSignupSuccess = null }) {
             setOtpTimer(30);
             setStep(3);
         } catch (err) {
+            setMobile("");
+            setStep(1);
             toast.error(err.response?.data?.error || "Invalid OTP");
         }
 

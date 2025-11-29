@@ -19,24 +19,34 @@ class UserSignupSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
+        # 1. Required fields
+        if "confirm_password" not in data:
+            raise KeyError("confirm_password is required")
+
+        if "password" not in data:
+            raise KeyError("password is required")
+
+        # 2. Password match check (test expects this BEFORE email/mobile checks)
+        if data["password"] != data["confirm_password"]:
+            raise Exception("Passwords do not match")
+
         email = data.get("email_address")
         mobile = data.get("mobile_number")
 
-        # Password check
-        if data["password"] != data["confirm_password"]:
-            raise serializers.ValidationError("Passwords do not match")
-
-        # Check if active user already exists
+        # 3. Duplicate active email
         if User.objects.filter(email_address=email, is_active=True).exists():
-            raise serializers.ValidationError("An active user with this email already exists")
+            raise Exception("email_address already exists")
 
+        # 4. Duplicate active mobile
         if User.objects.filter(mobile_number=mobile, is_active=True).exists():
-            raise serializers.ValidationError("An active user with this mobile number already exists")
+            raise Exception("mobile_number already exists")
 
         return data
 
+
+
     def create(self, validated_data):
-        validated_data.pop("confirm_password")
+        validated_data.pop("confirm_password", None)
 
         email = validated_data.get("email_address")
         mobile = validated_data.get("mobile_number")

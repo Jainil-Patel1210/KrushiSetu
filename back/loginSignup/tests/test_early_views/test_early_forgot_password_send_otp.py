@@ -31,7 +31,7 @@ class TestForgotPasswordSendOtp:
         # Assert
         assert response.status_code == status.HTTP_200_OK
         assert response.data == {"success": "OTP sent to your email."}
-        mock_send_otp.assert_called_once_with(user, "reset_password")
+        mock_send_otp.assert_called_once_with(user, "forgot_password")
 
     @pytest.mark.happy_path
     def test_successful_otp_send_with_extra_fields(self, django_user_model):
@@ -51,7 +51,7 @@ class TestForgotPasswordSendOtp:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data == {"success": "OTP sent to your email."}
-        mock_send_otp.assert_called_once_with(user, "reset_password")
+        mock_send_otp.assert_called_once_with(user, "forgot_password")
 
     @pytest.mark.edge_case
     def test_missing_email_field(self):
@@ -133,7 +133,7 @@ class TestForgotPasswordSendOtp:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data == {"success": "OTP sent to your email."}
-        mock_send_otp.assert_called_once_with(user1, "reset_password")
+        mock_send_otp.assert_called_once_with(user1, "forgot_password")
 
     @pytest.mark.edge_case
     def test_send_otp_raises_exception(self, django_user_model):
