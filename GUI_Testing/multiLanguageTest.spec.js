@@ -14,7 +14,7 @@ describe('MultiLanguage_Test', function() {
     await driver.quit();
   })
   it('MultiLanguage_Test', async function() {
-    await driver.get("http://localhost:5173/")
+    await driver.get("https://krushi-setu.vercel.app/")
     await driver.manage().window().setRect({ width: 1034, height: 658 })
     {
       const element = await driver.findElement(By.css(".px-8"))
