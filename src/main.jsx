@@ -46,13 +46,18 @@ function AppWrapper() {
         <Route path="/apply/:id" element={
           <ProtectedRoute><ApplySubsidy /></ProtectedRoute>} />
         <Route path="/login" element={<Authentication />} />
-        <Route path="/sidebar" element={<Sidebar />} />
-        <Route path="/officer_sidebar" element={<Officer_Sidebar />} />
-        <Route path="/sub" element={<Subsidy_Provider_Sidebar />} />
-        <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/sidebar" element={
+          <ProtectedRoute><Sidebar /></ProtectedRoute>} />
+        <Route path="/officer_sidebar" element={
+          <ProtectedRoute><Officer_Sidebar /></ProtectedRoute>} />
+        <Route path="/sub" element={
+          <ProtectedRoute><Subsidy_Provider_Sidebar /></ProtectedRoute>} />
+        <Route path="/change-password" element={
+          <ProtectedRoute><ChangePassword /></ProtectedRoute>} />
         <Route path="/subsidy-list" element={<Subsidy_List />} />
         <Route path="/viewdetails/:id" element={<ViewDetails />} />
-        <Route path="/rate-review/:id" element={<RateReview />} />
+        <Route path="/rate-review/:id" element={
+          <ProtectedRoute><RateReview /></ProtectedRoute>} />
       </>
     )
   );

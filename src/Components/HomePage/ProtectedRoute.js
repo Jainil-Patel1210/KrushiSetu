@@ -1,51 +1,53 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import api from "../Signup_And_Login/api.js";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../Signup_And_Login/api";
 
 function ProtectedRoute({ children }) {
   const navigate = useNavigate();
-  const [checking, setChecking] = useState(true);
-  const [authed, setAuthed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isAuth, setIsAuth] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
+    const checkAuth = async () => {
+      const access = localStorage.getItem("access");
 
-    async function verify() {
-      // Quick local check first
-      const token = localStorage.getItem('access');
-      if (token) {
-        if (!mounted) return;
-        setAuthed(true);
-        setChecking(false);
+      if (access) {
+        setIsAuth(true);
+        setLoading(false);
         return;
       }
 
       try {
-        await api.post('/token/refresh/');
-        if (!mounted) return;
-        setAuthed(true);
+        const refresh = localStorage.getItem("refresh");
+
+        if (!refresh) throw new Error("No refresh token");
+
+        const res = await api.post("/token/refresh/", {
+          refresh: refresh,
+        });
+
+        localStorage.setItem("access", res.data.access);
+        setIsAuth(true);
       } catch (err) {
-        if (!mounted) return;
-        setAuthed(false);
+        localStorage.clear();
+        setIsAuth(false);
       } finally {
-        if (mounted) setChecking(false);
+        setLoading(false);
       }
-    }
+    };
 
-    verify();
-
-    return () => { mounted = false; };
-  }, [navigate]);
+    checkAuth();
+  }, []);
 
   useEffect(() => {
-    if (!checking && !authed) {
-      navigate('/login', { state: { redirectTo: window.location.pathname } });
+    if (!loading && !isAuth) {
+      navigate("/login");
     }
-  }, [checking, authed, navigate]);
+  }, [loading, isAuth, navigate]);
 
-  if (checking) return null;
+  if (loading) return null;
 
-  return authed ? children : null;
+  return isAuth ? children : null;
 }
 
 export default ProtectedRoute;
