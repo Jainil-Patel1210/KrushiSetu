@@ -147,7 +147,7 @@ CORS_ALLOW_METHODS = [
 ]
 
 # CSRF trusted origins (same as CORS for consistency)
-default_csrf_origins = "http://localhost:5173,http://localhost:5174,https://krushi-setu.vercel.app"
+default_csrf_origins = "http://localhost:5173,http://localhost:5174,https://krushi-setu.vercel.app,https://*.vercel.app"
 CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", default_csrf_origins).split(",")
 # Strip whitespace from each origin
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS]
@@ -309,4 +309,5 @@ ANYMAIL = {
 
 # Your verified custom domain email
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+
 
