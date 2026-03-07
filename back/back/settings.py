@@ -23,7 +23,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load .env file from the back directory
 load_dotenv(dotenv_path=BASE_DIR / '.env')
-CORS_ALLOW_ALL_ORIGINS = True
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -78,8 +77,8 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -125,7 +124,9 @@ default_cors_origins = "http://localhost:5173,http://localhost:5174,https://krus
 CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", default_cors_origins).split(",")
 # Strip whitespace from each origin
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS]
-
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
 CORS_ALLOW_HEADERS = [
     "content-type",
     "authorization",
@@ -650,4 +651,5 @@ ANYMAIL = {
 
 # Your verified custom domain email
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+
 
