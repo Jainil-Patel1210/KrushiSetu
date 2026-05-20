@@ -1,53 +1,51 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../Signup_And_Login/api";
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import api from "../Signup_And_Login/api.js";
 
 function ProtectedRoute({ children }) {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [isAuth, setIsAuth] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const access = localStorage.getItem("access");
+    let mounted = true;
 
-      if (access) {
-        setIsAuth(true);
-        setLoading(false);
+    async function verify() {
+      // Quick local check first
+      const token = localStorage.getItem('access');
+      if (token) {
+        if (!mounted) return;
+        setAuthed(true);
+        setChecking(false);
         return;
       }
 
       try {
-        const refresh = localStorage.getItem("refresh");
-
-        if (!refresh) throw new Error("No refresh token");
-
-        const res = await api.post("/token/refresh/", {
-          refresh: refresh,
-        });
-
-        localStorage.setItem("access", res.data.access);
-        setIsAuth(true);
+        await api.post('/token/refresh/');
+        if (!mounted) return;
+        setAuthed(true);
       } catch (err) {
-        localStorage.clear();
-        setIsAuth(false);
+        if (!mounted) return;
+        setAuthed(false);
       } finally {
-        setLoading(false);
+        if (mounted) setChecking(false);
       }
-    };
+    }
 
-    checkAuth();
-  }, []);
+    verify();
+
+    return () => { mounted = false; };
+  }, [navigate]);
 
   useEffect(() => {
-    if (!loading && !isAuth) {
-      navigate("/login");
+    if (!checking && !authed) {
+      navigate('/login', { state: { redirectTo: window.location.pathname } });
     }
-  }, [loading, isAuth, navigate]);
+  }, [checking, authed, navigate]);
 
-  if (loading) return null;
+  if (checking) return null;
 
-  return isAuth ? children : null;
+  return authed ? children : null;
 }
 
 export default ProtectedRoute;
