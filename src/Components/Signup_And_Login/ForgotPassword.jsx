@@ -18,15 +18,6 @@ function ForgotPassword({ onBackToLogin }) {
     const passwordRestriction = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    const isSendOtpDisabled = !forgotEmail || !validateEmail(forgotEmail);
-
-    const isVerifyOtpDisabled = !forgotOtp;
-
-    const isResetPasswordDisabled =
-        !newPassword ||
-        !confirmNewPassword ||
-        newPassword !== confirmNewPassword ||
-        !passwordRestriction.test(newPassword);
     // Step 1: Send OTP to email
     const handleForgotSendOtp = async (e) => {
         e.preventDefault();
@@ -42,6 +33,7 @@ function ForgotPassword({ onBackToLogin }) {
             const response = await api.post("/forgot-password/", {
                 email: forgotEmail,
             });
+            // otpSent is not used for UI, but was in original logic
             setForgotStep(2);
             toast.success('OTP sent to your email!');
             btn.disabled = false;
@@ -70,6 +62,7 @@ function ForgotPassword({ onBackToLogin }) {
                 email: forgotEmail,
                 otp: forgotOtp,
             });
+            // otpVerified is not used for UI, but was in original logic
             setForgotStep(3);
             toast.success('OTP verified. You can now reset your password.');
             setTimeout('', 1200);
@@ -160,11 +153,8 @@ function ForgotPassword({ onBackToLogin }) {
                         {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
                         <div className="flex items-center justify-center pt-2">
                             <button
-                                className={`text-white font-bold p-2 mb-3 w-50 rounded-md transition duration-200 ${isSendOtpDisabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-700 hover:bg-green-800'}`}
-                                type="submit"
-                                id="btn3"
-                                disabled={isSendOtpDisabled}
-                                aria-disabled={isSendOtpDisabled}
+                                className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
+                                type="submit" id="btn3"
                             >
                                 Send OTP
                             </button>
@@ -192,11 +182,8 @@ function ForgotPassword({ onBackToLogin }) {
                         {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
                         <div className="flex items-center justify-center pt-2">
                             <button
-                                className={`font-bold text-white p-2 mb-3 w-50 rounded-md transition duration-200 ${isVerifyOtpDisabled ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-green-700 text-black hover:bg-green-800'}`}
-                                type="submit"
-                                id="btn2"
-                                disabled={isVerifyOtpDisabled}
-                                aria-disabled={isVerifyOtpDisabled}
+                                className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
+                                type="submit" id="btn2"
                             >
                                 Verify OTP
                             </button>
@@ -226,7 +213,7 @@ function ForgotPassword({ onBackToLogin }) {
                         </div>
                         <div className="relative">
                             <input
-                                className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 "
+                                className="w-full p-2 mb-3 rounded-md bg-white border"
                                 type={showForgotConfirmNewPassword ? "text" : "password"}
                                 placeholder="Confirm New Password"
                                 value={confirmNewPassword}
@@ -238,11 +225,8 @@ function ForgotPassword({ onBackToLogin }) {
                         {forgotPasswordError && <p className="text-red-600 text-xs mb-2">{forgotPasswordError}</p>}
                         <div className="flex items-center justify-center pt-2">
                             <button
-                                className={`text-white font-bold p-2 mb-3 w-50 rounded-md transition duration-200 ${isResetPasswordDisabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-700 hover:bg-green-800'}`}
-                                type="submit"
-                                id="btn4"
-                                disabled={isResetPasswordDisabled}
-                                aria-disabled={isResetPasswordDisabled}
+                                className="text-black font-bold p-2 mb-3 w-50 rounded-md bg-green-700 hover:bg-green-800 transition duration-200"
+                                type="submit" id="btn4"
                             >
                                 Reset Password
                             </button>

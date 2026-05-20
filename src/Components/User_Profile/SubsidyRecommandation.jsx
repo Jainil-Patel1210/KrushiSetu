@@ -30,18 +30,6 @@ function RecommendSubsidy() {
         past_subsidies: ''
     });
 
-    // Track which fields were blurred/touched so we show inline errors only after interaction
-    const [touched, setTouched] = useState({});
-
-    
-    const [attemptedNext, setAttemptedNext] = useState(false);
-    const [attemptedSubmit, setAttemptedSubmit] = useState(false);
-
-    // Precomputed validity for steps
-    const [canProceedStep1, setCanProceedStep1] = useState(false);
-    const [canProceedStep2, setCanProceedStep2] = useState(false);
-    const [canSubmit, setCanSubmit] = useState(false);
-
     const farmerTypes = ['Small Farmer', 'Marginal Farmer', 'Medium Farmer', 'Large Farmer'];
     const seasons = ['Kharif', 'Rabi', 'Zaid', 'Year-round'];
     const soilTypes = ['Alluvial', 'Black/Regur', 'Red', 'Laterite', 'Desert', 'Mountain', 'Loamy'];
@@ -49,20 +37,19 @@ function RecommendSubsidy() {
     const rainfallRegions = ['High rainfall', 'Moderate rainfall', 'Low rainfall', 'Semi-arid', 'Arid'];
     const temperatureZones = ['Tropical', 'Sub-tropical', 'Temperate', 'Cold', 'Moderate'];
 
+    // Update available districts when state changes
     useEffect(() => {
         if (formData.state) {
             const selectedState = stateDistrictData.find(s => s.state === formData.state);
             if (selectedState) {
                 setAvailableDistricts(selectedState.districts.map(d => d.district));
-            } else {
-                setAvailableDistricts([]);
             }
         } else {
             setAvailableDistricts([]);
         }
-        setFormData(prev => ({ ...prev, district: '' }));
     }, [formData.state]);
 
+    // Prefill form from user profile if available (best-effort)
     useEffect(() => {
         const fetchProfileAndPrefill = async () => {
             try {
@@ -76,17 +63,19 @@ function RecommendSubsidy() {
                             break;
                         }
                     } catch (e) {
+                        
                     }
                 }
 
                 if (!profile) return;
 
+               
                 setFormData(prev => ({
                     ...prev,
                     income: prev.income || (profile.income != null ? String(profile.income) : prev.income),
                     farmer_type: prev.farmer_type || profile.farmer_type || profile.ownership_type || prev.farmer_type,
                     land_size: prev.land_size || (profile.land_size != null ? String(profile.land_size) : prev.land_size),
-                    crop_type: prev.crop_type || profile.crop_type || prev.crop_type || profile.crop,
+                    crop_type: prev.crop_type || profile.crop_type || prev.crop || prev.crop_type,
                     season: prev.season || profile.season || prev.season,
                     soil_type: prev.soil_type || profile.soil_type || prev.soil_type,
                     water_sources: prev.water_sources || (Array.isArray(profile.water_sources) ? profile.water_sources[0] : profile.water_sources) || prev.water_sources,
@@ -106,7 +95,8 @@ function RecommendSubsidy() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-
+        
+        // If state changes, reset district
         if (name === 'state') {
             setFormData(prev => ({
                 ...prev,
@@ -121,62 +111,37 @@ function RecommendSubsidy() {
         }
     };
 
-    const handleBlur = (e) => {
-        const { name } = e.target;
-        setTouched(prev => ({ ...prev, [name]: true }));
-    };
-
-    const validateStep1Fields = () => {
-        const errs = {};
-        const inc = (formData.income || '').toString().trim();
-        if (!inc) errs.income = 'Annual income is required';
-        else if (!/^[1-9][0-9]*$/.test(inc)) errs.income = 'Enter a valid income (no leading zero)';
-        if (!formData.farmer_type) errs.farmer_type = 'Select farmer type';
-        const ls = (formData.land_size || '').toString().trim();
-        if (!ls) errs.land_size = 'Land size is required';
-        else if (!/^(?:\d+|\d+\.\d+)$/.test(ls) || Number(ls) <= 0) errs.land_size = 'Enter a valid land size (>0)';
-        return errs;
-    };
-
-    const validateStep2Fields = () => {
-        const errs = {};
-        if (!formData.crop_type || formData.crop_type.toString().trim() === '') errs.crop_type = 'Enter primary crop type';
-        if (!formData.state) errs.state = 'Select state';
-        if (!formData.district) errs.district = 'Select district';
-        return errs;
-    };
-
-    useEffect(() => {
-        const s1 = validateStep1Fields();
-        setCanProceedStep1(Object.keys(s1).length === 0);
-
-        const s2 = validateStep2Fields();
-        setCanProceedStep2(Object.keys(s2).length === 0);
-
-        const allErrs = { ...s1, ...s2 };
-        setCanSubmit(Object.keys(allErrs).length === 0);
-    }, [formData]);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setAttemptedSubmit(true);
+        setLoading(true);
         setError(null);
 
-        const step1Errs = validateStep1Fields();
-        const step2Errs = validateStep2Fields();
-        const allErrs = { ...step1Errs, ...step2Errs };
+        console.log('Current form data:', formData);
 
-        if (Object.keys(allErrs).length > 0) {
-            setError('Please fix the highlighted fields.');
+        // Validate all required fields before submitting
+        const requiredFields = ['income', 'farmer_type', 'land_size', 'crop_type', 'state'];
+        const missingFields = requiredFields.filter(field => {
+            const value = formData[field];
+            const isEmpty = !value || value.toString().trim() === '';
+            if (isEmpty) {
+                console.log(`Field ${field} is empty:`, value);
+            }
+            return isEmpty;
+        });
+        
+        if (missingFields.length > 0) {
+            console.log('Missing fields:', missingFields);
+            setError(`Missing required fields: ${missingFields.join(', ')}`);
+            setLoading(false);
             return;
         }
 
-        setLoading(true);
         console.log('Submitting form data:', formData);
 
         try {
             const BASE_URL = `${import.meta.env.VITE_BASE_URL}`;
-
+            
+            // Prepare data in correct format
             const requestData = {
                 farmer_profile: {
                     income: parseInt(formData.income) || 0,
@@ -193,14 +158,14 @@ function RecommendSubsidy() {
                     past_subsidies: formData.past_subsidies ? formData.past_subsidies.split(',').map(s => s.trim()).filter(s => s) : []
                 }
             };
-
+            
             console.log('Sending request:', requestData);
-
+            
             const response = await axios.post(`${BASE_URL}/api/subsidy-recommendations/recommend/`, requestData);
-
+            
             if (response.data.success) {
                 setRecommendations(response.data);
-                setStep(3); 
+                setStep(3); // Move to results page
             } else {
                 setError(response.data.error || 'Failed to get recommendations');
             }
@@ -208,9 +173,9 @@ function RecommendSubsidy() {
             console.error('Error:', err);
             console.error('Error response:', err.response);
             console.error('Form data sent:', formData);
-
+            
             let errorMessage = 'Unable to connect to recommendation service.';
-
+            
             if (err.response?.data?.error) {
                 errorMessage = err.response.data.error;
             } else if (err.response?.status === 400) {
@@ -220,7 +185,7 @@ function RecommendSubsidy() {
             } else if (err.message) {
                 errorMessage = err.message;
             }
-
+            
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -228,14 +193,21 @@ function RecommendSubsidy() {
     };
 
     const nextStep = () => {
-        setAttemptedNext(true);
-        setError(null);
-        const s1 = validateStep1Fields();
-        if (Object.keys(s1).length > 0) {
-            setError('Please fix the highlighted fields in this section.');
-            return;
+        if (step === 1) {
+            // Validate step 1 fields
+            if (!formData.income || !formData.farmer_type || !formData.land_size) {
+                setError('Please fill all required fields in this section');
+                return;
+            }
+        } else if (step === 2) {
+            // Validate step 2 fields
+            if (!formData.crop_type || !formData.state || !formData.district) {
+                setError('Please fill all required fields in this section');
+                return;
+            }
         }
-        setStep(2);
+        setError(null);
+        setStep(step + 1);
     };
 
     const prevStep = () => {
@@ -260,26 +232,7 @@ function RecommendSubsidy() {
         });
         setRecommendations(null);
         setError(null);
-        setTouched({});
-        setAttemptedNext(false);
-        setAttemptedSubmit(false);
         setStep(1);
-    };
-
-    const fieldError = (field) => {
-        const s1 = validateStep1Fields();
-        const s2 = validateStep2Fields();
-        const all = { ...s1, ...s2 };
-        if (!all[field]) return null;
-
-        const clickOnlyFields = ['crop_type', 'state', 'district'];
-        if (clickOnlyFields.includes(field)) {
-            if (touched[field] || attemptedSubmit) return all[field];
-            return null;
-        }
-
-        if (touched[field] || attemptedNext || attemptedSubmit) return all[field];
-        return null;
     };
 
     // Step 1: Basic Information
@@ -287,7 +240,7 @@ function RecommendSubsidy() {
         <div className="space-y-6">
             <div className="text-center mb-8">
                 <FaRupeeSign className="text-5xl text-green-600 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-900">Basic Information</h2>
+                <h2 className="text-2xl font-bold text-gray-800">Basic Information</h2>
                 <p className="text-gray-600 mt-2">Tell us about your farm and income</p>
             </div>
 
@@ -296,26 +249,15 @@ function RecommendSubsidy() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Annual Income (₹) <span className="text-red-500">*</span>
                     </label>
-
                     <input
-                        type="text"
+                        type="number"
                         name="income"
-                        inputMode="numeric"
                         value={formData.income}
-                        onChange={(e) => {
-                            let digit = e.target.value.replace(/\D/g, "");
-                            if (digit.startsWith("0")) {
-                                digit = digit.replace(/^0+/, "");
-                            }
-                            handleInputChange({ target: { name: "income", value: digit } });
-                        }}
-                        onBlur={handleBlur}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none
-                            ${fieldError('income') ? 'border-gray-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-600'}`}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                         placeholder="e.g., 100000"
                         required
                     />
-                    {fieldError('income') && <p className="mt-1 text-sm text-red-600">{fieldError('income')}</p>}
                 </div>
 
                 <div>
@@ -326,9 +268,7 @@ function RecommendSubsidy() {
                         name="farmer_type"
                         value={formData.farmer_type}
                         onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none
-                            ${fieldError('farmer_type') ? 'border-gray-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-700'}`}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                         required
                     >
                         <option value="">Select type</option>
@@ -336,7 +276,6 @@ function RecommendSubsidy() {
                             <option key={type} value={type}>{type}</option>
                         ))}
                     </select>
-                    {fieldError('farmer_type') && <p className="mt-1 text-sm text-red-600">{fieldError('farmer_type')}</p>}
                 </div>
 
                 <div>
@@ -344,24 +283,15 @@ function RecommendSubsidy() {
                         Land Size (acres) <span className="text-red-500">*</span>
                     </label>
                     <input
-                        type="text"
+                        type="number"
+                        step="0.1"
                         name="land_size"
-                        inputMode="decimal"
                         value={formData.land_size}
-                        onChange={(e) => {
-                            let val = e.target.value;
-                            val = val.replace(/[^0-9.]/g, "");
-                            val = val.replace(/(\..*)\./g, "$1");
-                            if (val.startsWith(".")) val = "0" + val;
-                            handleInputChange({ target: { name: "land_size", value: val } });
-                        }}
-                        onBlur={handleBlur}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none
-                            ${fieldError('land_size') ? 'border-gray-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-600'}`}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                         placeholder="e.g., 2.5"
                         required
                     />
-                    {fieldError('land_size') && <p className="mt-1 text-sm text-red-600">{fieldError('land_size')}</p>}
                 </div>
 
                 <div>
@@ -373,7 +303,7 @@ function RecommendSubsidy() {
                         name="past_subsidies"
                         value={formData.past_subsidies}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                         placeholder="e.g., PM-KISAN, Soil Health Card"
                     />
                 </div>
@@ -383,9 +313,7 @@ function RecommendSubsidy() {
                 <button
                     type="button"
                     onClick={nextStep}
-                    disabled={!canProceedStep1}
-                    className={`px-8 py-3 rounded-lg font-semibold transition-colors
-                        ${canProceedStep1 ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-300 text-gray-700 cursor-not-allowed'}`}
+                    className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
                 >
                     Next Step →
                 </button>
@@ -412,13 +340,10 @@ function RecommendSubsidy() {
                         name="crop_type"
                         value={formData.crop_type}
                         onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none
-                            ${fieldError('crop_type') ? 'border-gray-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-600'}`}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                         placeholder="e.g., Wheat, Rice, Cotton"
                         required
                     />
-                    {fieldError('crop_type') && <p className="mt-1 text-sm text-red-600">{fieldError('crop_type')}</p>}
                 </div>
 
                 <div>
@@ -429,7 +354,7 @@ function RecommendSubsidy() {
                         name="season"
                         value={formData.season}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                     >
                         <option value="">Select season</option>
                         {seasons.map(season => (
@@ -446,7 +371,7 @@ function RecommendSubsidy() {
                         name="soil_type"
                         value={formData.soil_type}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                     >
                         <option value="">Select soil type</option>
                         {soilTypes.map(soil => (
@@ -463,7 +388,7 @@ function RecommendSubsidy() {
                         name="water_sources"
                         value={formData.water_sources}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                     >
                         <option value="">Select water source</option>
                         {waterSources.map(source => (
@@ -480,9 +405,7 @@ function RecommendSubsidy() {
                         name="state"
                         value={formData.state}
                         onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none
-                            ${fieldError('state') ? 'border-gray-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-600'}`}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                         required
                     >
                         <option value="">Select state</option>
@@ -492,7 +415,6 @@ function RecommendSubsidy() {
                             </option>
                         ))}
                     </select>
-                    {fieldError('state') && <p className="mt-1 text-sm text-red-600">{fieldError('state')}</p>}
                 </div>
 
                 <div>
@@ -503,9 +425,7 @@ function RecommendSubsidy() {
                         name="district"
                         value={formData.district}
                         onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none
-                            ${fieldError('district') ? 'border-gray-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-600'}`}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                         required
                         disabled={!formData.state}
                     >
@@ -518,7 +438,6 @@ function RecommendSubsidy() {
                             </option>
                         ))}
                     </select>
-                    {fieldError('district') && <p className="mt-1 text-sm text-red-600">{fieldError('district')}</p>}
                 </div>
 
                 <div>
@@ -529,7 +448,7 @@ function RecommendSubsidy() {
                         name="rainfall_region"
                         value={formData.rainfall_region}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                     >
                         <option value="">Select rainfall region</option>
                         {rainfallRegions.map(region => (
@@ -546,7 +465,7 @@ function RecommendSubsidy() {
                         name="temperature_zone"
                         value={formData.temperature_zone}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
                     >
                         <option value="">Select temperature zone</option>
                         {temperatureZones.map(zone => (
@@ -567,9 +486,8 @@ function RecommendSubsidy() {
                 <button
                     type="button"
                     onClick={handleSubmit}
-                    disabled={!canSubmit || loading}
-                    className={`md:px-8 md:py-3 px-1 py-2 rounded-lg font-semibold transition-colors
-                        ${(!canSubmit || loading) ? 'bg-gray-300 text-gray-700 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}
+                    disabled={loading}
+                    className="md:px-8 md:py-3 px-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:bg-gray-400"
                 >
                     {loading ? 'Analyzing...' : 'Get Recommendations'}
                 </button>
@@ -598,7 +516,7 @@ function RecommendSubsidy() {
 
             {/* Recommendations */}
             <div className="space-y-6">
-                {recommendations.recommendations.map((rec) => (
+                {recommendations.recommendations.map((rec, index) => (
                     <div key={rec.subsidy_id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-green-500">
                         <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center">
@@ -643,6 +561,7 @@ function RecommendSubsidy() {
 
                         <button 
                             onClick={() => {
+                                // Format subsidy data for ApplySubsidy component
                                 const subsidyData = {
                                     id: rec.subsidy_id,
                                     title: rec.title,
@@ -679,7 +598,7 @@ function RecommendSubsidy() {
         <Settings />
         <div className="min-h-screen py-12 px-4 bg-gray-100">
             <div className=" mx-auto">
-
+                {/* Header */}
                 <div className="text-center mb-12">
                     <h1 className="md:text-4xl text-2xl font-bold text-gray-800 mb-3">
                         AI-Powered Subsidy Recommendations
@@ -689,26 +608,26 @@ function RecommendSubsidy() {
                     </p>
                 </div>
 
-
+                {/* Progress Indicator */}
                 {step < 3 && (
                     <div className="mb-12">
                         <div className="flex items-center justify-center">
-                            <div className={`flex items-center ${step >= 1 ? 'text-green-700' : 'text-gray-400'}`}>
+                            <div className={`flex items-center ${step >= 1 ? 'text-green-600' : 'text-gray-400'}`}>
                                 <div className={`hidden md:flex md:w-10 md:h-10 md:rounded-full items-center justify-center ${step >= 1 ? 'md:bg-green-600 text-white' : 'md:bg-gray-300'}`}>
                                     1
                                 </div>
                                 <span className="md:ml-2 font-medium md:font-semibold">Basic Info</span>
                             </div>
-                            <div className={`w-12 md:w-24 h-1 mx-1 md:mx-4 ${step >= 2 ? 'bg-green-700' : 'bg-gray-300'}`}></div>
-                            <div className={`flex items-center ${step >= 2 ? 'text-green-700' : 'text-gray-400'}`}>
-                                <div className={`hidden md:flex md:w-10 md:h-10 md:rounded-full items-center justify-center ${step >= 2 ? 'md:bg-green-700 text-white' : 'md:bg-gray-300'}`}>
+                            <div className={`w-12 md:w-24 h-1 mx-1 md:mx-4 ${step >= 2 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+                            <div className={`flex items-center ${step >= 2 ? 'text-green-600' : 'text-gray-400'}`}>
+                                <div className={`hidden md:flex md:w-10 md:h-10 md:rounded-full items-center justify-center ${step >= 2 ? 'md:bg-green-600 text-white' : 'md:bg-gray-300'}`}>
                                     2
                                 </div>
                                 <span className="md:ml-2 font-medium md:font-semibold">Farm Details</span>
                             </div>
-                            <div className={`w-12 md:w-24 h-1 mx-1 md:mx-4 ${step >= 3 ? 'bg-green-700' : 'bg-gray-300'}`}></div>
-                            <div className={`flex items-center ${step >= 3 ? 'text-green-700' : 'text-gray-400'}`}>
-                                <div className={`hidden md:flex md:w-10 md:h-10 md:rounded-full items-center justify-center ${step >= 3 ? 'md:bg-green-700 text-white' : 'md:bg-gray-300'}`}>
+                            <div className={`w-12 md:w-24 h-1 mx-1 md:mx-4 ${step >= 3 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+                            <div className={`flex items-center ${step >= 3 ? 'text-green-600' : 'text-gray-400'}`}>
+                                <div className={`hidden md:flex md:w-10 md:h-10 md:rounded-full items-center justify-center ${step >= 3 ? 'md:bg-green-600 text-white' : 'md:bg-gray-300'}`}>
                                     3
                                 </div>
                                 <span className="md:ml-2 font-medium md:font-semibold">Results</span>
@@ -717,6 +636,15 @@ function RecommendSubsidy() {
                     </div>
                 )}
 
+                {/* Error Display */}
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
+                        <p className="font-semibold">Error:</p>
+                        <p>{error}</p>
+                    </div>
+                )}
+
+                {/* Main Content Card */}
                 <div className="bg-white rounded-2xl shadow-2xl p-8">
                     {step === 1 && renderStep1()}
                     {step === 2 && renderStep2()}
