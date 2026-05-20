@@ -57,11 +57,33 @@ function Subsidy_List() {
     fetchSubsidies(currentPage);
   }, [currentPage]);
 
+  // Reset to page 1 when searching
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchSubsidy]);
+
   const handlePageChange = (num) => {
     if (num >= 1 && num <= totalPages) {
       setCurrentPage(num);
       window.scrollTo(0, 0);
     }
+  };
+
+  // Generate page numbers to display (show only nearby pages)
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
   };
 
   const formatDateRange = (start, end) => {
@@ -176,21 +198,58 @@ function Subsidy_List() {
           </div>
 
           {/* PAGINATION */}
-          <div className="flex justify-center gap-3 mt-6">
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => handlePageChange(i + 1)}
-                className={`px-3 py-1 rounded-md border ${
-                  currentPage === i + 1
-                    ? "bg-green-600 text-white"
-                    : "bg-white"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
+          {totalPages > 1 && (
+            <div className="mt-8 flex flex-col items-center gap-4">
+              <p className="text-sm text-gray-600">
+                Page <span className="font-semibold text-gray-900">{currentPage}</span> of <span className="font-semibold text-gray-900">{totalPages}</span>
+              </p>
+              
+              <div className="flex justify-center items-center gap-2 flex-wrap">
+                {/* Previous Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-2 rounded-md border transition ${
+                    currentPage === 1
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                  }`}
+                >
+                  ← Previous
+                </button>
+
+                {/* Page Numbers */}
+                <div className="flex gap-1">
+                  {getPageNumbers().map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => handlePageChange(num)}
+                      className={`px-3 py-2 rounded-md border transition ${
+                        currentPage === num
+                          ? "bg-green-600 text-white border-green-600 font-semibold"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                      }`}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-2 rounded-md border transition ${
+                    currentPage === totalPages
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                  }`}
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* MODALS */}
           {selectedSubsidy && (
