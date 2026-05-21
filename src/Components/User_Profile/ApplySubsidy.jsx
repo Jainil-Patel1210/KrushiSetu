@@ -163,6 +163,7 @@ export default function ApplySubsidy() {
         break;
       case 'landArea':
         if (!value) msg = 'Enter land area';
+        else if (Number(value) <= 0) msg = 'Land area must be greater than 0';
         break;
       case 'unit':
         if (!value) msg = 'Select unit';
@@ -202,6 +203,7 @@ export default function ApplySubsidy() {
       if (!form.address.trim()) e.address = 'Address required';
     } else if (step === 1) {
       if (!form.landArea) e.landArea = 'Enter land area';
+      else if (Number(form.landArea) <= 0) e.landArea = 'Land area must be greater than 0';
       if (!form.unit) e.unit = 'Select unit';
       if (!form.soilType) e.soilType = 'Select soil type';
       if (!form.ownership) e.ownership = 'Select ownership type';
@@ -927,6 +929,7 @@ export default function ApplySubsidy() {
                   <input
                     className="bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-600 focus:outline-none transition-all"
                     type="number"
+                    min="0"
                     id="landArea"
                     name="landArea"
                     value={form.landArea}

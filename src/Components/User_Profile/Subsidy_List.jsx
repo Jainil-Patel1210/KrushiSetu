@@ -7,7 +7,9 @@ import api from "./api1.js";
 
 function Subsidy_List() {
   const [searchSubsidy, setSearchSubsidy] = useState("");
-  const [subsidies, setSubsidies] = useState([]);
+  const [subsidies, setSubsidies] = useState([]);        // current page items (server-paginated)
+  const [allSubsidies, setAllSubsidies] = useState([]);  // all items (client-side fallback)
+  const [isServerPaginated, setIsServerPaginated] = useState(false);
   const [selectedSubsidy, setSelectedSubsidy] = useState(null);
   const [openReviews, setOpenReviews] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,10 +17,11 @@ function Subsidy_List() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  const PAGE_SIZE = 10;
   const navigate = useNavigate();
 
   // ======================================================
-  // FIX: SAFE API FETCH
+  // FIX: SAFE API FETCH with client-side pagination fallback
   // ======================================================
   const fetchSubsidies = async (page = 1) => {
   try {
@@ -28,20 +31,31 @@ function Subsidy_List() {
 
     const data = response.data;
 
-    // Case 1: paginated response
-    if (Array.isArray(data.results)) {
+    // Case 1: paginated response from backend
+    if (data && Array.isArray(data.results) && typeof data.count === 'number') {
       setSubsidies(data.results);
-      setTotalPages(Math.ceil((data.count ?? data.results.length) / 10));
+      setAllSubsidies([]);
+      setIsServerPaginated(true);
+      setTotalPages(Math.ceil(data.count / PAGE_SIZE));
     }
 
-    // Case 2: non-paginated response (plain list)
+    // Case 2: non-paginated response (plain list) → use client-side pagination
+    else if (Array.isArray(data.results)) {
+      // has results but no count — treat as client-side
+      setAllSubsidies(data.results);
+      setIsServerPaginated(false);
+      setTotalPages(Math.ceil(data.results.length / PAGE_SIZE));
+    }
+
     else if (Array.isArray(data)) {
-      setSubsidies(data);
-      setTotalPages(1);
+      setAllSubsidies(data);
+      setIsServerPaginated(false);
+      setTotalPages(Math.ceil(data.length / PAGE_SIZE));
     }
 
     else {
       setSubsidies([]);
+      setAllSubsidies([]);
     }
 
   } catch (error) {
@@ -52,10 +66,51 @@ function Subsidy_List() {
   }
 };
 
+  // For client-side pagination: compute the displayed subsidies
+  const displayedSubsidies = (() => {
+    // Apply search filter
+    const source = isServerPaginated ? subsidies : allSubsidies;
+    const filtered = searchSubsidy.trim()
+      ? source.filter(s =>
+          (s.title || '').toLowerCase().includes(searchSubsidy.toLowerCase()) ||
+          (s.description || '').toLowerCase().includes(searchSubsidy.toLowerCase())
+        )
+      : source;
 
+    if (isServerPaginated) {
+      // Server already paginated, just return filtered results
+      return filtered;
+    }
+
+    // Client-side pagination
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  })();
+
+  // Recalculate totalPages when search changes (client-side mode)
   useEffect(() => {
-    fetchSubsidies(currentPage);
+    if (!isServerPaginated) {
+      const filtered = searchSubsidy.trim()
+        ? allSubsidies.filter(s =>
+            (s.title || '').toLowerCase().includes(searchSubsidy.toLowerCase()) ||
+            (s.description || '').toLowerCase().includes(searchSubsidy.toLowerCase())
+          )
+        : allSubsidies;
+      setTotalPages(Math.ceil(filtered.length / PAGE_SIZE) || 1);
+    }
+  }, [searchSubsidy, allSubsidies, isServerPaginated]);
+
+  // Fetch on page change (only needed for server-side pagination)
+  useEffect(() => {
+    if (isServerPaginated || currentPage === 1) {
+      fetchSubsidies(currentPage);
+    }
   }, [currentPage]);
+
+  // Fetch on mount
+  useEffect(() => {
+    fetchSubsidies(1);
+  }, []);
 
   // Reset to page 1 when searching
   useEffect(() => {
@@ -129,8 +184,8 @@ function Subsidy_List() {
             {/* ======================================================
                FIX: SAFE MAP WITH FALLBACK
             ====================================================== */}
-            {subsidies?.length > 0 ? (
-              subsidies.map((subsidy) => (
+            {displayedSubsidies?.length > 0 ? (
+              displayedSubsidies.map((subsidy) => (
                 <div
                   key={subsidy.id}
                   className="bg-white p-6 rounded-xl shadow-md mb-4 flex justify-between"

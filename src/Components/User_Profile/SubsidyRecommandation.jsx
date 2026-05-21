@@ -13,6 +13,7 @@ function RecommendSubsidy() {
     const [loading, setLoading] = useState(false);
     const [recommendations, setRecommendations] = useState(null);
     const [error, setError] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
     const [availableDistricts, setAvailableDistricts] = useState([]);
 
     const [formData, setFormData] = useState({
@@ -69,12 +70,18 @@ function RecommendSubsidy() {
 
                 if (!profile) return;
 
-               
+                // Convert land_size to acres if profile stores it in hectares
+                // 1 hectare = 2.47105 acres
+                let landSizeInAcres = profile.land_size != null ? profile.land_size : null;
+                if (landSizeInAcres != null && profile.unit && profile.unit.toLowerCase() === 'hectares') {
+                    landSizeInAcres = (parseFloat(landSizeInAcres) * 2.47105).toFixed(2);
+                }
+
                 setFormData(prev => ({
                     ...prev,
                     income: prev.income || (profile.income != null ? String(profile.income) : prev.income),
                     farmer_type: prev.farmer_type || profile.farmer_type || profile.ownership_type || prev.farmer_type,
-                    land_size: prev.land_size || (profile.land_size != null ? String(profile.land_size) : prev.land_size),
+                    land_size: prev.land_size || (landSizeInAcres != null ? String(landSizeInAcres) : prev.land_size),
                     crop_type: prev.crop_type || profile.crop_type || prev.crop || prev.crop_type,
                     season: prev.season || profile.season || prev.season,
                     soil_type: prev.soil_type || profile.soil_type || prev.soil_type,
@@ -108,6 +115,22 @@ function RecommendSubsidy() {
                 ...prev,
                 [name]: value
             }));
+        }
+
+        // Real-time validation for numeric fields
+        if (name === 'income') {
+            if (value && Number(value) < 0) {
+                setFieldErrors(prev => ({ ...prev, income: 'Annual income cannot be negative' }));
+            } else {
+                setFieldErrors(prev => ({ ...prev, income: '' }));
+            }
+        }
+        if (name === 'land_size') {
+            if (value && Number(value) < 0) {
+                setFieldErrors(prev => ({ ...prev, land_size: 'Land size cannot be negative' }));
+            } else {
+                setFieldErrors(prev => ({ ...prev, land_size: '' }));
+            }
         }
     };
 
@@ -194,9 +217,22 @@ function RecommendSubsidy() {
 
     const nextStep = () => {
         if (step === 1) {
+            // Check for existing field errors
+            if (fieldErrors.income || fieldErrors.land_size) {
+                setError('Please fix the errors before proceeding');
+                return;
+            }
             // Validate step 1 fields
             if (!formData.income || !formData.farmer_type || !formData.land_size) {
                 setError('Please fill all required fields in this section');
+                return;
+            }
+            if (isNaN(Number(formData.income)) || Number(formData.income) <= 0) {
+                setError('Annual income must be a valid number greater than 0');
+                return;
+            }
+            if (isNaN(Number(formData.land_size)) || Number(formData.land_size) <= 0) {
+                setError('Land size must be a valid number greater than 0');
                 return;
             }
         } else if (step === 2) {
@@ -250,14 +286,18 @@ function RecommendSubsidy() {
                         Annual Income (₹) <span className="text-red-500">*</span>
                     </label>
                     <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         name="income"
                         value={formData.income}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none ${fieldErrors.income ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'}`}
                         placeholder="e.g., 100000"
                         required
                     />
+                    {fieldErrors.income && (
+                        <p className="text-red-500 text-sm mt-1">{fieldErrors.income}</p>
+                    )}
                 </div>
 
                 <div>
@@ -283,15 +323,18 @@ function RecommendSubsidy() {
                         Land Size (acres) <span className="text-red-500">*</span>
                     </label>
                     <input
-                        type="number"
-                        step="0.1"
+                        type="text"
+                        inputMode="decimal"
                         name="land_size"
                         value={formData.land_size}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none ${fieldErrors.land_size ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'}`}
                         placeholder="e.g., 2.5"
                         required
                     />
+                    {fieldErrors.land_size && (
+                        <p className="text-red-500 text-sm mt-1">{fieldErrors.land_size}</p>
+                    )}
                 </div>
 
                 <div>
