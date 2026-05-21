@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework import viewsets
+from rest_framework import filters
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -42,6 +43,8 @@ class SubsidyViewSet(viewsets.ModelViewSet):
     )
     serializer_class = SubsidySerializer
     pagination_class = SubsidyPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["title", "description", "eligibility"]
 
     def list(self, request, *args, **kwargs):
         """Paginated list of subsidies."""

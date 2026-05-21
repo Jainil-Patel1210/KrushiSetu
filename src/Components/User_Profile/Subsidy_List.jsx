@@ -7,9 +7,8 @@ import api from "./api1.js";
 
 function Subsidy_List() {
   const [searchSubsidy, setSearchSubsidy] = useState("");
-  const [subsidies, setSubsidies] = useState([]);        // current page items (server-paginated)
-  const [allSubsidies, setAllSubsidies] = useState([]);  // all items (client-side fallback)
-  const [isServerPaginated, setIsServerPaginated] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [subsidies, setSubsidies] = useState([]);
   const [selectedSubsidy, setSelectedSubsidy] = useState(null);
   const [openReviews, setOpenReviews] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,45 +16,34 @@ function Subsidy_List() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const PAGE_SIZE = 10;
   const navigate = useNavigate();
 
   // ======================================================
-  // FIX: SAFE API FETCH with client-side pagination fallback
+  // FIX: SAFE API FETCH
   // ======================================================
-  const fetchSubsidies = async (page = 1) => {
+  const fetchSubsidies = async (page = 1, search = "") => {
   try {
     setLoading(true);
 
-    const response = await api.get(`/api/subsidies/?page=${page}`);
+    const q = `/api/subsidies/?page=${page}` + (search ? `&search=${encodeURIComponent(search)}` : "");
+    const response = await api.get(q);
 
     const data = response.data;
 
-    // Case 1: paginated response from backend
-    if (data && Array.isArray(data.results) && typeof data.count === 'number') {
+    // Case 1: paginated response
+    if (Array.isArray(data.results)) {
       setSubsidies(data.results);
-      setAllSubsidies([]);
-      setIsServerPaginated(true);
-      setTotalPages(Math.ceil(data.count / PAGE_SIZE));
+      setTotalPages(Math.ceil((data.count ?? data.results.length) / 10));
     }
 
-    // Case 2: non-paginated response (plain list) → use client-side pagination
-    else if (Array.isArray(data.results)) {
-      // has results but no count — treat as client-side
-      setAllSubsidies(data.results);
-      setIsServerPaginated(false);
-      setTotalPages(Math.ceil(data.results.length / PAGE_SIZE));
-    }
-
+    // Case 2: non-paginated response (plain list)
     else if (Array.isArray(data)) {
-      setAllSubsidies(data);
-      setIsServerPaginated(false);
-      setTotalPages(Math.ceil(data.length / PAGE_SIZE));
+      setSubsidies(data);
+      setTotalPages(1);
     }
 
     else {
       setSubsidies([]);
-      setAllSubsidies([]);
     }
 
   } catch (error) {
@@ -66,79 +54,27 @@ function Subsidy_List() {
   }
 };
 
-  // For client-side pagination: compute the displayed subsidies
-  const displayedSubsidies = (() => {
-    // Apply search filter
-    const source = isServerPaginated ? subsidies : allSubsidies;
-    const filtered = searchSubsidy.trim()
-      ? source.filter(s =>
-          (s.title || '').toLowerCase().includes(searchSubsidy.toLowerCase()) ||
-          (s.description || '').toLowerCase().includes(searchSubsidy.toLowerCase())
-        )
-      : source;
-
-    if (isServerPaginated) {
-      // Server already paginated, just return filtered results
-      return filtered;
-    }
-
-    // Client-side pagination
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  })();
-
-  // Recalculate totalPages when search changes (client-side mode)
+  // Debounce search input to avoid rapid requests
   useEffect(() => {
-    if (!isServerPaginated) {
-      const filtered = searchSubsidy.trim()
-        ? allSubsidies.filter(s =>
-            (s.title || '').toLowerCase().includes(searchSubsidy.toLowerCase()) ||
-            (s.description || '').toLowerCase().includes(searchSubsidy.toLowerCase())
-          )
-        : allSubsidies;
-      setTotalPages(Math.ceil(filtered.length / PAGE_SIZE) || 1);
-    }
-  }, [searchSubsidy, allSubsidies, isServerPaginated]);
+    const t = setTimeout(() => setDebouncedSearch(searchSubsidy.trim()), 400);
+    return () => clearTimeout(t);
+  }, [searchSubsidy]);
 
-  // Fetch on page change (only needed for server-side pagination)
-  useEffect(() => {
-    if (isServerPaginated || currentPage === 1) {
-      fetchSubsidies(currentPage);
-    }
-  }, [currentPage]);
-
-  // Fetch on mount
-  useEffect(() => {
-    fetchSubsidies(1);
-  }, []);
-
-  // Reset to page 1 when searching
+  // Reset to first page when search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchSubsidy]);
+  }, [debouncedSearch]);
+
+  // Fetch when page or debounced search changes
+  useEffect(() => {
+    fetchSubsidies(currentPage, debouncedSearch);
+  }, [currentPage, debouncedSearch]);
 
   const handlePageChange = (num) => {
     if (num >= 1 && num <= totalPages) {
       setCurrentPage(num);
       window.scrollTo(0, 0);
     }
-  };
-
-  // Generate page numbers to display (show only nearby pages)
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisible = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    return pages;
   };
 
   const formatDateRange = (start, end) => {
@@ -184,8 +120,8 @@ function Subsidy_List() {
             {/* ======================================================
                FIX: SAFE MAP WITH FALLBACK
             ====================================================== */}
-            {displayedSubsidies?.length > 0 ? (
-              displayedSubsidies.map((subsidy) => (
+            {subsidies?.length > 0 ? (
+              subsidies.map((subsidy) => (
                 <div
                   key={subsidy.id}
                   className="bg-white p-6 rounded-xl shadow-md mb-4 flex justify-between"
@@ -253,58 +189,21 @@ function Subsidy_List() {
           </div>
 
           {/* PAGINATION */}
-          {totalPages > 1 && (
-            <div className="mt-8 flex flex-col items-center gap-4">
-              <p className="text-sm text-gray-600">
-                Page <span className="font-semibold text-gray-900">{currentPage}</span> of <span className="font-semibold text-gray-900">{totalPages}</span>
-              </p>
-              
-              <div className="flex justify-center items-center gap-2 flex-wrap">
-                {/* Previous Button */}
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-2 rounded-md border transition ${
-                    currentPage === 1
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
-                  }`}
-                >
-                  ← Previous
-                </button>
-
-                {/* Page Numbers */}
-                <div className="flex gap-1">
-                  {getPageNumbers().map((num) => (
-                    <button
-                      key={num}
-                      onClick={() => handlePageChange(num)}
-                      className={`px-3 py-2 rounded-md border transition ${
-                        currentPage === num
-                          ? "bg-green-600 text-white border-green-600 font-semibold"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
-                      }`}
-                    >
-                      {num}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Next Button */}
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-2 rounded-md border transition ${
-                    currentPage === totalPages
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
-                  }`}
-                >
-                  Next →
-                </button>
-              </div>
-            </div>
-          )}
+          <div className="flex justify-center gap-3 mt-6">
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => handlePageChange(i + 1)}
+                className={`px-3 py-1 rounded-md border ${
+                  currentPage === i + 1
+                    ? "bg-green-600 text-white"
+                    : "bg-white"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
 
           {/* MODALS */}
           {selectedSubsidy && (
