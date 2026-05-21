@@ -46,6 +46,7 @@
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/coverage-v8": "^4.0.9",
     "@vitest/ui": "^4.0.9",
+    "baseline-browser-mapping": "^2.10.31",
     "chromedriver": "^142.0.2",
     "jsdom": "^27.2.0",
     "mocha": "^11.0.0",

@@ -23,10 +23,13 @@ function News() {
     }, []);
 
     const fetchLatestNews = async () => {
-        const token = localStorage.getItem("access");
         try {
             const res = await api.get("/news/articles/?limit=3");
-            setNewsData(res.data);
+            const articles = Array.isArray(res.data)
+                ? res.data
+                : res.data?.results ?? [];
+
+            setNewsData(articles);
         } catch (err) {
             console.error("Error fetching news:", err);
         }

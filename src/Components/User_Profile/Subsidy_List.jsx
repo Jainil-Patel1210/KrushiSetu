@@ -1,77 +1,94 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Subsidy_detail from "./Subsidy_detail";
-import Settings from "../HomePage/Settings.jsx";
 import ReviewsModal from "./ReviewsModal";
 import api from "./api1.js";
 
 function Subsidy_List() {
   const [searchSubsidy, setSearchSubsidy] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [subsidies, setSubsidies] = useState([]);
   const [selectedSubsidy, setSelectedSubsidy] = useState(null);
   const [openReviews, setOpenReviews] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
   const navigate = useNavigate();
 
-  // ======================================================
-  // FIX: SAFE API FETCH
-  // ======================================================
-  const fetchSubsidies = async (page = 1, search = "") => {
-  try {
-    setLoading(true);
+  const PAGE_SIZE = 10;
 
-    const q = `/api/subsidies/?page=${page}` + (search ? `&search=${encodeURIComponent(search)}` : "");
-    const response = await api.get(q);
+  const matchesSearch = (subsidy, term) => {
+    if (!term) return true;
 
-    const data = response.data;
+    const haystack = [
+      subsidy.title,
+      subsidy.description,
+      subsidy.eligibility,
+      subsidy.documents_required,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
 
-    // Case 1: paginated response
-    if (Array.isArray(data.results)) {
-      setSubsidies(data.results);
-      setTotalPages(Math.ceil((data.count ?? data.results.length) / 10));
+    return haystack.includes(term.toLowerCase());
+  };
+
+  const fetchAllSubsidies = async () => {
+    try {
+      setLoading(true);
+
+      const firstResponse = await api.get(`/api/subsidies/?page=1&page_size=50`);
+      const firstData = firstResponse.data;
+
+      const firstPageItems = Array.isArray(firstData?.results)
+        ? firstData.results
+        : Array.isArray(firstData)
+          ? firstData
+          : [];
+
+      const totalCount = firstData?.count ?? firstPageItems.length;
+      const pageSize = firstData?.results ? 50 : firstPageItems.length || PAGE_SIZE;
+      const remainingPages = Math.max(Math.ceil(totalCount / pageSize) - 1, 0);
+
+      if (remainingPages === 0) {
+        setSubsidies(firstPageItems);
+        return;
+      }
+
+      const nextPageRequests = [];
+      for (let page = 2; page <= remainingPages + 1; page += 1) {
+        nextPageRequests.push(api.get(`/api/subsidies/?page=${page}&page_size=${pageSize}`));
+      }
+
+      const nextResponses = await Promise.all(nextPageRequests);
+      const nextItems = nextResponses.flatMap((response) => {
+        const data = response.data;
+        if (Array.isArray(data?.results)) return data.results;
+        if (Array.isArray(data)) return data;
+        return [];
+      });
+
+      const allItems = [...firstPageItems, ...nextItems];
+      setSubsidies(allItems);
+    } catch (fetchError) {
+      console.error(fetchError);
+      setError("Failed to load Subsidies.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Case 2: non-paginated response (plain list)
-    else if (Array.isArray(data)) {
-      setSubsidies(data);
-      setTotalPages(1);
-    }
-
-    else {
-      setSubsidies([]);
-    }
-
-  } catch (error) {
-    console.error(error);
-    setError("Failed to load Subsidies.");
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // Debounce search input to avoid rapid requests
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(searchSubsidy.trim()), 400);
-    return () => clearTimeout(t);
-  }, [searchSubsidy]);
+    fetchAllSubsidies();
+  }, []);
 
   // Reset to first page when search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch]);
-
-  // Fetch when page or debounced search changes
-  useEffect(() => {
-    fetchSubsidies(currentPage, debouncedSearch);
-  }, [currentPage, debouncedSearch]);
+  }, [searchSubsidy]);
 
   const handlePageChange = (num) => {
-    if (num >= 1 && num <= totalPages) {
+    if (num >= 1 && num <= filteredTotalPages) {
       setCurrentPage(num);
       window.scrollTo(0, 0);
     }
@@ -85,6 +102,26 @@ function Subsidy_List() {
     };
     return `${fmt(start)} to ${fmt(end)}`;
   };
+
+  const filteredSubsidies = subsidies.filter((subsidy) =>
+    matchesSearch(subsidy, searchSubsidy.trim())
+  );
+
+  const filteredTotalPages = Math.max(
+    Math.ceil(filteredSubsidies.length / PAGE_SIZE),
+    1
+  );
+
+  const paginatedSubsidies = filteredSubsidies.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  useEffect(() => {
+    if (currentPage > filteredTotalPages) {
+      setCurrentPage(filteredTotalPages);
+    }
+  }, [currentPage, filteredTotalPages]);
 
   if (loading)
     return (
@@ -109,7 +146,7 @@ function Subsidy_List() {
           <div className="mt-6">
             <input
               type="text"
-              placeholder="Search Subsidies..."
+              placeholder="Search subsidies by keyword..."
               value={searchSubsidy}
               onChange={(e) => setSearchSubsidy(e.target.value)}
               className="w-full sm:w-1/2 lg:w-1/3 border px-3 py-2 rounded-md"
@@ -120,8 +157,8 @@ function Subsidy_List() {
             {/* ======================================================
                FIX: SAFE MAP WITH FALLBACK
             ====================================================== */}
-            {subsidies?.length > 0 ? (
-              subsidies.map((subsidy) => (
+            {paginatedSubsidies?.length > 0 ? (
+              paginatedSubsidies.map((subsidy) => (
                 <div
                   key={subsidy.id}
                   className="bg-white p-6 rounded-xl shadow-md mb-4 flex justify-between"
@@ -190,7 +227,7 @@ function Subsidy_List() {
 
           {/* PAGINATION */}
           <div className="flex justify-center gap-3 mt-6">
-            {[...Array(totalPages)].map((_, i) => (
+            {[...Array(filteredTotalPages)].map((_, i) => (
               <button
                 key={i}
                 onClick={() => handlePageChange(i + 1)}
