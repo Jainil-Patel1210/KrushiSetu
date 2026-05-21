@@ -35,7 +35,11 @@ class SubsidyViewSet(viewsets.ModelViewSet):
     """
     Main ViewSet for Subsidy management.
     """
-    queryset = Subsidy.objects.all().order_by('-created_at')
+    queryset = (
+        Subsidy.objects.select_related('created_by')
+        .prefetch_related('ratings__user')
+        .order_by('-created_at')
+    )
     serializer_class = SubsidySerializer
     pagination_class = SubsidyPagination
 
