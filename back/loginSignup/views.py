@@ -132,42 +132,30 @@ class UserSignupView(generics.CreateAPIView):
             return Response({"error": "Passwords do not match"}, status=400)
 
         email = request.data.get("email_address")
-        mobile = request.data.get("mobile_number")
 
         # ---------------------------------------------
         # 1️⃣ Check if user already exists
         # ---------------------------------------------
         existing_user = User.objects.filter(email_address=email).first()
-        existing_user1 = User.objects.filter(mobile_number=mobile).first()
 
-        if existing_user or existing_user1:
+        if existing_user:
             if existing_user.is_active:
                 # User already fully registered
                 return Response(
                     {"error": "Account with email already exists. Please log in."},
                     status=400
                 )
-            
-            if existing_user1.is_active:
-                return Response(
-                    {"error": "Account with mobile no already exists. Please log in."},
-                    status=400
-                )
 
             # ---------------------------------------------
             # 2️⃣ User exists but NOT ACTIVE → resend OTP
             # ---------------------------------------------
-           # Find out which user object we matched
-            user_to_update = existing_user if existing_user else existing_user1
             
             # Update user fields (in case user changed name/email/mobile)
-            user_to_update.full_name = request.data.get("full_name")
-            user_to_update.mobile_number = mobile
-            user_to_update.email_address = email
-            user_to_update.set_password(password)
-            user_to_update.save()
+            existing_user.full_name = request.data.get("full_name")
+            existing_user.set_password(password)
+            existing_user.save()
 
-            send_otp(user_to_update, "email_verify")
+            send_otp(existing_user, "email_verify")
 
             return Response({
                 "message": "Account already exists but is not verified. OTP re-sent to email.",
