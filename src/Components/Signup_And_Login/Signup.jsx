@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import SocialLogin from "./SocialLogin";
 import PasswordToggleIcon from "./PasswordToggleIcon";
 import api from "./api";
 import { Toaster, toast } from "react-hot-toast";
@@ -12,13 +11,11 @@ function Signup({ onSignupSuccess = null }) {
     const [isLoading, setIsLoading] = useState(false);
 
     const [fullName, setFullName] = useState("");
-    const [mobile, setMobile] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
     const [fullNameError, setFullNameError] = useState("");
-    const [mobileError, setMobileError] = useState("");
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
 
@@ -28,7 +25,6 @@ function Signup({ onSignupSuccess = null }) {
 
     const [emailOtp, setEmailOtp] = useState("");
     const [otpTimer, setOtpTimer] = useState(0);
-    const [userId, setUserId] = useState("");
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -47,11 +43,6 @@ function Signup({ onSignupSuccess = null }) {
             setIsLoading(false);
             return;
         }
-        if (mobile.length !== 10) {
-            toast.error("Mobile number must be exactly 10 digits.");
-            setIsLoading(false);
-            return;
-        }
         if (!passwordRestriction.test(password)) {
             toast.error("Password must have 8 chars, 1 letter, 1 digit, 1 special char.");
             setIsLoading(false);
@@ -67,13 +58,11 @@ function Signup({ onSignupSuccess = null }) {
             const res = await api.post("/signup/", {
                 full_name: fullName,
                 email_address: email,
-                mobile_number: mobile,
                 password: password,
                 confirm_password: confirmPassword,
             });
 
             toast.success("Account created. Verify email OTP.");
-            setUserId(res.data.user_id);
             setOtpTimer(30);
             setStep(2);
         } catch (err) {
@@ -93,7 +82,6 @@ function Signup({ onSignupSuccess = null }) {
                 otp: emailOtp,
             });
 
-            // THIS IS THE CHANGED PART 👇
             toast.success("Signup complete! You can now login.");
             if (onSignupSuccess) onSignupSuccess(); 
             
@@ -124,7 +112,6 @@ function Signup({ onSignupSuccess = null }) {
         }
         return () => clearInterval(interval);
     }, [otpTimer]);
-
 
     return (
         <>
@@ -183,31 +170,6 @@ function Signup({ onSignupSuccess = null }) {
                                 </p>
                             )}
 
-                            {/* Mobile */}
-                            <input
-                                className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
-                                type="text"
-                                placeholder="Mobile Number"
-                                value={mobile}
-                                onChange={(e) => {
-                                    const v = e.target.value
-                                        .replace(/\D/g, "")
-                                        .slice(0, 10);
-                                    setMobile(v);
-                                    setMobileError(
-                                        v.length === 10
-                                            ? ""
-                                            : "Must be exactly 10 digits"
-                                    );
-                                }}
-                                required
-                            />
-                            {mobileError && (
-                                <p className="text-red-600 text-xs mb-1">
-                                    {mobileError}
-                                </p>
-                            )}
-
                             {/* Password */}
                             <div className="relative">
                                 <input
@@ -218,9 +180,7 @@ function Signup({ onSignupSuccess = null }) {
                                     onChange={(e) => {
                                         setPassword(e.target.value);
                                         setPasswordError(
-                                            passwordRestriction.test(
-                                                e.target.value
-                                            )
+                                            passwordRestriction.test(e.target.value)
                                                 ? ""
                                                 : 'Password must be at least 8 characters, include 1 letter, 1 digit, and 1 special character.'
                                         );
@@ -229,9 +189,7 @@ function Signup({ onSignupSuccess = null }) {
                                 />
                                 <PasswordToggleIcon
                                     visible={showPassword}
-                                    onClick={() =>
-                                        setShowPassword(!showPassword)
-                                    }
+                                    onClick={() => setShowPassword(!showPassword)}
                                 />
                             </div>
 
@@ -254,9 +212,7 @@ function Signup({ onSignupSuccess = null }) {
                                 />
                                 <PasswordToggleIcon
                                     visible={showConfirmPassword}
-                                    onClick={() =>
-                                        setShowConfirmPassword(!showConfirmPassword)
-                                    }
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 />
                             </div>
 
@@ -291,24 +247,22 @@ function Signup({ onSignupSuccess = null }) {
                     <form onSubmit={handleVerifyEmailOtp}>
                         <p className="text-center mb-2">Enter Email OTP</p>
                         <input
-                            className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
-                            placeholder="Enter OTP"
+                            className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 tracking-widest text-center font-bold"
+                            placeholder="------"
                             value={emailOtp}
                             onChange={(e) =>
-                                setEmailOtp(
-                                    e.target.value.replace(/\D/g, "").slice(0, 6)
-                                )
+                                setEmailOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
                             }
                             required
                         />
 
                         {otpTimer > 0 ? (
-                            <p className="text-center text-gray-600">
+                            <p className="text-center text-gray-600 mb-4">
                                 Resend in {otpTimer}s
                             </p>
                         ) : (
                             <p
-                                className="text-center text-green-700 cursor-pointer"
+                                className="text-center text-green-700 cursor-pointer mb-4 hover:underline font-semibold"
                                 onClick={resendEmailOtp}
                             >
                                 Resend OTP
