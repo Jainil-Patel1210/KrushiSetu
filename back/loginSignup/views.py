@@ -157,13 +157,17 @@ class UserSignupView(generics.CreateAPIView):
             # ---------------------------------------------
             # 2️⃣ User exists but NOT ACTIVE → resend OTP
             # ---------------------------------------------
-            # Update user fields (in case user changed name/mobile)
-            existing_user.full_name = request.data.get("full_name")
-            existing_user.mobile_number = mobile
-            existing_user.set_password(password)
-            existing_user.save()
+           # Find out which user object we matched
+            user_to_update = existing_user if existing_user else existing_user1
+            
+            # Update user fields (in case user changed name/email/mobile)
+            user_to_update.full_name = request.data.get("full_name")
+            user_to_update.mobile_number = mobile
+            user_to_update.email_address = email
+            user_to_update.set_password(password)
+            user_to_update.save()
 
-            send_otp(existing_user, "email_verify")
+            send_otp(user_to_update, "email_verify")
 
             return Response({
                 "message": "Account already exists but is not verified. OTP re-sent to email.",
@@ -287,70 +291,6 @@ class CookieTokenRefreshView(APIView):
 
 
 # --------------------------------------------------------------------
-# Login With Mobile OTP (Step 1)
-# --------------------------------------------------------------------
-
-class LoginOtpView(APIView):
-    def post(self, request):
-        mobile = request.data.get("mobile_number")
-
-        try:
-            user = User.objects.get(mobile_number=mobile)
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=404)
-
-        send_otp(user, "login")
-
-        return Response({"message": "OTP sent", "user_id": user.id})
-
-
-# --------------------------------------------------------------------
-# Login With Mobile OTP – Verify (Step 2)
-# --------------------------------------------------------------------
-
-class VerifyOTPView(APIView):
-    def post(self, request):
-        user_id = request.data.get("user_id")
-        otp = request.data.get("otp")
-        remember = request.data.get("remember", False)
-
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=404)
-
-        success, msg = verify_otp(user, "login", otp)
-        if not success:
-            return Response({"error": msg}, status=400)
-
-        refresh = RefreshToken.for_user(user)
-        access = str(refresh.access_token)
-        refresh_token = str(refresh)
-
-        access_age = 300
-        refresh_age = 7 * 24 * 3600
-
-        if remember:
-            access_age = 86400
-            refresh_age = 30 * 24 * 3600
-
-        response = Response({
-            "message": "Login successful",
-            "user": {
-                "id": user.id,
-                "email": user.email_address,
-                "full_name": user.full_name,
-                "role": user.role
-            }
-        })
-
-        response.set_cookie("access_token", access, httponly=True, secure=True, samesite="None", max_age=access_age)
-        response.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="None", max_age=refresh_age)
-
-        return response
-
-
-# --------------------------------------------------------------------
 # Logout
 # --------------------------------------------------------------------
 
@@ -383,29 +323,6 @@ def verify_email(request):
     if not success:
         return Response({"error": msg}, status=400)
 
-    send_otp(user, "mobile_verify")
-
-    return Response({"message": "Email verified. OTP sent to your mobile.", "user_id": user.id})
-
-
-# --------------------------------------------------------------------
-# Signup – Step 3 (Mobile OTP verification → activate)
-# --------------------------------------------------------------------
-
-@api_view(['POST'])
-def verify_mobile_otp(request):
-    user_id = request.data.get("user_id")
-    otp = request.data.get("otp")
-
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return Response({"error": "User not found"}, status=404)
-
-    success, msg = verify_otp(user, "mobile_verify", otp)
-    if not success:
-        return Response({"error": msg}, status=400)
-
     user.is_active = True
     user.save()
 
@@ -427,18 +344,5 @@ def resend_email_otp(request):
     send_otp(user, "email_verify")
 
     return Response({"message": "Email OTP resent successfully"})
-
-@api_view(['POST'])
-def resend_mobile_otp(request):
-    user_id = request.data.get("user_id")
-
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return Response({"error": "User not found"}, status=404)
-
-    send_otp(user, "mobile_verify")
-
-    return Response({"message": "Mobile OTP resent successfully"})
 
 
