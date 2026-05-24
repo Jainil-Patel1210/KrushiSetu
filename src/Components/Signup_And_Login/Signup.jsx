@@ -27,7 +27,6 @@ function Signup({ onSignupSuccess = null }) {
     const passwordRestriction = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
     const [emailOtp, setEmailOtp] = useState("");
-    const [mobileOtp, setMobileOtp] = useState("");
     const [otpTimer, setOtpTimer] = useState(0);
     const [userId, setUserId] = useState("");
 
@@ -89,38 +88,17 @@ function Signup({ onSignupSuccess = null }) {
         setIsLoading(true);
 
         try {
-            const res = await api.post("/verify-email/", {
+            await api.post("/verify-email/", {
                 email_address: email,
                 otp: emailOtp,
             });
 
-            toast.success("Email verified. Mobile OTP sent.");
-            setUserId(res.data.user_id);
-            setOtpTimer(30);
-            setStep(3);
-        } catch (err) {
-            setMobile("");
-            setStep(1);
-            toast.error(err.response?.data?.error || "Invalid OTP");
-        }
-
-        setIsLoading(false);
-    };
-
-    const handleVerifyMobileOtp = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-
-        try {
-            await api.post("/verify-mobile-otp/", {
-                user_id: userId,
-                otp: mobileOtp,
-            });
-
+            // THIS IS THE CHANGED PART 👇
             toast.success("Signup complete! You can now login.");
-            if (onSignupSuccess) onSignupSuccess();
-            setTimeout(() => navigate("/login"), 1200);
+            if (onSignupSuccess) onSignupSuccess(); 
+            
         } catch (err) {
+            setStep(1);
             toast.error(err.response?.data?.error || "Invalid OTP");
         }
 
@@ -131,16 +109,6 @@ function Signup({ onSignupSuccess = null }) {
         try {
             await api.post("/resend-email-otp/", { email_address: email });
             toast.success("Email OTP resent.");
-            setOtpTimer(30);
-        } catch (err) {
-            toast.error("Failed to resend OTP.");
-        }
-    };
-
-    const resendMobileOtp = async () => {
-        try {
-            await api.post("/resend-mobile-otp/", { user_id: userId });
-            toast.success("Mobile OTP resent.");
             setOtpTimer(30);
         } catch (err) {
             toast.error("Failed to resend OTP.");
@@ -354,47 +322,6 @@ function Signup({ onSignupSuccess = null }) {
                                 disabled={isLoading}
                             >
                                 {isLoading ? "Verifying..." : "Verify Email"}
-                            </button>
-                        </div>
-                    </form>
-                )}
-
-                {/* STEP 3 — MOBILE OTP */}
-                {step === 3 && (
-                    <form onSubmit={handleVerifyMobileOtp}>
-                        <p className="text-center mb-2">Enter Mobile OTP</p>
-                        <input
-                            className="w-full p-2 mb-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600"
-                            placeholder="Enter OTP"
-                            value={mobileOtp}
-                            onChange={(e) =>
-                                setMobileOtp(
-                                    e.target.value.replace(/\D/g, "").slice(0, 6)
-                                )
-                            }
-                            required
-                        />
-
-                        {otpTimer > 0 ? (
-                            <p className="text-center text-gray-600">
-                                Resend in {otpTimer}s
-                            </p>
-                        ) : (
-                            <p
-                                className="text-center text-green-700 cursor-pointer"
-                                onClick={resendMobileOtp}
-                            >
-                                Resend OTP
-                            </p>
-                        )}
-
-                        <div className="flex justify-center pb-3">
-                            <button
-                                className="bg-green-700 text-white p-2 rounded w-40"
-                                type="submit"
-                                disabled={isLoading}
-                            >
-                                {isLoading ? "Verifying..." : "Verify Mobile"}
                             </button>
                         </div>
                     </form>
