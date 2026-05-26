@@ -9,7 +9,7 @@ from .models import Subsidy, SubsidyRating
 from .serializers import SubsidySerializer, SubsidyRatingSerializer
 from .permissions import IsSubsidyProviderOrAdmin 
 from rest_framework.pagination import PageNumberPagination
-
+from django.db.models import Count
 from notifications.utils import notify_user
 from loginSignup.models import User
 # only needed for bulk option:
@@ -36,11 +36,10 @@ class SubsidyViewSet(viewsets.ModelViewSet):
     """
     Main ViewSet for Subsidy management.
     """
-    queryset = (
-        Subsidy.objects.select_related('created_by')
-        .prefetch_related('ratings__user')
-        .order_by('-created_at')
-    )
+   queryset = Subsidy.objects.select_related('created_by').annotate(
+        ratings_count=Count('ratings')
+    ).order_by('-created_at')
+    
     serializer_class = SubsidySerializer
     pagination_class = SubsidyPagination
     filter_backends = [filters.SearchFilter]

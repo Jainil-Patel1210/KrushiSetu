@@ -16,8 +16,9 @@ class SubsidyRatingSerializer(serializers.ModelSerializer):
 
 # ------------------- Subsidy Serializer -------------------
 class SubsidySerializer(serializers.ModelSerializer):
-    ratings_count = serializers.IntegerField(source='ratings.count', read_only=True)
-    ratings = SubsidyRatingSerializer(many=True, read_only=True)
+    # 🔹 FIX: Changed from source='ratings.count' to just IntegerField
+    ratings_count = serializers.IntegerField(read_only=True) 
+    
     created_by = serializers.SerializerMethodField()
 
     class Meta:
@@ -34,9 +35,8 @@ class SubsidySerializer(serializers.ModelSerializer):
 
             # ⭐ IMPORTANT FIELDS
             'rating',             # average rating
-            'ratings_count',      # ⭐ number of reviews
-
-            'ratings',            # list of all reviews (optional)
+            'ratings_count',      # ⭐ number of reviews (now efficient!)
+             
             'created_by',
         ]
 
